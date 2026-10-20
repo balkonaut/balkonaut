@@ -1,0 +1,21 @@
+# Kopieren nach data/config.yaml und anpassen.
+home_assistant:
+  url: http://homeassistant.local:8123
+  token: LONG_LIVED_ACCESS_TOKEN
+  # Messgröße: [Entität, Faktor]; Faktor -1 dreht das Vorzeichen (siehe Handbuch, Messquellen)
+  entities:
+    grid_power: [sensor.shellypro3em_total_active_power, 1]
+    pv_power: [sensor.ezhi_photovoltaic_power, 1]
+    pv_ac_power: [sensor.ezhi_off_grid_power, 1]
+    battery_power: [sensor.ezhi_battery_power, 1]
+    battery_soc: [sensor.ezhi_battery_state_of_charge, 1]
+    output_power: [sensor.ezhi_on_grid_power, -1]
+    output_energy: [sensor.solar_einspeisung_energy, 1]
+    pv_energy: [sensor.ezhi_photovoltaic_energy, 1]
+    battery_charge_energy: [sensor.ezhi_battery_total_charge_energy, 1]
+    battery_discharge_energy: [sensor.ezhi_battery_total_discharge_energy, 1]
+prices:
+  energy: 0.30   # Arbeitspreis €/kWh
+  feed_in: 0.0   # Einspeisevergütung €/kWh
+system:
+  cost: 0        # Anschaffungskosten €

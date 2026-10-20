@@ -1,4 +1,9 @@
 site_name: Balkonaut Handbuch
+nav:
+  - index.md
+  - installation.md
+  - einstellungen.md
+  - messquellen.md
 theme:
   name: material
   language: de
