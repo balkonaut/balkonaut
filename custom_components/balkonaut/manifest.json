@@ -1,9 +1,6 @@
 {
   "domain": "balkonaut",
   "name": "Balkonaut",
-  "categories": [
-    "energy.solar_batteries"
-  ],
   "codeowners": [
     "@Gruudash"
   ],
