@@ -1,7 +1,12 @@
 {
   "domain": "balkonaut",
   "name": "Balkonaut",
-  "codeowners": ["@Gruudash"],
+  "categories": [
+    "energy.solar_batteries"
+  ],
+  "codeowners": [
+    "@Gruudash"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/balkonaut/balkonaut",
   "integration_type": "service",
