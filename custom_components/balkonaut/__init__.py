@@ -8,14 +8,21 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 DOMAIN = "balkonaut"
 DEFAULT_SCAN_INTERVAL = 5  # Minuten
-PLATFORMS = [Platform.SENSOR]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.EVENT, Platform.SENSOR]
 _LOGGER = logging.getLogger(__name__)
 
 type BalkonautConfigEntry = ConfigEntry[BalkonautCoordinator]
+
+
+def device_info(entry: ConfigEntry) -> DeviceInfo:
+    """Gemeinsames Gerät aller Balkonaut-Entitäten."""
+    return DeviceInfo(identifiers={(DOMAIN, entry.entry_id)}, name="Balkonaut", manufacturer="Balkonaut",
+                      entry_type=DeviceEntryType.SERVICE, configuration_url=entry.data[CONF_URL])
 
 
 async def fetch_status(session: aiohttp.ClientSession, url: str) -> dict:

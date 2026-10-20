@@ -9,14 +9,13 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import CONF_URL, PERCENTAGE, UnitOfEnergy
+from homeassistant.const import PERCENTAGE, UnitOfEnergy
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import DOMAIN, BalkonautConfigEntry, BalkonautCoordinator
+from . import BalkonautConfigEntry, BalkonautCoordinator, device_info
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -88,9 +87,7 @@ class BalkonautSensor(CoordinatorEntity[BalkonautCoordinator], SensorEntity):
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, entry.entry_id)}, name="Balkonaut",
-                                            manufacturer="Balkonaut", entry_type=DeviceEntryType.SERVICE,
-                                            configuration_url=entry.data[CONF_URL])
+        self._attr_device_info = device_info(entry)
 
     @property
     def native_value(self) -> StateType | date:

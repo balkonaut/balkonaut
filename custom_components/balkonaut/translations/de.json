@@ -94,6 +94,23 @@
       "akku_wirkungsgrad": {
         "name": "Akku Wirkungsgrad (Monat)"
       }
+    },
+    "binary_sensor": {
+      "warnungen": {
+        "name": "Warnungen"
+      }
+    },
+    "event": {
+      "warnung": {
+        "name": "Warnung",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "warnung": "Warnung"
+            }
+          }
+        }
+      }
     }
   }
 }

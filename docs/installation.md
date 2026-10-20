@@ -73,7 +73,25 @@ Die Integration holt die Werte der laufenden Balkonaut-App als Gerät *Balkonaut
 3. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Balkonaut*, Adresse der App eingeben
    (z. B. `http://192.168.1.10:8000`).
 
-Das Abfrageintervall (Standard 5 Minuten) lässt sich danach unter *Konfigurieren* ändern. Die Installation über
+Das Abfrageintervall (Standard 5 Minuten) lässt sich danach unter *Konfigurieren* ändern.
+
+Für Warnungen bringt die Integration zwei Entitäten mit: den Problem-Sensor *Warnungen* (an, solange eine Warnung
+besteht, Texte im Attribut `warnungen`) und das Ereignis *Warnung*, das bei jeder neu auftretenden Warnung auslöst.
+Eine Benachrichtigung braucht damit kein Template mehr (`notify.mobile_app_…` an das eigene Gerät anpassen):
+
+```yaml
+alias: Balkonaut Warnung
+triggers:
+  - trigger: state
+    entity_id: event.balkonaut_warnung
+    not_from: unavailable
+actions:
+  - action: notify.mobile_app_mein_handy
+    data:
+      title: Balkonaut
+      message: "{{ trigger.to_state.attributes.text }}"
+mode: queued
+``` Die Installation über
 HACS folgt, sobald das Repository öffentlich ist.
 
 ## In Home Assistant einbinden

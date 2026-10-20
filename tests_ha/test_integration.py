@@ -53,3 +53,28 @@ async def test_sensors_and_options(hass, aioclient_mock):
     result = await hass.config_entries.options.async_init(entry.entry_id)
     result = await hass.config_entries.options.async_configure(result["flow_id"], {CONF_SCAN_INTERVAL: 10})
     assert result["type"] is FlowResultType.CREATE_ENTRY and entry.options[CONF_SCAN_INTERVAL] == 10
+
+
+async def test_warnings(hass, aioclient_mock):
+    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_URL: URL})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    registry = er.async_get(hass)
+    problem = registry.async_get_entity_id("binary_sensor", DOMAIN, f"{entry.entry_id}_warnungen")
+    event = registry.async_get_entity_id("event", DOMAIN, f"{entry.entry_id}_warnung")
+    assert hass.states.get(problem).state == "off"
+    assert hass.states.get(event).state == "unknown"
+
+    warning = {"code": "ungleich", "wechselrichter": "ac", "text": "zweiter Wechselrichter bleibt zurück"}
+    entry.runtime_data.async_set_updated_data(STATUS | {"warnungen": [warning]})
+    await hass.async_block_till_done()
+    assert hass.states.get(problem).state == "on"
+    assert hass.states.get(problem).attributes["warnungen"] == [warning["text"]]
+    fired = hass.states.get(event)
+    assert fired.attributes["event_type"] == "warnung" and fired.attributes["text"] == warning["text"]
+
+    entry.runtime_data.async_set_updated_data(STATUS | {"warnungen": [warning]})  # gleiche Warnung: kein neues Ereignis
+    await hass.async_block_till_done()
+    assert hass.states.get(event).state == fired.state
