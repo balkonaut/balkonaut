@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {% block head %}{% endblock %}
+<link rel="icon" href="/handbuch/assets/logo.svg" type="image/svg+xml">
 <title>{% block title %}{% endblock %} · Balkonaut</title>
 <style>
   :root { --bg: #f7f5f0; --card: #fff; --ink: #1d1f1c; --muted: #5d625a; --line: #e3dfd4;
@@ -33,7 +34,7 @@
 </head>
 <body>
 <main>
-<nav><b>Balkonaut</b><a href="/">Übersicht</a><a href="/verlauf">Verlauf</a><a href="/nulleinspeisung">Nulleinspeisung</a><a href="/einstellungen">Einstellungen</a><a href="/handbuch/">Handbuch</a></nav>
+<nav><b><img src="/handbuch/assets/logo.svg" alt="" width="28" height="28" style="vertical-align:middle;margin-right:.4rem">Balkonaut</b><a href="/">Übersicht</a><a href="/verlauf">Verlauf</a><a href="/nulleinspeisung">Nulleinspeisung</a><a href="/einstellungen">Einstellungen</a><a href="/handbuch/">Handbuch</a></nav>
 {% block content %}{% endblock %}
 </main>
 </body>

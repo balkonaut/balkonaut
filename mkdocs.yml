@@ -8,6 +8,8 @@ nav:
   - schnittstelle.md
 theme:
   name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
   language: de
   palette:
     - media: "(prefers-color-scheme: light)"

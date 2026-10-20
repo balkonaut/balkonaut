@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Balkonaut</title>
+  <defs>
+    <clipPath id="visor"><rect x="150" y="175" width="212" height="150" rx="75"/></clipPath>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f6690"/><stop offset="1" stop-color="#1b3f5c"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="url(#sky)"/>
+  <circle cx="400" cy="112" r="44" fill="#f2b733"/>
+  <g stroke="#f2b733" stroke-width="10" stroke-linecap="round">
+    <line x1="400" y1="40" x2="400" y2="56"/><line x1="472" y1="112" x2="456" y2="112"/>
+    <line x1="451" y1="61" x2="440" y2="72"/><line x1="451" y1="163" x2="440" y2="152"/>
+  </g>
+  <rect x="166" y="380" width="180" height="52" rx="18" fill="#d9dde0"/>
+  <circle cx="256" cy="250" r="150" fill="#f4f5f2"/>
+  <rect x="150" y="175" width="212" height="150" rx="75" fill="#16324a"/>
+  <g clip-path="url(#visor)">
+    <g transform="translate(256 262) skewX(-18)">
+      <rect x="-88" y="-34" width="176" height="96" fill="#2f6690" stroke="#f2b733" stroke-width="4"/>
+      <g stroke="#f2b733" stroke-width="3">
+        <line x1="-29" y1="-34" x2="-29" y2="62"/><line x1="29" y1="-34" x2="29" y2="62"/>
+        <line x1="-88" y1="14" x2="88" y2="14"/>
+      </g>
+    </g>
+    <path d="M172 214 Q200 186 246 182" fill="none" stroke="#ffffff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <circle cx="132" cy="258" r="16" fill="#3f7d4e"/>
+  <circle cx="380" cy="258" r="16" fill="#3f7d4e"/>
+</svg>

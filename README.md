@@ -1,3 +1,5 @@
+<img src="docs/assets/logo.svg" alt="Balkonaut" width="96" align="right">
+
 # Balkonaut
 
 **Antworten statt Rohdaten für dein Balkonkraftwerk mit Speicher.**
