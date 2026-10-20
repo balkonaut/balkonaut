@@ -62,6 +62,9 @@ docker compose up -d --build
 
 Danach `http://<adresse>:8000/` öffnen. Details stehen im Handbuch unter `/handbuch/`.
 
+Für Home Assistant gibt es eine Integration, installierbar über HACS als benutzerdefiniertes Repository
+(`https://github.com/balkonaut/balkonaut`, Typ *Integration*).
+
 ## Pläne
 
 | Phase | Inhalt | Stand |
@@ -69,8 +72,8 @@ Danach `http://<adresse>:8000/` öffnen. Details stehen im Handbuch unter `/hand
 | P0 Fundament | Gerüst, Datenquellen, erste Messdaten | erledigt |
 | P1 MVP | Erfassung, Bilanz, Amortisation, Dashboard, Container | Testbetrieb |
 | P2 Akku & Tiefe | Akku-Auswertung, Regelgüte der Nulleinspeisung, Verlaufsansichten, REST-API | erledigt |
-| P3 Simulation & Prognose | Was-wäre-wenn (zweiter Akku, mehr Module, anderer Tarif), PV-Prognose, Monatsbericht | geplant |
-| P4 Home Assistant | HACS-Integration mit Sensoren, öffentliches Repository | geplant |
+| P3 Simulation & Prognose | Was-wäre-wenn (zweiter Akku, mehr Module, anderer Tarif), PV-Prognose, Monatsbericht | teilweise: Prognose, Ertragswächter, Monatsbericht |
+| P4 Home Assistant | HACS-Integration mit Sensoren, Warnungen und Diagnose, öffentliches Repository | erledigt |
 | P5 Öffnen für andere | direkte Geräte-Anbindung ohne HA, weitere Hersteller, Add-on, Lovelace-Card mit Energiefluss | geplant |
 | P6 Community | anonymer Vergleich nach Region, dynamische Tarife | Idee |
 

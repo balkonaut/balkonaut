@@ -30,6 +30,9 @@ Fehlt ein Wert (z. B. ohne Akku-Messgrößen), steht dort `null`.
 
 ## Werte als Sensoren in Home Assistant
 
+Einfacher geht es mit der [Home-Assistant-Integration](installation.md#home-assistant-integration). Die REST-Sensoren
+unten sind die Alternative ohne zusätzliche Dateien in Home Assistant.
+
 Mit der REST-Integration von Home Assistant werden Werte zu Sensoren. Beispiel für die `configuration.yaml`:
 
 ```yaml

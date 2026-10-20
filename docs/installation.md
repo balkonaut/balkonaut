@@ -64,20 +64,40 @@ mehrfach laufen.
 
 ## Home-Assistant-Integration
 
-Die Integration holt die Werte der laufenden Balkonaut-App als Gerät *Balkonaut* mit Sensoren nach Home Assistant
-(Bilanz für heute, Monat und Jahr, Amortisation, Akku). Sie ersetzt die REST-Sensoren aus der YAML-Konfiguration.
+Die Integration holt die Werte der laufenden Balkonaut-App nach Home Assistant: 22 Sensoren (Bilanz für heute,
+Monat und Jahr, Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Die App muss dafür
+laufen und von Home Assistant aus erreichbar sein.
 
-1. Den Ordner `custom_components/balkonaut` aus diesem Repository nach `config/custom_components/balkonaut` in
-   Home Assistant kopieren, z. B. mit dem Add-on *Samba share* oder *Studio Code Server*.
-2. Home Assistant neu starten.
-3. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Balkonaut*, Adresse der App eingeben
+### Installation über HACS
+
+1. In Home Assistant *HACS* öffnen, oben rechts die drei Punkte → *Benutzerdefinierte Repositories*.
+2. Als Repository `https://github.com/balkonaut/balkonaut` eintragen, Typ *Integration*, *Hinzufügen*.
+3. In HACS nach *Balkonaut* suchen, *Herunterladen*, danach Home Assistant neu starten.
+4. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Balkonaut*, Adresse der App eingeben
    (z. B. `http://192.168.1.10:8000`).
 
-Das Abfrageintervall (Standard 5 Minuten) lässt sich danach unter *Konfigurieren* ändern.
+Neue Versionen bietet HACS danach als Update an.
 
-Für Warnungen bringt die Integration zwei Entitäten mit: den Problem-Sensor *Warnungen* (an, solange eine Warnung
-besteht, Texte im Attribut `warnungen`) und das Ereignis *Warnung*, das bei jeder neu auftretenden Warnung auslöst.
-Eine Benachrichtigung braucht damit kein Template mehr (`notify.mobile_app_…` an das eigene Gerät anpassen):
+### Manuelle Installation
+
+Den Ordner `custom_components/balkonaut` aus dem Repository nach `config/custom_components/balkonaut` in Home
+Assistant kopieren (z. B. mit dem Add-on *Samba share* oder *Studio Code Server*), Home Assistant neu starten und die
+Integration wie oben hinzufügen. Updates müssen dann ebenfalls von Hand kopiert werden.
+
+### Einstellungen, Diagnose, Störungen
+
+- Das Abfrageintervall (Standard 5 Minuten) lässt sich unter *Konfigurieren* ändern.
+- Antwortet die App dreimal hintereinander nicht, erscheint unter *Einstellungen → Reparaturen* ein Hinweis. Er
+  verschwindet, sobald die App wieder antwortet.
+- Über *⋮ → Diagnose herunterladen* gibt es eine Datei mit Einstellungen und letzter Antwort der App, die Adresse
+  ist darin geschwärzt.
+
+### Benachrichtigung bei Warnungen
+
+Der Problem-Sensor *Warnungen* ist an, solange eine Warnung besteht (Texte im Attribut `warnungen`). Das Ereignis
+*Warnung* löst bei jeder neu auftretenden Warnung aus. Eine Benachrichtigung braucht damit kein Template
+(`notify.mobile_app_…` an das eigene Gerät anpassen, Entitäts-ID ggf. anpassen, wenn das Gerät einem Bereich
+zugeordnet ist):
 
 ```yaml
 alias: Balkonaut Warnung
@@ -94,8 +114,14 @@ actions:
       title: Balkonaut
       message: "{{ trigger.to_state.attributes.text }}"
 mode: queued
-``` Die Installation über
-HACS folgt, sobald das Repository öffentlich ist.
+```
+
+### Umstieg von den REST-Sensoren
+
+Wer vorher die REST-Sensoren aus [Schnittstelle](schnittstelle.md) genutzt hat: den `rest:`-Block aus der
+`configuration.yaml` entfernen, Home Assistant neu starten und die verwaisten Einträge (Integration *RESTful*,
+Status *nicht verfügbar*) unter *Einstellungen → Geräte & Dienste → Entitäten* löschen. Danach lassen sich die
+Sensoren der Integration, die wegen belegter Namen auf `_2` enden, umbenennen.
 
 ## In Home Assistant einbinden
 
