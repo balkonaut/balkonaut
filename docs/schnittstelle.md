@@ -38,23 +38,54 @@ rest:
     scan_interval: 300
     sensor:
       - name: Balkonaut Ersparnis heute
+        unique_id: balkonaut_ersparnis_heute
         value_template: "{{ value_json.bilanz.tag.ersparnis | round(2) }}"
         unit_of_measurement: "€"
         device_class: monetary
       - name: Balkonaut Autarkie heute
+        unique_id: balkonaut_autarkie_heute
         value_template: "{{ ((value_json.bilanz.tag.autarkiegrad or 0) * 100) | round(0) }}"
         unit_of_measurement: "%"
       - name: Balkonaut Ersparnis gesamt
+        unique_id: balkonaut_ersparnis_gesamt
         value_template: "{{ value_json.amortisation.bisher_gespart | round(0) }}"
         unit_of_measurement: "€"
         device_class: monetary
       - name: Balkonaut amortisiert am
+        unique_id: balkonaut_amortisiert_am
         value_template: "{{ value_json.amortisation.amortisiert_am }}"
         device_class: date
       - name: Balkonaut Warnungen
+        unique_id: balkonaut_warnungen
         value_template: "{{ value_json.warnungen | count }}"
+        json_attributes:
+          - warnungen
       - name: Balkonaut Akku Vollzyklen
+        unique_id: balkonaut_akku_vollzyklen
         value_template: "{{ value_json.akku.gesamt.zyklen_gesamt | round(0) }}"
+```
+
+Mit `unique_id` lassen sich die Sensoren in Home Assistant umbenennen und einem Bereich zuordnen. Sie stehen
+nicht als eigenes Gerät unter *Geräte & Dienste*, sondern dort im Reiter *Entitäten* (Suche „balkonaut“).
+
+## Benachrichtigung bei Warnungen
+
+Der Sensor *Balkonaut Warnungen* zählt die Warnungen und trägt ihre Texte im Attribut `warnungen`. Eine
+Automation, die sie aufs Handy schickt (`notify.mobile_app_…` an das eigene Gerät anpassen):
+
+```yaml
+alias: Balkonaut Warnung
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.balkonaut_warnungen
+    above: 0
+actions:
+  - action: notify.mobile_app_mein_handy
+    data:
+      title: Balkonaut
+      message: >
+        {{ state_attr('sensor.balkonaut_warnungen', 'warnungen') | map(attribute='text') | join('\n') }}
+mode: single
 ```
 
 Nach dem Ändern der `configuration.yaml` in Home Assistant *Entwicklerwerkzeuge → YAML → REST-Entitäten neu laden*
