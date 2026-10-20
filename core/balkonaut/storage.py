@@ -50,3 +50,8 @@ class Storage:
     def hourly(self):
         return self.db.execute(
             "SELECT key, hour, mean, mean_pos, mean_neg, last FROM hourly ORDER BY key, hour").fetchall()
+
+    def latest(self):
+        """Letzter Rohwert je Messgröße: {key: (ts, value)}."""
+        return {k: (ts, v) for k, ts, v in self.db.execute(
+            "SELECT key, max(ts), value FROM raw GROUP BY key")}  # SQLite: value gehört zur Zeile mit max(ts)

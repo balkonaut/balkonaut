@@ -17,6 +17,22 @@ from balkonaut.storage import Storage
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 
+def de(value, digits=1):
+    """Zahl im deutschen Format, fehlende Werte als Strich."""
+    if not isinstance(value, (int, float)):
+        return "–"
+    return f"{value:,.{digits}f}".replace(",", " ").replace(".", ",").replace(" ", ".")
+
+
+templates.env.filters.update(
+    de=de,
+    abs_de=lambda v, d=1: de(abs(v) if isinstance(v, (int, float)) else None, d),
+    pct=lambda v: "–" if v is None else de(v * 100, 0) + " %",
+    ago=lambda s: f"{s} s" if s < 120 else f"{s // 60} min" if s < 7200 else f"{s // 3600} h",
+)
+PERIODS = [("tag", "Heute"), ("monat", "Monat"), ("jahr", "Jahr"), ("gesamt", "Gesamt")]
+
+
 @asynccontextmanager
 async def lifespan(app):
     data = Path(os.environ.get("BALKONAUT_DATA", "data"))
@@ -49,6 +65,33 @@ def bilanz(request: Request):
               for name, start in analytics.periods(time.time()).items()}
     result["amortisation"] = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"])
     return result
+
+
+@app.get("/")
+def dashboard(request: Request, zeitraum: str = "tag"):
+    cfg = config.load(request.app.state.config_path)
+    storage = request.app.state.storage
+    rows = storage.hourly()
+    now = time.time()
+    starts = analytics.periods(now)
+    period = zeitraum if zeitraum in starts else "tag"
+    latest = storage.latest()
+    live = {k: v for k, (_, v) in latest.items()}
+    live["pv"] = (live.get("pv_power") or 0) + (live.get("pv_ac_power") or 0) if latest else None
+    hours = []
+    for i in range(24):
+        h0 = starts["tag"] + i * 3600
+        b = analytics.balance([r for r in rows if r[1] < h0 + 3600], h0, cfg["prices"])
+        hours.append({"label": i, "own": b["eigenverbrauch"] * 1000, "grid": b["netzbezug"] * 1000})
+    peak = max(h["own"] + h["grid"] for h in hours)
+    a = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"])
+    return templates.TemplateResponse(request, "dashboard.html", {
+        "periods": PERIODS, "period": period, "b": analytics.balance(rows, starts[period], cfg["prices"]),
+        "live": live, "live_age": int(now - max(ts for ts, _ in latest.values())) if latest else None,
+        "hours": hours, "peak": peak, "scale": 140 / peak if peak else 0, "a": a,
+        "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
+        "prices_set": cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0,
+    })
 
 
 @app.get("/einstellungen")

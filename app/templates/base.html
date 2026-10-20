@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% block head %}{% endblock %}
+<title>{% block title %}{% endblock %} · Balkonaut</title>
+<style>
+  :root { --bg: #f7f5f0; --card: #fff; --ink: #1d1f1c; --muted: #5d625a; --line: #e3dfd4;
+          --sun: #c98a0b; --leaf: #3f7d4e; --sky: #2f6690; --warn: #b4532a; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141613; --card: #1d201c; --ink: #ecebe6; --muted: #a3a89e; --line: #30342e;
+            --sun: #f2b733; --leaf: #7cc28d; --sky: #7fb3dc; --warn: #e58b62; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 60rem; margin: 0 auto; padding: 1rem 1rem 3rem; }
+  nav { display: flex; gap: 1rem; align-items: baseline; padding: 1rem 0; border-bottom: 1px solid var(--line); }
+  nav b { margin-right: auto; font-size: 1.2rem; }
+  a { color: var(--sky); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: .75rem; padding: 1rem; }
+  .grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+  .label { color: var(--muted); font-size: .85rem; }
+  .value { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .note { padding: .5rem 1rem; border-radius: .5rem; }
+  .ok { background: #3f7d4e33; } .err { background: #b4532a33; }
+</style>
+</head>
+<body>
+<main>
+<nav><b>Balkonaut</b><a href="/">Übersicht</a><a href="/einstellungen">Einstellungen</a></nav>
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

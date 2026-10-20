@@ -1,20 +1,12 @@
-<!doctype html>
-<html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Einstellungen · Balkonaut</title>
+{% extends "base.html" %}
+{% block title %}Einstellungen{% endblock %}
+{% block content %}
 <style>
-  :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
-  body { max-width: 32rem; margin: 2rem auto; padding: 0 1rem; }
+  form { max-width: 32rem; }
   label { display: block; margin: 1rem 0 .25rem; }
-  input { width: 100%; padding: .5rem; font-size: 1rem; box-sizing: border-box; }
+  input { width: 100%; padding: .5rem; font-size: 1rem; }
   button { margin-top: 1.5rem; padding: .5rem 1.5rem; font-size: 1rem; }
-  .note { padding: .5rem 1rem; border-radius: .5rem; }
-  .ok { background: #3f7d4e33; } .err { background: #b4532a33; }
 </style>
-</head>
-<body>
 <h1>Einstellungen</h1>
 {% if error %}<p class="note err">Bitte nur Zahlen ab 0 eingeben.</p>
 {% elif request.query_params.get("gespeichert") %}<p class="note ok">Gespeichert.</p>{% endif %}
@@ -27,5 +19,4 @@
   <input id="cost" name="cost" inputmode="decimal" required value="{{ cfg.system.cost }}">
   <button type="submit">Speichern</button>
 </form>
-</body>
-</html>
+{% endblock %}

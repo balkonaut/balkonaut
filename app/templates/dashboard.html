@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block head %}<meta http-equiv="refresh" content="60">{% endblock %}
+{% block title %}Übersicht{% endblock %}
+{% block content %}
+<style>
+  h2 { font-size: 1.1rem; margin: 1.75rem 0 .5rem; }
+  .tabs { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .tabs a { padding: .25rem .75rem; border: 1px solid var(--line); border-radius: 999px; text-decoration: none; color: var(--ink); }
+  .tabs a.on { background: var(--ink); color: var(--bg); }
+  .bar { height: .75rem; background: var(--line); border-radius: 999px; overflow: hidden; margin: .5rem 0; }
+  .bar span { display: block; height: 100%; background: var(--leaf); }
+  svg { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 1rem; font-size: .85rem; color: var(--muted); }
+  .dot { display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; vertical-align: middle; margin-right: .3rem; }
+</style>
+{% if not prices_set %}<p class="note err">Arbeitspreis und Anschaffungskosten fehlen, Euro-Beträge stehen deshalb auf 0. <a href="/einstellungen">Jetzt eintragen</a></p>{% endif %}
+
+<h2>Jetzt</h2>
+<div class="grid">
+  <div class="card"><div class="label">Balkonkraftwerk ins Haus</div><div class="value">{{ live.output_power|de(0) }} W</div></div>
+  <div class="card"><div class="label">PV-Erzeugung</div><div class="value">{{ live.pv|de(0) }} W</div></div>
+  <div class="card"><div class="label">{{ "Einspeisung" if (live.grid_power or 0) < 0 else "Netzbezug" }}</div><div class="value">{{ live.grid_power|abs_de(0) }} W</div></div>
+  <div class="card"><div class="label">Akku {{ "lädt" if (live.battery_power or 0) > 5 else "entlädt" if (live.battery_power or 0) < -5 else "" }}</div><div class="value">{{ live.battery_soc|de(0) }} %</div><div class="label">{{ live.battery_power|de(0) }} W</div></div>
+</div>
+{% if live_age is none %}<p class="label">Noch keine Messwerte.</p>
+{% elif live_age > 120 %}<p class="note err">Keine aktuellen Messwerte, letzter Stand vor {{ live_age|ago }}. Verbindung zu Home Assistant prüfen.</p>
+{% else %}<p class="label">Stand vor {{ live_age|ago }}</p>{% endif %}
+
+<h2>Bilanz</h2>
+<div class="tabs">{% for key, name in periods %}<a href="?zeitraum={{ key }}" class="{{ 'on' if key == period }}">{{ name }}</a>{% endfor %}</div>
+<div class="grid" style="margin-top:.75rem">
+  <div class="card"><div class="label">Ersparnis</div><div class="value">{{ b.ersparnis|de(2) }} €</div></div>
+  <div class="card"><div class="label">Eigenverbrauch</div><div class="value">{{ b.eigenverbrauch|de(1) }} kWh</div></div>
+  <div class="card"><div class="label">Autarkiegrad</div><div class="value">{{ b.autarkiegrad|pct }}</div></div>
+  <div class="card"><div class="label">Eigenverbrauchsquote</div><div class="value">{{ b.eigenverbrauchsquote|pct }}</div></div>
+  <div class="card"><div class="label">Erzeugung</div><div class="value">{{ b.erzeugung|de(1) }} kWh</div></div>
+  <div class="card"><div class="label">Hausverbrauch</div><div class="value">{{ b.hausverbrauch|de(1) }} kWh</div></div>
+  <div class="card"><div class="label">Netzbezug</div><div class="value">{{ b.netzbezug|de(1) }} kWh</div></div>
+  <div class="card"><div class="label">Einspeisung</div><div class="value">{{ b.einspeisung|de(1) }} kWh</div></div>
+</div>
+
+<h2>Heute nach Stunden</h2>
+<div class="card">
+  <svg viewBox="0 0 480 170" role="img" aria-label="Hausverbrauch je Stunde, aufgeteilt in Balkonkraftwerk und Netzbezug">
+    {% for h in hours %}
+      {% set x = loop.index0 * 20 + 2 %}
+      <rect x="{{ x }}" y="{{ 150 - h.own * scale }}" width="16" height="{{ h.own * scale }}" fill="var(--leaf)"><title>{{ h.label }} Uhr: {{ h.own|de(0) }} Wh vom Balkonkraftwerk</title></rect>
+      <rect x="{{ x }}" y="{{ 150 - (h.own + h.grid) * scale }}" width="16" height="{{ h.grid * scale }}" fill="var(--sun)"><title>{{ h.label }} Uhr: {{ h.grid|de(0) }} Wh aus dem Netz</title></rect>
+      {% if loop.index0 % 3 == 0 %}<text x="{{ x + 8 }}" y="166" font-size="10" text-anchor="middle" fill="var(--muted)">{{ h.label }}</text>{% endif %}
+    {% endfor %}
+  </svg>
+  <div class="legend"><span><i class="dot" style="background:var(--leaf)"></i>Balkonkraftwerk</span><span><i class="dot" style="background:var(--sun)"></i>Netz</span><span>höchster Wert {{ peak|de(0) }} Wh</span></div>
+</div>
+
+<h2>Amortisation</h2>
+<div class="card">
+  <div class="label">Bisher gespart {{ a.bisher_gespart|de(0) }} € von {{ a.kosten|de(0) }} €</div>
+  <div class="bar"><span style="width: {{ progress }}%"></span></div>
+  <div class="grid">
+    <div><div class="label">Noch offen</div><div class="value">{{ a.rest|de(0) }} €</div></div>
+    <div><div class="label">Ersparnis pro Jahr (hochgerechnet)</div><div class="value">{{ a.ersparnis_pro_jahr|de(0) }} €</div></div>
+    <div><div class="label">Amortisiert in</div><div class="value">{% if a.jahre_bis_amortisation is none %}–{% else %}{{ a.jahre_bis_amortisation|de(1) }} Jahren{% endif %}</div></div>
+  </div>
+  <p class="label">Näherung auf Basis von {{ a.messtage|de(1) }} Messtagen, ohne Jahresverlauf.</p>
+</div>
+{% endblock %}
