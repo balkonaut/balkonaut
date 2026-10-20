@@ -1,0 +1,24 @@
+name: Testen, bauen und ausrollen
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker-CLI bereitstellen
+        run: command -v docker || (apt-get update && apt-get install -y docker.io)
+      - name: Tests (Python wie im Container)
+        run: docker build --target test .
+      - name: Image bauen
+        run: docker build -t balkonaut:latest .
+      - name: Container ersetzen
+        env:
+          DATA_DIR: ${{ vars.BALKONAUT_DATA_DIR }}
+        run: |
+          test -n "$DATA_DIR" || { echo "Repo-Variable BALKONAUT_DATA_DIR fehlt"; exit 1; }
+          docker rm -f balkonaut balkonaut-balkonaut-1 2>/dev/null || true
+          docker run -d --name balkonaut --restart unless-stopped -p 8000:8000 -v "$DATA_DIR:/data" balkonaut:latest

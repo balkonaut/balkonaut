@@ -16,6 +16,34 @@ Balkonaut läuft als Docker-Container, zum Beispiel auf einer NAS.
 Alle Daten liegen im Ordner `data/`: Konfiguration (`config.yaml`) und Messdaten (`balkonaut.db`).
 Für ein Backup genügt es, diesen Ordner zu sichern.
 
+## Automatisch aktualisieren (Gitea Actions)
+
+Liegt das Repository in einer eigenen Gitea-Instanz, kann ein Gitea Runner auf der NAS bei jedem Push auf `main`
+die Tests ausführen, das Image bauen und den Container ersetzen (`.gitea/workflows/deploy.yml`):
+
+1. In Gitea im Repository unter *Einstellungen → Actions → Runner* einen Runner anlegen und das Registrierungs-Token kopieren.
+2. Den Runner auf der NAS starten:
+
+    ```bash
+    docker run -d --name gitea-runner --restart unless-stopped \
+      -e GITEA_INSTANCE_URL=http://<gitea-adresse> \
+      -e GITEA_RUNNER_REGISTRATION_TOKEN=<token> \
+      -e GITEA_RUNNER_NAME=nas \
+      -v <ordner>/gitea-runner:/data \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      docker.io/gitea/runner:3
+    ```
+
+3. Unter *Einstellungen → Actions → Variablen* die Variable `BALKONAUT_DATA_DIR` mit dem absoluten Pfad des
+   Datenordners auf der NAS anlegen.
+
+Der Container heißt danach `balkonaut`. Ein Container, der vorher mit `docker compose` gestartet wurde, wird beim
+ersten Lauf ersetzt.
+
+!!! warning "Zugriff auf Docker"
+    Der Runner hat über `/var/run/docker.sock` vollen Zugriff auf Docker und damit auf die NAS. Nur für eigene,
+    private Repositories verwenden.
+
 ## Verlauf aus Home Assistant übernehmen
 
 Home Assistant speichert standardmäßig die letzten zehn Tage. Diesen Verlauf kann Balkonaut einmalig
