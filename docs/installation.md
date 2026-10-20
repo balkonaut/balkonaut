@@ -85,6 +85,9 @@ triggers:
   - trigger: state
     entity_id: event.balkonaut_warnung
     not_from: unavailable
+    not_to:
+      - unavailable
+      - unknown
 actions:
   - action: notify.mobile_app_mein_handy
     data:
