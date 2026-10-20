@@ -4,7 +4,7 @@ Begriffe und Formeln: docs/auswertung.md
 """
 import statistics
 from collections import defaultdict
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo("Europe/Berlin")  # ponytail: feste Zeitzone, konfigurierbar machen für Nutzer außerhalb DE/AT
@@ -206,3 +206,48 @@ def regulation(series, prices, soc_min=10, limit=800):
         "max_abgabe": max(outputs, default=None),
         "anteil_ueber_limit": sum(o > limit for o in outputs) / len(outputs) if outputs else None,
     }
+
+
+WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober",
+          "November", "Dezember"]
+
+
+def _ts(d):
+    return datetime.combine(d, time(), TZ).timestamp()
+
+
+def buckets(view, d):
+    """Balken einer Verlaufsansicht: (Titel, [(Beschriftung, start, ende)], vorheriges Datum, nächstes Datum)."""
+    if view == "woche":
+        mon = d - timedelta(days=d.weekday())
+        days = [mon + timedelta(days=i) for i in range(7)]
+        iso = mon.isocalendar()
+        bars = [(f"{WEEKDAYS[x.weekday()]} {x.day}.", _ts(x), _ts(x + timedelta(days=1))) for x in days]
+        return f"KW {iso.week}/{iso.year}", bars, mon - timedelta(days=7), mon + timedelta(days=7)
+    if view == "monat":
+        first = d.replace(day=1)
+        nxt = (first + timedelta(days=32)).replace(day=1)
+        days = [first + timedelta(days=i) for i in range((nxt - first).days)]
+        bars = [(str(x.day), _ts(x), _ts(x + timedelta(days=1))) for x in days]
+        return f"{MONTHS[first.month - 1]} {first.year}", bars, (first - timedelta(days=1)).replace(day=1), nxt
+    if view == "jahr":
+        firsts = [date(d.year, m, 1) for m in range(1, 13)] + [date(d.year + 1, 1, 1)]
+        bars = [(MONTHS[a.month - 1][:3], _ts(a), _ts(b)) for a, b in zip(firsts, firsts[1:])]
+        return str(d.year), bars, date(d.year - 1, 1, 1), date(d.year + 1, 1, 1)
+    start, end = int(_ts(d)), int(_ts(d + timedelta(days=1)))  # Tag, Stunden in Ortszeit (23/25 bei Zeitumstellung)
+    edges = list(range(start, end, 3600)) + [end]
+    bars = [(datetime.fromtimestamp(a, TZ).strftime("%H"), a, b) for a, b in zip(edges, edges[1:])]
+    return f"{WEEKDAYS[d.weekday()]}, {d:%d.%m.%Y}", bars, d - timedelta(days=1), d + timedelta(days=1)
+
+
+def history(rows, bars, prices):
+    """Bilanz je Balken: Eigenverbrauch, Netzbezug und Erzeugung in kWh."""
+    # ponytail: rechnet jeden Balken einzeln (Jahr: 12 Durchläufe über ein Jahr Stundenwerte); bei Bedarf vorsummieren
+    lo = bars[0][1] - 7 * 86400  # Zähler brauchen einen Basiswert vor dem ersten Balken
+    rows = [r for r in rows if lo <= r[1] < bars[-1][2]]
+    out = []
+    for label, a, b in bars:
+        x = balance([r for r in rows if r[1] < b], a, prices)
+        out.append({"label": label, "own": x["eigenverbrauch"], "grid": x["netzbezug"], "gen": x["erzeugung"]})
+    return out

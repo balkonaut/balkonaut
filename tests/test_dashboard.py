@@ -33,3 +33,13 @@ def test_regulation_page(tmp_path, monkeypatch):
         for t in range(now - 600, now, 10):
             app.state.storage.add(t, {"grid_power": 20, "output_power": 300, "pv_ac_power": 0, "battery_soc": 50})
         assert "100 %" in client.get("/nulleinspeisung").text
+
+
+def test_history_page(tmp_path, monkeypatch):
+    monkeypatch.setenv("BALKONAUT_DATA", str(tmp_path))
+    with TestClient(app) as client:
+        for view in ("tag", "woche", "monat", "jahr"):
+            assert client.get(f"/verlauf?ansicht={view}").status_code == 200
+        r = client.get("/verlauf?ansicht=monat&datum=2026-02-10")
+        assert "Februar 2026" in r.text and "datum=2026-01-01" in r.text
+        assert client.get("/verlauf?datum=unsinn").status_code == 200

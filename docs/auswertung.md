@@ -10,6 +10,13 @@ gewählten Zeitraum, den heutigen Hausverbrauch je Stunde (Anteil Balkonkraftwer
 Stand der Amortisation. Sie lädt sich jede Minute neu. Sind die letzten Messwerte älter als
 zwei Minuten, erscheint ein Hinweis: Dann ist meist Home Assistant nicht erreichbar.
 
+## Verlauf
+
+Die Seite *Verlauf* zeigt Tag (Stunden), Woche, Monat (je Tag) und Jahr (je Monat) als Balkendiagramm:
+grün der Teil des Hausverbrauchs, den das Balkonkraftwerk gedeckt hat, gelb der Netzbezug, der dunkle Strich
+die Erzeugung. Mit *zurück* und *weiter* blätterst du durch die Zeiträume, darunter steht die Bilanz des
+gewählten Zeitraums.
+
 ## Begriffe
 
 | Wert | Bedeutung |

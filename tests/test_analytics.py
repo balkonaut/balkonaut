@@ -95,3 +95,16 @@ def test_regulation():
     assert abs(r["vermeidbarer_netzbezug"] - (10 * 10 + 600 + 200) * 10 / 3600 / 1000) < 1e-12
     assert r["max_abgabe"] == 900 and r["anteil_ueber_limit"] == 1 / 14
     assert regulation({}, PRICES) is None
+
+
+def test_buckets():
+    from datetime import date
+    from balkonaut.analytics import buckets
+    title, bars, prev, nxt = buckets("tag", date(2026, 10, 25))  # Ende der Sommerzeit: 25 Stunden
+    assert len(bars) == 25 and bars[0][0] == "00" and prev == date(2026, 10, 24)
+    title, bars, prev, nxt = buckets("woche", date(2026, 10, 21))
+    assert title == "KW 43/2026" and bars[0][0] == "Mo 19." and nxt == date(2026, 10, 26)
+    title, bars, prev, nxt = buckets("monat", date(2026, 2, 10))
+    assert len(bars) == 28 and prev == date(2026, 1, 1) and nxt == date(2026, 3, 1)
+    title, bars, prev, nxt = buckets("jahr", date(2026, 5, 5))
+    assert len(bars) == 12 and bars[0][0] == "Jan" and title == "2026"

@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import date
+from datetime import date, datetime
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -33,6 +33,13 @@ templates.env.filters.update(
     ago=lambda s: f"{s} s" if s < 120 else f"{s // 60} min" if s < 7200 else f"{s // 3600} h",
 )
 PERIODS = [("tag", "Heute"), ("monat", "Monat"), ("jahr", "Jahr"), ("gesamt", "Gesamt")]
+VIEWS = [("tag", "Tag"), ("woche", "Woche"), ("monat", "Monat"), ("jahr", "Jahr")]
+
+
+def chart(bars):
+    """Balken plus Maßstab für das SVG-Diagramm (Höhe 140 Einheiten)."""
+    peak = max((max(b["own"] + b["grid"], b["gen"]) for b in bars), default=0)
+    return {"bars": bars, "peak": peak, "scale": 140 / peak if peak else 0}
 
 
 @asynccontextmanager
@@ -82,20 +89,35 @@ def dashboard(request: Request, zeitraum: str = "tag"):
     latest = storage.latest()
     live = {k: v for k, (_, v) in latest.items()}
     live["pv"] = (live.get("pv_power") or 0) + (live.get("pv_ac_power") or 0) if latest else None
-    hours = []
-    for i in range(24):
-        h0 = starts["tag"] + i * 3600
-        b = analytics.balance([r for r in rows if r[1] < h0 + 3600], h0, cfg["prices"])
-        hours.append({"label": i, "own": b["eigenverbrauch"] * 1000, "grid": b["netzbezug"] * 1000})
-    peak = max(h["own"] + h["grid"] for h in hours)
+    today = datetime.fromtimestamp(now, analytics.TZ).date()
+    bars = analytics.history(rows, analytics.buckets("tag", today)[1], cfg["prices"])
     a = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"], config.commissioned(cfg))
     return templates.TemplateResponse(request, "dashboard.html", {
         "periods": PERIODS, "period": period, "b": analytics.balance(rows, starts[period], cfg["prices"]),
         "akku": analytics.battery(rows, starts[period], cfg["prices"], config.commissioned(cfg)),
         "live": live, "live_age": int(now - max(ts for ts, _ in latest.values())) if latest else None,
-        "hours": hours, "peak": peak, "scale": 140 / peak if peak else 0, "a": a,
+        "chart": chart(bars), "a": a,
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
         "prices_set": cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0,
+    })
+
+
+@app.get("/verlauf")
+def history(request: Request, ansicht: str = "tag", datum: str = ""):
+    cfg = config.load(request.app.state.config_path)
+    today = datetime.now(analytics.TZ).date()
+    try:
+        day = date.fromisoformat(datum) if datum else today
+    except ValueError:
+        day = today
+    view = ansicht if ansicht in dict(VIEWS) else "tag"
+    title, buckets, prev, nxt = analytics.buckets(view, day)
+    rows = request.app.state.storage.hourly(int(time.time()))
+    bars = analytics.history(rows, buckets, cfg["prices"])
+    total = analytics.balance([r for r in rows if r[1] < buckets[-1][2]], buckets[0][1], cfg["prices"])
+    return templates.TemplateResponse(request, "history.html", {
+        "views": VIEWS, "view": view, "title": title, "prev": prev, "next": nxt if nxt <= today else None,
+        "chart": chart(bars), "b": total,
     })
 
 
