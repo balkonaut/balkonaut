@@ -15,6 +15,7 @@ Welche Quelle für welche Größe maßgeblich ist: docs/messquellen.md
 """
 import json
 import logging
+from datetime import datetime, timezone
 import urllib.error
 import urllib.request
 
@@ -31,12 +32,14 @@ class HomeAssistant:
         self.token = token
         self.entities = entities
 
+    def _get(self, path, timeout=10):
+        req = urllib.request.Request(self.url + path, headers={"Authorization": "Bearer " + self.token})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.load(r)
+
     def _state(self, entity_id):
-        req = urllib.request.Request(f"{self.url}/api/states/{entity_id}",
-                                     headers={"Authorization": "Bearer " + self.token})
         try:
-            with urllib.request.urlopen(req, timeout=10) as r:
-                return json.load(r)
+            return self._get(f"/api/states/{entity_id}")
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 return None
@@ -52,6 +55,26 @@ class HomeAssistant:
                 log.warning("%s nicht lesbar: %s", eid, e)
                 values[key] = None
         return values
+
+    def history(self, start, end):
+        """Verlauf aller Messgrößen aus dem HA-Recorder: {Messgröße: [(ts, wert), ...]}, tageweise abgefragt."""
+        by_id = {eid: (key, factor) for key, (eid, factor) in self.entities.items()}
+        units = {eid: ((self._state(eid) or {}).get("attributes") or {}).get("unit_of_measurement") for eid in by_id}
+        out = {key: [] for key in self.entities}
+        for t in range(int(start), int(end), 86400):
+            query = (f"/api/history/period/{iso(t)}?end_time={iso(min(t + 86400, end))}"
+                     f"&filter_entity_id={','.join(by_id)}&minimal_response&no_attributes")
+            for series in self._get(query, timeout=120):
+                eid = series[0]["entity_id"]
+                key, factor = by_id[eid]
+                attrs = {"unit_of_measurement": units[eid]}
+                out[key] += [(datetime.fromisoformat(p["last_changed"]).timestamp(),
+                              normalize({"state": p["state"], "attributes": attrs}, factor)) for p in series]
+        return {key: sorted(points) for key, points in out.items()}
+
+
+def iso(ts):
+    return datetime.fromtimestamp(ts, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def normalize(state, factor=1):

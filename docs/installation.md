@@ -16,6 +16,19 @@ Balkonaut läuft als Docker-Container, zum Beispiel auf einer NAS.
 Alle Daten liegen im Ordner `data/`: Konfiguration (`config.yaml`) und Messdaten (`balkonaut.db`).
 Für ein Backup genügt es, diesen Ordner zu sichern.
 
+## Verlauf aus Home Assistant übernehmen
+
+Home Assistant speichert standardmäßig die letzten zehn Tage. Diesen Verlauf kann Balkonaut einmalig
+übernehmen, damit die Auswertung nicht bei null beginnt:
+
+```bash
+docker compose exec balkonaut python -m app.backfill 10
+```
+
+Die Zahl gibt an, wie viele Tage vor dem ersten eigenen Messwert übernommen werden.
+Stunden, die Balkonaut schon selbst gemessen hat, bleiben unverändert. Der Befehl kann gefahrlos
+mehrfach laufen.
+
 ## In Home Assistant einbinden
 
 Übersicht und Handbuch lassen sich als eigene Dashboards in die Seitenleiste von Home Assistant holen:

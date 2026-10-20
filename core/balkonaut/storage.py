@@ -5,6 +5,7 @@ mean_pos/mean_neg (positiver/negativer Anteil, z. B. Netzbezug/Einspeisung),
 last (letzter Wert, für Zähler und Ladestand), n (Anzahl Rohwerte).
 Tageswerte entstehen in der Auswertung aus den Stundenwerten, damit Tagesgrenzen in Ortszeit liegen.
 """
+import bisect
 import sqlite3
 
 RAW_DAYS = 14  # ponytail: feste Aufbewahrung der Rohwerte, konfigurierbar machen, falls jemand mehr braucht
@@ -55,3 +56,26 @@ class Storage:
         """Letzter Rohwert je Messgröße: {key: (ts, value)}."""
         return {k: (ts, v) for k, ts, v in self.db.execute(
             "SELECT key, max(ts), value FROM raw GROUP BY key")}  # SQLite: value gehört zur Zeile mit max(ts)
+
+    def first(self):
+        """Beginn der ersten gespeicherten Stunde, None bei leerer Datenbank."""
+        (ts,) = self.db.execute(
+            "SELECT min(t) FROM (SELECT min(ts) / 3600 * 3600 AS t FROM raw UNION SELECT min(hour) FROM hourly)").fetchone()
+        return ts
+
+    def backfill(self, series, start, until):
+        """Verlauf {Messgröße: [(ts, wert)]} als Treppenfunktion abtasten und als Stundenwerte
+        für [start, until) nachtragen. Vorhandene Stunden bleiben unverändert."""
+        tmp = Storage(":memory:")
+        times = {k: [t for t, _ in s] for k, s in series.items()}
+        for t in range(int(start), int(until), 10):  # wie der Collector
+            values = {}
+            for k, s in series.items():
+                i = bisect.bisect_right(times[k], t) - 1
+                values[k] = s[i][1] if i >= 0 else None
+            tmp.add(t, values)
+        tmp.aggregate(until)
+        rows = tmp.db.execute("SELECT * FROM hourly WHERE hour < ?", (until,)).fetchall()
+        with self.db:
+            self.db.executemany("INSERT OR IGNORE INTO hourly VALUES (?, ?, ?, ?, ?, ?, ?)", rows)
+        return len({r[1] for r in rows})
