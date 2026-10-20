@@ -7,7 +7,7 @@ from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo("Europe/Berlin")  # ponytail: feste Zeitzone, konfigurierbar machen für Nutzer außerhalb DE/AT
-MAX_KWH_PER_DAY = 0.8 * 24  # ponytail: 800-W-Grenze für Balkonkraftwerke in DE; Limit aus HA lesen, falls nötig
+MAX_KWH_PER_DAY = 1.2 * 24  # ponytail: Höchstwert EZHI (1200 W), fängt nur grobe Datumsfehler; Limit aus HA lesen, falls nötig
 
 
 def _years_since(rows, commissioned):

@@ -46,8 +46,8 @@ Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Mes
 - **Ersparnis pro Jahr**: Mit eingetragenem Datum der Inbetriebnahme die bisherige Ersparnis geteilt durch
   die Jahre seitdem. Ohne Datum der Durchschnitt pro Messtag mal 365.
 - **Amortisiert**: Monat, in dem die Anschaffungskosten voraussichtlich erreicht sind, und die Jahre bis dahin.
-- **Plausibilität**: Ist der Abgabezähler höher, als ein Balkonkraftwerk mit 800 W seit dem eingetragenen Datum
-  hätte liefern können, erscheint ein Hinweis. Dann stimmt meist das Datum nicht.
+- **Plausibilität**: Ist der Abgabezähler höher, als ein Wechselrichter mit 1200 W Dauerleistung seit dem eingetragenen
+  Datum hätte liefern können, erscheint ein Hinweis. Dann stimmt meist das Datum nicht.
 - **Vollzyklen pro Jahr** (Bereich Akku): Vollzyklen seit Inbetriebnahme geteilt durch die Jahre seitdem.
 
 !!! warning "Näherung ohne Datum der Inbetriebnahme"
