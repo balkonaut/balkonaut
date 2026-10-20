@@ -51,3 +51,18 @@ def test_chart_ticks():
     assert [t for t, _ in c["ticks"]] == [5, 10, 15] and c["ticks"][0][1] == "5"
     assert [label for _, label in chart([{"own": 0.12, "grid": 0.2, "gen": 0}])["ticks"]] == ["0,1", "0,2", "0,3"]
     assert chart([])["ticks"] == []
+
+
+def test_api_v1(tmp_path, monkeypatch):
+    monkeypatch.setenv("BALKONAUT_DATA", str(tmp_path))
+    with TestClient(app) as client:
+        s = client.get("/api/v1/status").json()
+        assert s["stand"] is None and s["live"] == {} and s["bilanz"]["tag"]["ersparnis"] == 0
+        now = int(time.time())
+        app.state.storage.add(now - 10, {"grid_power": 300, "output_power": 200, "battery_soc": 40})
+        s = client.get("/api/v1/status").json()
+        assert s["live"]["battery_soc"] == 40 and set(s["akku"]) == {"tag", "monat", "jahr", "gesamt"}
+        v = client.get("/api/v1/verlauf?ansicht=woche").json()
+        assert len(v["balken"]) == 7 and v["titel"].startswith("KW")
+        assert client.get("/api/v1/nulleinspeisung").json()["regelbereit_stunden"] >= 0
+        assert client.get("/api/bilanz").status_code == 404

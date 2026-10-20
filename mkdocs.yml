@@ -5,6 +5,7 @@ nav:
   - einstellungen.md
   - auswertung.md
   - messquellen.md
+  - schnittstelle.md
 theme:
   name: material
   language: de

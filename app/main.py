@@ -76,42 +76,59 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/api/bilanz")
-def bilanz(request: Request):
-    cfg = config.load(request.app.state.config_path)
-    rows = request.app.state.storage.hourly(int(time.time()))
-    result = {name: analytics.balance(rows, start, cfg["prices"])
-              for name, start in analytics.periods(time.time()).items()}
-    result["amortisation"] = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"], config.commissioned(cfg))
-    return result
-
-
-@app.get("/")
-def dashboard(request: Request, zeitraum: str = "tag"):
+@app.get("/api/v1/status")
+def api_status(request: Request):
+    """Aktuelle Messwerte, Bilanz und Akku für heute, Monat, Jahr und gesamt sowie Amortisation.
+    Felder: siehe Handbuch, Schnittstelle."""
     cfg = config.load(request.app.state.config_path)
     storage = request.app.state.storage
     now = time.time()
     rows = storage.hourly(int(now))
-    starts = analytics.periods(now)
-    period = zeitraum if zeitraum in starts else "tag"
     latest = storage.latest()
-    live = {k: v for k, (_, v) in latest.items()}
-    live["pv"] = (live.get("pv_power") or 0) + (live.get("pv_ac_power") or 0) if latest else None
-    today = datetime.fromtimestamp(now, analytics.TZ).date()
-    bars = analytics.history(rows, analytics.buckets("tag", today)[1], cfg["prices"])
-    a = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"], config.commissioned(cfg))
+    starts = analytics.periods(now)
+    return {
+        "stand": datetime.fromtimestamp(max(ts for ts, _ in latest.values()), analytics.TZ) if latest else None,
+        "live": {k: v for k, (_, v) in latest.items()},
+        "bilanz": {name: analytics.balance(rows, start, cfg["prices"]) for name, start in starts.items()},
+        "akku": {name: analytics.battery(rows, start, cfg["prices"], config.commissioned(cfg))
+                 for name, start in starts.items()},
+        "amortisation": analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"], config.commissioned(cfg)),
+    }
+
+
+@app.get("/api/v1/verlauf")
+def api_history(request: Request, ansicht: str = "tag", datum: str = ""):
+    """Balken einer Verlaufsansicht (tag, woche, monat, jahr) und Bilanz des Zeitraums."""
+    return history_data(request, ansicht, datum)
+
+
+@app.get("/api/v1/nulleinspeisung")
+def api_regulation(request: Request):
+    """Regelgüte der Nulleinspeisung der letzten 7 Tage, null ohne Messwerte."""
+    return regulation_data(request)
+
+
+@app.get("/", include_in_schema=False)
+def dashboard(request: Request, zeitraum: str = "tag"):
+    cfg = config.load(request.app.state.config_path)
+    st = api_status(request)
+    period = zeitraum if zeitraum in st["bilanz"] else "tag"
+    live = st["live"]
+    live["pv"] = (live.get("pv_power") or 0) + (live.get("pv_ac_power") or 0) if live else None
+    today = datetime.now(analytics.TZ).date()
+    bars = analytics.history(request.app.state.storage.hourly(int(time.time())),
+                             analytics.buckets("tag", today)[1], cfg["prices"])
+    a = st["amortisation"]
     return templates.TemplateResponse(request, "dashboard.html", {
-        "periods": PERIODS, "period": period, "b": analytics.balance(rows, starts[period], cfg["prices"]),
-        "akku": analytics.battery(rows, starts[period], cfg["prices"], config.commissioned(cfg)),
-        "live": live, "live_age": int(now - max(ts for ts, _ in latest.values())) if latest else None,
+        "periods": PERIODS, "period": period, "b": st["bilanz"][period], "akku": st["akku"][period],
+        "live": live, "live_age": int(time.time() - st["stand"].timestamp()) if st["stand"] else None,
         "chart": chart(bars), "a": a,
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
         "prices_set": cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0,
     })
 
 
-@app.get("/verlauf")
-def history(request: Request, ansicht: str = "tag", datum: str = ""):
+def history_data(request, ansicht, datum):
     cfg = config.load(request.app.state.config_path)
     today = datetime.now(analytics.TZ).date()
     try:
@@ -123,31 +140,41 @@ def history(request: Request, ansicht: str = "tag", datum: str = ""):
     rows = request.app.state.storage.hourly(int(time.time()))
     bars = analytics.history(rows, buckets, cfg["prices"])
     total = analytics.balance([r for r in rows if r[1] < buckets[-1][2]], buckets[0][1], cfg["prices"])
+    return {"ansicht": view, "titel": title, "zurueck": prev, "weiter": nxt if nxt <= today else None,
+            "balken": bars, "bilanz": total}
+
+
+@app.get("/verlauf", include_in_schema=False)
+def history(request: Request, ansicht: str = "tag", datum: str = ""):
+    d = history_data(request, ansicht, datum)
     return templates.TemplateResponse(request, "history.html", {
-        "views": VIEWS, "view": view, "title": title, "prev": prev, "next": nxt if nxt <= today else None,
-        "chart": chart(bars), "b": total,
+        "views": VIEWS, "view": d["ansicht"], "title": d["titel"], "prev": d["zurueck"], "next": d["weiter"],
+        "chart": chart(d["balken"]), "b": d["bilanz"],
     })
 
 
-@app.get("/nulleinspeisung")
-def zero_feed_in(request: Request):
+def regulation_data(request):
     cfg = config.load(request.app.state.config_path)
     storage = request.app.state.storage
     latest = {k: v for k, (_, v) in storage.latest().items()}
     since = int(time.time()) - 7 * 86400
     series = storage.series(since, ["grid_power", "output_power", "pv_ac_power", "battery_soc"])
-    r = analytics.regulation(series, cfg["prices"], soc_min=latest.get("battery_soc_min") or 10,
-                             limit=latest.get("output_power_limit") or 800)
-    return templates.TemplateResponse(request, "regulation.html", {"r": r})
+    return analytics.regulation(series, cfg["prices"], soc_min=latest.get("battery_soc_min") or 10,
+                                limit=latest.get("output_power_limit") or 800)
 
 
-@app.get("/einstellungen")
+@app.get("/nulleinspeisung", include_in_schema=False)
+def zero_feed_in(request: Request):
+    return templates.TemplateResponse(request, "regulation.html", {"r": regulation_data(request)})
+
+
+@app.get("/einstellungen", include_in_schema=False)
 def settings(request: Request):
     cfg = config.load(request.app.state.config_path)
     return templates.TemplateResponse(request, "settings.html", {"cfg": cfg})
 
 
-@app.post("/einstellungen")
+@app.post("/einstellungen", include_in_schema=False)
 async def save_settings(request: Request):
     form = {k: v[0] for k, v in parse_qs((await request.body()).decode()).items()}
     cfg = config.load(request.app.state.config_path)
