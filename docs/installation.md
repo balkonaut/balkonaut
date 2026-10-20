@@ -16,10 +16,10 @@ Balkonaut läuft als Docker-Container, zum Beispiel auf einer NAS.
 Alle Daten liegen im Ordner `data/`: Konfiguration (`config.yaml`) und Messdaten (`balkonaut.db`).
 Für ein Backup genügt es, diesen Ordner zu sichern.
 
-## Automatisch aktualisieren (Gitea Actions)
+## Image automatisch bauen (Gitea Actions)
 
 Liegt das Repository in einer eigenen Gitea-Instanz, kann ein Gitea Runner auf der NAS bei jedem Push auf `main`
-die Tests ausführen, das Image bauen und den Container ersetzen (`.gitea/workflows/deploy.yml`):
+die Tests ausführen und das Image `balkonaut:latest` bauen (`.gitea/workflows/deploy.yml`):
 
 1. In Gitea im Repository unter *Einstellungen → Actions → Runner* einen Runner anlegen und das Registrierungs-Token kopieren.
 2. Den Runner auf der NAS starten:
@@ -34,11 +34,16 @@ die Tests ausführen, das Image bauen und den Container ersetzen (`.gitea/workfl
       docker.io/gitea/runner:3
     ```
 
-3. Unter *Einstellungen → Actions → Variablen* die Variable `BALKONAUT_DATA_DIR` mit dem absoluten Pfad des
-   Datenordners auf der NAS anlegen.
+3. Nach einem erfolgreichen Lauf den Container mit dem neuen Image neu erstellen, im Verzeichnis von Balkonaut:
 
-Der Container heißt danach `balkonaut`. Ein Container, der vorher mit `docker compose` gestartet wurde, wird beim
-ersten Lauf ersetzt.
+    ```bash
+    docker compose up -d
+    ```
+
+    oder in Dockhand den Stack neu starten. `git pull` und `--build` sind dafür nicht nötig.
+
+Den Container selbst startet der Workflow bewusst nicht: Der Runner entfernt am Ende eines Jobs alle Container,
+die der Job gestartet hat.
 
 !!! warning "Zugriff auf Docker"
     Der Runner hat über `/var/run/docker.sock` vollen Zugriff auf Docker und damit auf die NAS. Nur für eigene,

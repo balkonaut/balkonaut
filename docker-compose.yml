@@ -1,6 +1,7 @@
 services:
   balkonaut:
     build: .
+    image: balkonaut:latest
     ports:
       - "8000:8000"
     volumes:
