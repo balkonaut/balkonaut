@@ -17,3 +17,12 @@ def test_aggregate():
     s.aggregate(H + 2 * 3600 + RAW_DAYS * 86400)  # zweite Stunde aggregieren, alte Rohwerte löschen
     assert s.db.execute("SELECT count(*) FROM raw").fetchone() == (0,)
     assert s.db.execute("SELECT mean FROM hourly WHERE hour = ?", (H + 3600,)).fetchone() == (7,)
+
+
+def test_hourly_includes_running_hour():
+    s = Storage(":memory:")
+    s.add(H, {"grid_power": 400, "output_energy": 10.0})
+    s.add(H + 900, {"grid_power": -200, "output_energy": 10.2})
+    assert s.hourly() == []
+    rows = s.hourly(H + 1800)  # halbe Stunde vorbei
+    assert rows == [("grid_power", H, 50.0, 100.0, -50.0, -200.0), ("output_energy", H, 5.05, 5.05, 0.0, 10.2)]

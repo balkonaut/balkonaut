@@ -1,8 +1,7 @@
 # Auswertung
 
 Balkonaut rechnet aus den Messwerten für **heute**, **diesen Monat**, **dieses Jahr** und **gesamt**
-(Tagesgrenzen in deutscher Zeit). Grundlage sind abgeschlossene Stunden, die laufende Stunde
-erscheint also erst nach ihrem Ende.
+(Tagesgrenzen in deutscher Zeit). Die laufende Stunde zählt bis zum aktuellen Messwert mit.
 
 ## Übersicht
 

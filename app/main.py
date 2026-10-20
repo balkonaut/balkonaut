@@ -63,7 +63,7 @@ def health():
 @app.get("/api/bilanz")
 def bilanz(request: Request):
     cfg = config.load(request.app.state.config_path)
-    rows = request.app.state.storage.hourly()
+    rows = request.app.state.storage.hourly(int(time.time()))
     result = {name: analytics.balance(rows, start, cfg["prices"])
               for name, start in analytics.periods(time.time()).items()}
     result["amortisation"] = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"])
@@ -74,8 +74,8 @@ def bilanz(request: Request):
 def dashboard(request: Request, zeitraum: str = "tag"):
     cfg = config.load(request.app.state.config_path)
     storage = request.app.state.storage
-    rows = storage.hourly()
     now = time.time()
+    rows = storage.hourly(int(now))
     starts = analytics.periods(now)
     period = zeitraum if zeitraum in starts else "tag"
     latest = storage.latest()

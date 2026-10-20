@@ -48,9 +48,18 @@ class Storage:
                 WHERE hour >= ? AND hour < ?""", (start, end))
             self.db.execute("DELETE FROM raw WHERE ts < ?", (now - RAW_DAYS * 86400,))
 
-    def hourly(self):
-        return self.db.execute(
-            "SELECT key, hour, mean, mean_pos, mean_neg, last FROM hourly ORDER BY key, hour").fetchall()
+    def hourly(self, now=None):
+        """Stundenwerte (key, hour, mean, mean_pos, mean_neg, last); mit now inklusive der laufenden Stunde.
+        Deren Mittelwerte sind auf den verstrichenen Anteil skaliert, damit mean weiter Wh entspricht."""
+        rows = self.db.execute("SELECT key, hour, mean, mean_pos, mean_neg, last FROM hourly").fetchall()
+        if now is not None:
+            hour = now // 3600 * 3600
+            f = (now - hour) / 3600
+            rows += self.db.execute("""
+                SELECT key, ?, avg(value) * ?, avg(max(value, 0)) * ?, avg(min(value, 0)) * ?,
+                       (SELECT value FROM raw r WHERE r.key = raw.key AND r.ts >= ? ORDER BY ts DESC LIMIT 1)
+                FROM raw WHERE ts >= ? GROUP BY key""", (hour, f, f, f, hour, hour)).fetchall()
+        return sorted(rows, key=lambda r: (r[0], r[1]))
 
     def latest(self):
         """Letzter Rohwert je Messgröße: {key: (ts, value)}."""
