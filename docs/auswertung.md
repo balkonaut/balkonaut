@@ -69,13 +69,17 @@ Alle Werte setzen eine korrekte Netzmessung voraus.
 - **Bisher gespart**: Stand des Abgabezählers am Einspeisepunkt mal gemessener Eigenverbrauchsquote
   mal Arbeitspreis. Der Zähler läuft meist seit Inbetriebnahme, damit zählen auch die Monate,
   bevor Balkonaut lief. Ohne Abgabezähler zählt nur der Messzeitraum.
-- **Ersparnis pro Jahr**: Mit eingetragenem Datum der Inbetriebnahme die bisherige Ersparnis geteilt durch
-  die Jahre seitdem. Ohne Datum der Durchschnitt pro Messtag mal 365.
+- **Ersparnis pro Jahr**: Mit eingetragenem Datum der Inbetriebnahme die bisherige Ersparnis seit diesem Datum,
+  sonst die Ersparnis der Messtage, jeweils aufs Jahr hochgerechnet. Ist die Forecast.Solar-Integration in Home
+  Assistant eingerichtet, rechnet Balkonaut mit dem **Jahresverlauf**: Aus Standort, Neigung, Ausrichtung und
+  Leistung der Flächen holt es den erwarteten Ertrag je Monat bei PVGIS (EU) und gewichtet den Zeitraum danach.
+  Zehn Oktobertage zählen so nicht wie zehn Junitage. Ohne Forecast.Solar wird gleichmäßig über das Jahr gerechnet.
 - **Amortisiert**: Monat, in dem die Anschaffungskosten voraussichtlich erreicht sind, und die Jahre bis dahin.
 - **Plausibilität**: Ist der Abgabezähler höher, als ein Wechselrichter mit 1200 W Dauerleistung seit dem eingetragenen
   Datum hätte liefern können, erscheint ein Hinweis. Dann stimmt meist das Datum nicht.
 - **Vollzyklen pro Jahr** (Bereich Akku): Vollzyklen seit Inbetriebnahme geteilt durch die Jahre seitdem.
 
-!!! warning "Näherung ohne Datum der Inbetriebnahme"
-    Die Hochrechnung aus den Messtagen kennt keinen Jahresverlauf. Mit Daten aus Herbst oder Winter
-    fällt sie zu niedrig aus, mit Sommerdaten zu hoch. Aussagekräftig wird sie nach einem vollen Jahr.
+!!! note "Näherung"
+    Der Jahresverlauf berücksichtigt die Sonne, aber nicht, dass im Sommer mehr Strom übrig bleibt, als der Haushalt
+    braucht. Bei hohem Eigenverbrauch im Sommer fällt die Hochrechnung aus Wintertagen deshalb etwas zu hoch aus.
+    Das Profil wird beim Start des Containers geladen; nach Änderungen an Forecast.Solar den Container neu starten.

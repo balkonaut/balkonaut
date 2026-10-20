@@ -54,11 +54,12 @@
   <div class="bar"><span style="width: {{ progress }}%"></span></div>
   <div class="grid">
     <div><div class="label">Noch offen</div><div class="value">{{ a.rest|de(0) }} €</div></div>
-    <div><div class="label">Ersparnis pro Jahr ({{ "Durchschnitt seit Inbetriebnahme" if a.basis == "inbetriebnahme" else "hochgerechnet" }})</div><div class="value">{{ a.ersparnis_pro_jahr|de(0) }} €</div></div>
+    <div><div class="label">Ersparnis pro Jahr ({{ "seit Inbetriebnahme" if a.basis == "inbetriebnahme" else "hochgerechnet" }}{{ ", mit Jahresverlauf" if a.jahresverlauf }})</div><div class="value">{{ a.ersparnis_pro_jahr|de(0) }} €</div></div>
     <div><div class="label">Amortisiert</div><div class="value">{% if a.jahre_bis_amortisation is none %}–{% elif a.rest == 0 %}bereits{% else %}{{ a.amortisiert_am.strftime("%m/%Y") }}{% endif %}</div>
       {% if a.jahre_bis_amortisation %}<div class="label">in {{ a.jahre_bis_amortisation|de(1) }} Jahren</div>{% endif %}</div>
   </div>
-  {% if a.basis == "messtage" %}<p class="label">Näherung auf Basis von {{ a.messtage|de(1) }} Messtagen, ohne Jahresverlauf. Mit dem <a href="/einstellungen">Datum der Inbetriebnahme</a> wird sie genauer.</p>{% endif %}
+  {% if a.basis == "messtage" %}<p class="label">Hochgerechnet aus {{ a.messtage|de(1) }} Messtagen{{ " nach erwartetem Jahresverlauf" if a.jahresverlauf else ", ohne Jahresverlauf" }}. Mit dem <a href="/einstellungen">Datum der Inbetriebnahme</a> wird sie genauer.</p>{% endif %}
+  {% if a.erwarteter_ertrag_jahr %}<p class="label">Erwarteter Jahresertrag laut PVGIS: {{ a.erwarteter_ertrag_jahr|de(0) }} kWh.</p>{% endif %}
   {% if not a.zaehler_plausibel %}<p class="note err">Der Abgabezähler ist für den Zeitraum seit der Inbetriebnahme zu hoch. Stimmt das Datum?</p>{% endif %}
 </div>
 {% endblock %}

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from balkonaut.analytics import TZ, amortization, balance, battery, periods
+from balkonaut.homeassistant import HomeAssistant
 
 PRICES = {"energy": 0.30, "feed_in": 0.10}
 
@@ -38,8 +39,8 @@ def test_amortization():
     a = amortization(rows, PRICES, cost=500)
     assert a["messtage"] == 2
     assert abs(a["bisher_gespart"] - 102 * 0.30) < 1e-9
-    assert abs(a["ersparnis_pro_jahr"] - 0.6 / 2 * 365) < 1e-9
-    assert abs(a["jahre_bis_amortisation"] - (500 - 30.6) / (0.3 * 365)) < 1e-9
+    assert abs(a["ersparnis_pro_jahr"] - 0.6 / 2 * 365.25) < 1e-9
+    assert abs(a["jahre_bis_amortisation"] - (500 - 30.6) / (0.3 * 365.25)) < 1e-9
 
 
 def test_periods():
@@ -108,3 +109,29 @@ def test_buckets():
     assert len(bars) == 28 and prev == date(2026, 1, 1) and nxt == date(2026, 3, 1)
     title, bars, prev, nxt = buckets("jahr", date(2026, 5, 5))
     assert len(bars) == 12 and bars[0][0] == "Jan" and title == "2026"
+
+
+def test_expected_share_and_profile():
+    from balkonaut.analytics import expected_share
+    profile = [10] * 6 + [30] * 6  # zweites Halbjahr dreimal so ertragreich
+    start = datetime(2026, 1, 1, tzinfo=TZ).timestamp()
+    assert abs(expected_share(start, datetime(2027, 1, 1, tzinfo=TZ).timestamp(), profile) - 1) < 1e-9
+    assert abs(expected_share(start, datetime(2026, 2, 1, tzinfo=TZ).timestamp(), profile) - 10 / 240) < 1e-9
+    rows = [("output_energy", h * 3600, 0, 0, 0, 1.0 + h * 0.01) for h in range(int(start // 3600), int(start // 3600) + 24 * 31)]
+    a = amortization(rows, PRICES, 500, profile=profile)  # Januar gemessen
+    flat = amortization(rows, PRICES, 500)
+    assert a["jahresverlauf"] and a["erwarteter_ertrag_jahr"] == 240
+    # Januar bringt laut Profil 10/240 des Jahres, nach Tagen wären es 31/365,25
+    assert abs(a["ersparnis_pro_jahr"] / flat["ersparnis_pro_jahr"] - (240 / 10) / (365.25 / 31)) < 1e-9
+
+
+def test_solar_planes(monkeypatch):
+    ha = HomeAssistant("http://ha", "t", {})
+    answers = {
+        "/api/config/config_entries/entry?domain=forecast_solar": [{"entry_id": "a"}],
+        "/api/diagnostics/config_entry/a": {"data": {"entry": {"subentries": [
+            {"data": {"declination": 30, "azimuth": 150, "modules_power": 870}}]}}},
+        "/api/config": {"latitude": 50.0, "longitude": 10.0},
+    }
+    monkeypatch.setattr(ha, "_get", lambda path, timeout=10: answers[path])
+    assert ha.solar_planes() == (50.0, 10.0, [(30, 150, 0.87)])

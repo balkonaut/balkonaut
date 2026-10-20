@@ -72,6 +72,17 @@ class HomeAssistant:
                               normalize({"state": p["state"], "attributes": attrs}, factor)) for p in series]
         return {key: sorted(points) for key, points in out.items()}
 
+    def solar_planes(self):
+        """Standort und Flächen aus der Forecast.Solar-Integration: (lat, lon, [(neigung, azimut, kwp)])."""
+        planes = []
+        for entry in self._get("/api/config/config_entries/entry?domain=forecast_solar"):
+            diag = self._get(f"/api/diagnostics/config_entry/{entry['entry_id']}")
+            for sub in diag["data"]["entry"].get("subentries") or []:
+                d = sub["data"]
+                planes.append((d["declination"], d["azimuth"], d["modules_power"] / 1000))
+        cfg = self._get("/api/config")
+        return cfg["latitude"], cfg["longitude"], sorted(planes)
+
 
 def iso(ts):
     return datetime.fromtimestamp(ts, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

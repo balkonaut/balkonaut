@@ -4,6 +4,7 @@ Begriffe und Formeln: docs/auswertung.md
 """
 import statistics
 from collections import defaultdict
+import calendar
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
@@ -72,12 +73,22 @@ def balance(rows, start, prices):
     }
 
 
-def amortization(rows, prices, cost, commissioned=None):
+def expected_share(start, end, profile):
+    """Anteil des erwarteten Jahresertrags (profile: kWh je Monat) im Zeitraum [start, end) als Jahresbruchteil."""
+    day, last, energy = datetime.fromtimestamp(start, TZ).date(), datetime.fromtimestamp(end, TZ).date(), 0.0
+    while day < last:
+        energy += profile[day.month - 1] / calendar.monthrange(day.year, day.month)[1]
+        day += timedelta(days=1)
+    return energy / sum(profile)
+
+
+def amortization(rows, prices, cost, commissioned=None, profile=None):
     """Bisherige Ersparnis und Restlaufzeit bis zur Amortisation.
 
     Bisherige Ersparnis: Stand des Abgabezählers mal gemessener Eigenverbrauchsquote mal Arbeitspreis;
     ohne Zähler nur der Messzeitraum. Ersparnis pro Jahr: mit Datum der Inbetriebnahme (Start des
-    Abgabezählers) der Durchschnitt seitdem, sonst Tagesdurchschnitt des Messzeitraums mal 365.
+    Abgabezählers) der Durchschnitt seitdem, sonst der Messzeitraum. Mit Ertragsprofil (kWh je Monat)
+    wird der Zeitraum nach seinem erwarteten Anteil am Jahresertrag hochgerechnet statt nach Tagen.
     """
     total = balance(rows, 0, prices)
     hours = [h for _, h, *_ in rows]
@@ -88,11 +99,16 @@ def amortization(rows, prices, cost, commissioned=None):
     else:
         saved = total["ersparnis"]
     years = _years_since(rows, commissioned)
+    end = max(hours) + 3600 if hours else 0
     if years and meter:
-        per_year, basis = saved / years, "inbetriebnahme"
+        basis, amount, start = "inbetriebnahme", saved, end - years * 365.25 * 86400
     else:
-        # ponytail: Hochrechnung ohne Saisonverlauf, Herbstdaten unterschätzen das Jahr. Prognose ab P3.
-        per_year, basis = (total["ersparnis"] / days * 365 if days else 0.0), "messtage"
+        basis, amount, start = "messtage", total["ersparnis"], min(hours) if hours else 0
+    if profile and hours:
+        share = expected_share(start, end, profile)
+        per_year = amount / share if share else 0.0
+    else:  # ohne Profil: gleichmäßig über das Jahr verteilt
+        per_year = amount / ((end - start) / (365.25 * 86400)) if end > start else 0.0
     remaining = max(cost - saved, 0.0)
     years_left = remaining / per_year if per_year else None
     return {
@@ -100,6 +116,8 @@ def amortization(rows, prices, cost, commissioned=None):
         "bisher_gespart": saved,
         "ersparnis_pro_jahr": per_year,
         "basis": basis,
+        "jahresverlauf": bool(profile),
+        "erwarteter_ertrag_jahr": sum(profile) if profile else None,
         "rest": remaining,
         "jahre_bis_amortisation": years_left,
         "amortisiert_am": (datetime.fromtimestamp(max(hours) + 3600, TZ) + timedelta(days=years_left * 365.25)).date()

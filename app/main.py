@@ -1,4 +1,6 @@
 import asyncio
+import json
+import logging
 import math
 import os
 from datetime import date, datetime
@@ -13,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app import config
-from balkonaut import analytics, collector
+from balkonaut import analytics, collector, pvgis
 from balkonaut.homeassistant import HomeAssistant
 from balkonaut.storage import Storage
 
@@ -50,6 +52,26 @@ def chart(bars):
     return {"bars": bars, "scale": 140 / peak if peak else 0, "ticks": ticks}
 
 
+log = logging.getLogger(__name__)
+
+
+async def load_profile(app, adapter, cache):
+    """Ertragsprofil (kWh je Monat) aus Forecast.Solar-Flächen und PVGIS, zwischengespeichert in cache."""
+    old = json.loads(cache.read_text()) if cache.exists() else None
+    try:
+        lat, lon, planes = await asyncio.to_thread(adapter.solar_planes)
+        key = {"lat": round(lat, 2), "lon": round(lon, 2), "planes": [list(p) for p in planes]}  # ~1 km genau
+        if not planes or (old and old["key"] == key):
+            app.state.profile = old["profile"] if old and planes else None
+            return
+        profile = await asyncio.to_thread(pvgis.monthly, key["lat"], key["lon"], planes)
+        cache.write_text(json.dumps({"key": key, "profile": profile}))
+        app.state.profile = profile
+    except Exception as e:  # HA oder PVGIS nicht erreichbar: letztes bekanntes Profil nutzen
+        log.warning("Ertragsprofil nicht aktualisiert: %s", e)
+        app.state.profile = old["profile"] if old else None
+
+
 @asynccontextmanager
 async def lifespan(app):
     data = Path(os.environ.get("BALKONAUT_DATA", "data"))
@@ -57,12 +79,14 @@ async def lifespan(app):
     app.state.config_path = data / "config.yaml"
     cfg = config.load(app.state.config_path)
     app.state.storage = Storage(data / "balkonaut.db")
-    task = None
+    app.state.profile = None
+    tasks = []
     if ha := cfg.get("home_assistant"):
         adapter = HomeAssistant(ha["url"], ha["token"], {k: tuple(v) for k, v in ha["entities"].items()})
-        task = asyncio.create_task(collector.run(adapter, app.state.storage))
+        tasks = [asyncio.create_task(collector.run(adapter, app.state.storage)),
+                 asyncio.create_task(load_profile(app, adapter, data / "ertragsprofil.json"))]
     yield
-    if task:
+    for task in tasks:
         task.cancel()
 
 
@@ -92,7 +116,8 @@ def api_status(request: Request):
         "bilanz": {name: analytics.balance(rows, start, cfg["prices"]) for name, start in starts.items()},
         "akku": {name: analytics.battery(rows, start, cfg["prices"], config.commissioned(cfg))
                  for name, start in starts.items()},
-        "amortisation": analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"], config.commissioned(cfg)),
+        "amortisation": analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"], config.commissioned(cfg),
+                                               request.app.state.profile),
     }
 
 
