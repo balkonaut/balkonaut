@@ -14,11 +14,14 @@ Neutrale Messgrößen (Leistung in W, Energie in kWh):
 Welche Quelle für welche Größe maßgeblich ist: docs/messquellen.md
 """
 import json
+import logging
 import urllib.error
 import urllib.request
 
 # Umrechnung auf W bzw. kWh
 UNITS = {"kW": 1000.0, "Wh": 0.001}
+
+log = logging.getLogger(__name__)
 
 
 class HomeAssistant:
@@ -41,7 +44,14 @@ class HomeAssistant:
 
     def read(self):
         """Aktuelle Werte aller Messgrößen; None bei unbekannter oder nicht verfügbarer Entität."""
-        return {key: normalize(self._state(eid), factor) for key, (eid, factor) in self.entities.items()}
+        values = {}
+        for key, (eid, factor) in self.entities.items():
+            try:
+                values[key] = normalize(self._state(eid), factor)
+            except OSError as e:  # HA nicht erreichbar oder Zeitüberschreitung
+                log.warning("%s nicht lesbar: %s", eid, e)
+                values[key] = None
+        return values
 
 
 def normalize(state, factor=1):
