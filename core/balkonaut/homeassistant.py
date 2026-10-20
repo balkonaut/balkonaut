@@ -7,6 +7,11 @@ Neutrale Messgrößen (Leistung in W, Energie in kWh):
     battery_power   Akku, + Laden / - Entladen
     battery_soc     Ladestand in %
     output_power    Abgabe des Speichersystems ins Hausnetz, + Abgabe
+    output_energy   Zähler Abgabe ins Hausnetz, am Einspeisepunkt gemessen
+    pv_energy       Zähler PV-Erzeugung am Speicher-Wechselrichter
+    battery_charge_energy, battery_discharge_energy   Zähler Akku
+
+Welche Quelle für welche Größe maßgeblich ist: docs/messquellen.md
 """
 import json
 import urllib.error
