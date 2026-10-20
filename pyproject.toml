@@ -3,7 +3,7 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "balkonbilanz"
+name = "balkonaut"
 version = "0.1.0"
 description = "Analyse- und Entscheidungstool für Balkonkraftwerke mit Speicher"
 requires-python = ">=3.12"

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="BalkonBilanz")
+app = FastAPI(title="Balkonaut")
 
 
 @app.get("/api/health")

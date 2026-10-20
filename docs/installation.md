@@ -1,6 +1,6 @@
 # Installation
 
-BalkonBilanz läuft als Docker-Container, zum Beispiel auf einer NAS.
+Balkonaut läuft als Docker-Container, zum Beispiel auf einer NAS.
 
 1. Repository herunterladen und in das Verzeichnis wechseln.
 2. Container bauen und starten:
