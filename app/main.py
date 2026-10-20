@@ -7,6 +7,7 @@ from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app import config
@@ -50,6 +51,8 @@ async def lifespan(app):
 
 
 app = FastAPI(title="Balkonaut", lifespan=lifespan)
+# Gebautes Handbuch (MkDocs), im Container unter /srv/handbuch
+app.mount("/handbuch", StaticFiles(directory=Path(__file__).parent.parent / "handbuch", html=True, check_dir=False))
 
 
 @app.get("/api/health")
