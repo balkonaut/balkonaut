@@ -112,5 +112,11 @@
         }
       }
     }
+  },
+  "issues": {
+    "unreachable": {
+      "title": "Balkonaut unreachable",
+      "description": "Home Assistant has not reached the Balkonaut app at {url} for several polls. Is the container running and is the address still correct? This notice disappears once the app responds again."
+    }
   }
 }

@@ -13,6 +13,10 @@ jobs:
         run: command -v docker || (apt-get update && apt-get install -y docker.io)
       - name: Tests (Python wie im Container)
         run: docker build --target test .
+      - name: Tests der Home-Assistant-Integration
+        run: docker build --target ha-test .
+      - name: hassfest
+        run: docker build --target hassfest .
       # Der Runner entfernt Container, die ein Job startet; ausgerollt wird deshalb außerhalb des Jobs.
       - name: Image bauen
         run: docker build -t balkonaut:latest .

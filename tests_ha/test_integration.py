@@ -78,3 +78,29 @@ async def test_warnings(hass, aioclient_mock):
     entry.runtime_data.async_set_updated_data(STATUS | {"warnungen": [warning]})  # gleiche Warnung: kein neues Ereignis
     await hass.async_block_till_done()
     assert hass.states.get(event).state == fired.state
+
+
+async def test_unreachable_issue_and_diagnostics(hass, aioclient_mock):
+    from homeassistant.helpers import issue_registry as ir
+    from custom_components.balkonaut.diagnostics import async_get_config_entry_diagnostics
+    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_URL: URL})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    coordinator = entry.runtime_data
+    issues = ir.async_get(hass)
+    issue_id = f"unreachable_{entry.entry_id}"
+
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(f"{URL}/api/v1/status", status=500)
+    for _ in range(3):
+        await coordinator.async_refresh()
+    assert issues.async_get_issue(DOMAIN, issue_id) is not None
+
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
+    await coordinator.async_refresh()
+    assert issues.async_get_issue(DOMAIN, issue_id) is None
+
+    diag = await async_get_config_entry_diagnostics(hass, entry)
+    assert diag["entry"]["data"][CONF_URL] == "**REDACTED**" and diag["status"]["bilanz"]["tag"]["ersparnis"] == 1.25
