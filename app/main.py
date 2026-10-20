@@ -1,4 +1,5 @@
 import asyncio
+import math
 import os
 from datetime import date, datetime
 import time
@@ -37,9 +38,16 @@ VIEWS = [("tag", "Tag"), ("woche", "Woche"), ("monat", "Monat"), ("jahr", "Jahr"
 
 
 def chart(bars):
-    """Balken plus Maßstab für das SVG-Diagramm (Höhe 140 Einheiten)."""
+    """Balken, Maßstab (Höhe 140 Einheiten) und Beschriftung der y-Achse in kWh für das SVG-Diagramm."""
     peak = max((max(b["own"] + b["grid"], b["gen"]) for b in bars), default=0)
-    return {"bars": bars, "peak": peak, "scale": 140 / peak if peak else 0}
+    ticks = []
+    if peak:
+        raw = peak / 4  # etwa vier Hilfslinien mit runden Werten (1, 2, 5 × 10^n)
+        mag = 10 ** math.floor(math.log10(raw))
+        step = next(m * mag for m in (1, 2, 5, 10) if m * mag >= raw)
+        digits = max(0, -math.floor(math.log10(step)))
+        ticks = [(i * step, de(i * step, digits)) for i in range(1, int(peak / step + 1e-9) + 1)]
+    return {"bars": bars, "scale": 140 / peak if peak else 0, "ticks": ticks}
 
 
 @asynccontextmanager

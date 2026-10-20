@@ -43,3 +43,11 @@ def test_history_page(tmp_path, monkeypatch):
         r = client.get("/verlauf?ansicht=monat&datum=2026-02-10")
         assert "Februar 2026" in r.text and "datum=2026-01-01" in r.text
         assert client.get("/verlauf?datum=unsinn").status_code == 200
+
+
+def test_chart_ticks():
+    from app.main import chart
+    c = chart([{"own": 3.2, "grid": 15.4, "gen": 3.4}])
+    assert [t for t, _ in c["ticks"]] == [5, 10, 15] and c["ticks"][0][1] == "5"
+    assert [label for _, label in chart([{"own": 0.12, "grid": 0.2, "gen": 0}])["ticks"]] == ["0,1", "0,2", "0,3"]
+    assert chart([])["ticks"] == []
