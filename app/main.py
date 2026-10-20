@@ -90,6 +90,7 @@ def dashboard(request: Request, zeitraum: str = "tag"):
     a = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"])
     return templates.TemplateResponse(request, "dashboard.html", {
         "periods": PERIODS, "period": period, "b": analytics.balance(rows, starts[period], cfg["prices"]),
+        "akku": analytics.battery(rows, starts[period], cfg["prices"]),
         "live": live, "live_age": int(now - max(ts for ts, _ in latest.values())) if latest else None,
         "hours": hours, "peak": peak, "scale": 140 / peak if peak else 0, "a": a,
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,

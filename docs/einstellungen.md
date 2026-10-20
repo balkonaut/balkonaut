@@ -31,6 +31,9 @@ Die Verbindung steht in `data/config.yaml` im Abschnitt `home_assistant`:
 | `output_energy` | Zähler der Abgabe ins Hausnetz | |
 | `pv_energy` | Zähler der PV-Erzeugung | |
 | `battery_charge_energy`, `battery_discharge_energy` | Zähler Akku laden und entladen | |
+| `battery_capacity` | nutzbare Akkukapazität in kWh (optional) | |
+| `battery_soh` | Akku-Gesundheit in % (optional) | |
+| `battery_soc_min`, `battery_soc_max` | eingestellte Lade-Untergrenze und -Obergrenze in % (optional) | |
 
 Welche Quelle für welche Größe am besten geeignet ist, steht unter [Messquellen](messquellen.md).
 Nach einer Änderung an `config.yaml` den Container neu starten.

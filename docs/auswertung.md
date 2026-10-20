@@ -24,6 +24,20 @@ zwei Minuten, erscheint ein Hinweis: Dann ist meist Home Assistant nicht erreich
 | Autarkiegrad | Anteil des Hausverbrauchs, den das Balkonkraftwerk deckt |
 | Ersparnis | Eigenverbrauch × Arbeitspreis + Einspeisung × Einspeisevergütung |
 
+## Akku
+
+| Wert | Bedeutung |
+|---|---|
+| Vollzyklen | Entladene Energie geteilt durch die nutzbare Kapazität. „Gesamt“ zählt seit Inbetriebnahme des Speichers |
+| Gesundheit (SoH) | Vom Speicher gemeldeter Zustand in % der ursprünglichen Kapazität |
+| Wirkungsgrad Akku | Entladene Energie plus Änderung des Ladestands, geteilt durch geladene Energie. Erst ab etwa 0,5 kWh Ladung im Zeitraum aussagekräftig |
+| Verluste Speicher-Wechselrichter | Anteil der Energie, die im Speicher-Wechselrichter verloren geht: Eingänge (PV, weitere Wechselrichter, Netzladung, Entladen) gegen Ausgänge (Abgabe, Laden) |
+| Stunden mit vollem Akku | Stunden mit Ladestand nahe der eingestellten Obergrenze. Bei Nulleinspeisung wird überschüssige PV-Leistung dann meist abgeregelt, ein größerer Akku könnte sie speichern |
+| Stunden mit leerem Akku | Stunden mit Ladestand nahe der Untergrenze. Der Netzbezug in diesen Stunden ist die Obergrenze dessen, was ein größerer Akku hätte abdecken können, sofern genug Überschuss da gewesen wäre |
+
+Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Messgrößen
+`battery_capacity`, `battery_soh`, `battery_soc_min` und `battery_soc_max` (siehe [Einstellungen](einstellungen.md)).
+
 ## Amortisation
 
 - **Bisher gespart**: Stand des Abgabezählers am Einspeisepunkt mal gemessener Eigenverbrauchsquote

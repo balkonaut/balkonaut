@@ -14,6 +14,11 @@ home_assistant:
     pv_energy: [sensor.ezhi_photovoltaic_energy, 1]
     battery_charge_energy: [sensor.ezhi_battery_total_charge_energy, 1]
     battery_discharge_energy: [sensor.ezhi_battery_total_discharge_energy, 1]
+    # optional, für die Akku-Auswertung
+    battery_capacity: [sensor.ezhi_battery_capacity, 1]
+    battery_soh: [sensor.ezhi_battery_state_of_health, 1]
+    battery_soc_min: [number.ezhi_soc_minimum, 1]
+    battery_soc_max: [number.ezhi_soc_maximum, 1]
 prices:
   energy: 0.30   # Arbeitspreis €/kWh
   feed_in: 0.0   # Einspeisevergütung €/kWh
