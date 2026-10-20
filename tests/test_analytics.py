@@ -77,3 +77,21 @@ def test_amortization_with_commissioning():
     assert abs(a["ersparnis_pro_jahr"] / a["bisher_gespart"] - 1) < 0.001  # ein Jahr: Jahresersparnis = bisher
     assert a["amortisiert_am"] > date(2026, 10, 20)
     assert not amortization(rows, PRICES, 500, date(2026, 10, 1))["zaehler_plausibel"]  # 730 kWh in 19 Tagen
+
+
+def test_regulation():
+    from balkonaut.analytics import regulation
+    series = {}
+    for i in range(10):  # Akku über Untergrenze, eigener Anteil 200 W unter Limit 800 W
+        series[i * 10] = {"grid_power": 10, "output_power": 300, "pv_ac_power": 100, "battery_soc": 50}
+    series[100] = {"grid_power": 610, "output_power": 300, "pv_ac_power": 100, "battery_soc": 50}  # Lastsprung
+    series[110] = {"grid_power": 200, "output_power": 700, "pv_ac_power": 100, "battery_soc": 50}
+    series[120] = {"grid_power": 20, "output_power": 900, "pv_ac_power": 100, "battery_soc": 50}  # am Limit
+    series[130] = {"grid_power": -100, "output_power": 300, "pv_ac_power": 0, "battery_soc": 5}  # Akku leer
+    r = regulation(series, PRICES)
+    assert r["lastspruenge"] == 1 and r["reaktionszeit_median"] == 20 and r["nicht_ausgeregelt"] == 0
+    assert r["anteil_nahe_null"] == 10 / 12  # 12 regelbereite Messungen, 10 davon nahe 0
+    assert abs(r["einspeisung"] - 100 * 10 / 3600 / 1000) < 1e-12
+    assert abs(r["vermeidbarer_netzbezug"] - (10 * 10 + 600 + 200) * 10 / 3600 / 1000) < 1e-12
+    assert r["max_abgabe"] == 900 and r["anteil_ueber_limit"] == 1 / 14
+    assert regulation({}, PRICES) is None

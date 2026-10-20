@@ -38,6 +38,25 @@ zwei Minuten, erscheint ein Hinweis: Dann ist meist Home Assistant nicht erreich
 Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Messgrößen
 `battery_capacity`, `battery_soh`, `battery_soc_min` und `battery_soc_max` (siehe [Einstellungen](einstellungen.md)).
 
+## Nulleinspeisung
+
+Die Seite *Nulleinspeisung* zeigt für die letzten 7 Tage, wie gut der Speicher den Netzanschluss auf 0 W regelt.
+Bewertet werden nur Zeiten, in denen er nachregeln konnte: Akku über der Untergrenze und eigene Abgabe
+unter dem eingestellten Limit. Strom, den ein weiterer Wechselrichter am Speicher (z. B. ein EZ1-M) nur
+durchreicht, zählt dabei nicht zur eigenen Abgabe.
+
+| Wert | Bedeutung |
+|---|---|
+| Regelbereit | Stunden, in denen der Speicher hätte nachregeln können |
+| Nahe 0 W | Anteil dieser Zeit mit Netzleistung zwischen −50 W und +50 W |
+| Vermeidbarer Netzbezug | Netzbezug in dieser Zeit, den der Speicher im Rahmen seines Limits hätte decken können |
+| Einspeisung | Strom, der ins Netz ging, und sein Wert, wäre er selbst verbraucht worden |
+| Lastsprünge, Reaktionszeit | Anstiege der Netzleistung um mehr als 300 W und die Zeit, bis wieder ±50 W erreicht sind (Messraster 10 s) |
+| Abgabe über Limit | Anteil der Zeit, in der die Abgabe ins Hausnetz über dem eingestellten Limit lag |
+
+Das Limit liest Balkonaut aus der optionalen Messgröße `output_power_limit`, ohne Angabe gilt 800 W.
+Alle Werte setzen eine korrekte Netzmessung voraus.
+
 ## Amortisation
 
 - **Bisher gespart**: Stand des Abgabezählers am Einspeisepunkt mal gemessener Eigenverbrauchsquote

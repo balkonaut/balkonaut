@@ -2,6 +2,7 @@
 
 Begriffe und Formeln: docs/auswertung.md
 """
+import statistics
 from collections import defaultdict
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
@@ -152,4 +153,56 @@ def battery(rows, start, prices, commissioned=None):
         "stunden_leer": empty,
         "netzbezug_bei_leerem_akku": import_empty,
         "kosten_bei_leerem_akku": import_empty * prices["energy"],
+    }
+
+
+NEAR_ZERO = 50  # W, Band um 0 W, das als ausgeregelt gilt
+JUMP = 300  # W, Anstieg der Netzleistung zwischen zwei Messungen, der als Lastsprung zählt
+
+
+def regulation(series, prices, soc_min=10, limit=800):
+    """Regelgüte der Nulleinspeisung aus Rohwerten {ts: {grid_power, output_power, pv_ac_power, battery_soc}}.
+
+    Nachregeln kann der Speicher nur, wenn der Akku über der Untergrenze ist und sein eigener Anteil an
+    der Abgabe (Abgabe minus durchgereichte AC-Erzeugung, z. B. EZ1-M) unter seinem Limit liegt.
+    """
+    pts = [(ts, v["grid_power"], v.get("output_power"), v.get("pv_ac_power") or 0, v.get("battery_soc"))
+           for ts, v in sorted(series.items()) if v.get("grid_power") is not None]
+    if not pts:
+        return None
+    step = 10  # Messraster des Collectors in s
+    kwh = step / 3600 / 1000
+
+    def headroom(o, ac, soc):
+        if o is None or soc is None or soc <= soc_min + 2:
+            return 0
+        return max(limit - (o - ac), 0) if o - ac < limit * 0.95 else 0
+
+    grids, export, avoidable, jumps = [], 0.0, 0.0, []
+    for i, (ts, g, o, ac, soc) in enumerate(pts):
+        export += max(-g, 0) * kwh
+        room = headroom(o, ac, soc)
+        if not room:
+            continue
+        grids.append(g)
+        avoidable += min(max(g, 0), room) * kwh
+        if i and g - pts[i - 1][1] > JUMP:  # Lastsprung: Zeit bis zurück im Band, höchstens 5 min
+            jumps.append(next((t2 - ts for t2, g2, *_ in pts[i + 1:i + 31] if g2 <= NEAR_ZERO), None))
+    done = [s for s in jumps if s is not None]
+    outputs = [o for _, _, o, _, _ in pts if o is not None]
+    return {
+        "zeitraum_stunden": len(pts) * step / 3600,
+        "regelbereit_stunden": len(grids) * step / 3600,
+        "anteil_nahe_null": sum(abs(g) <= NEAR_ZERO for g in grids) / len(grids) if grids else None,
+        "median_netz": statistics.median(grids) if grids else None,
+        "vermeidbarer_netzbezug": avoidable,
+        "vermeidbare_kosten": avoidable * prices["energy"],
+        "einspeisung": export,
+        "einspeisung_wert": export * (prices["energy"] - prices["feed_in"]),
+        "lastspruenge": len(jumps),
+        "reaktionszeit_median": statistics.median(done) if done else None,
+        "nicht_ausgeregelt": len(jumps) - len(done),
+        "limit": limit,
+        "max_abgabe": max(outputs, default=None),
+        "anteil_ueber_limit": sum(o > limit for o in outputs) / len(outputs) if outputs else None,
     }

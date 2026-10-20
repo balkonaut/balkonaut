@@ -88,3 +88,12 @@ class Storage:
         with self.db:
             self.db.executemany("INSERT OR IGNORE INTO hourly VALUES (?, ?, ?, ?, ?, ?, ?)", rows)
         return len({r[1] for r in rows})
+
+    def series(self, since, keys):
+        """Rohwerte ab since als {ts: {Messgröße: Wert}}, zeitlich sortiert."""
+        out = {}
+        marks = ",".join("?" * len(keys))
+        for ts, key, value in self.db.execute(
+                f"SELECT ts, key, value FROM raw WHERE ts >= ? AND key IN ({marks}) ORDER BY ts", (since, *keys)):
+            out.setdefault(ts, {})[key] = value
+        return out

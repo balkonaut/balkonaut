@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Nulleinspeisung{% endblock %}
+{% block content %}
+<h1>Nulleinspeisung</h1>
+<p class="label">Wie gut regelt der Speicher den Netzanschluss auf 0 W? Grundlage sind die Messwerte der letzten 7 Tage.
+Die Ergebnisse hängen an einer korrekten Netzmessung.</p>
+{% if not r %}<p class="note err">Noch keine Messwerte.</p>{% else %}
+{% if r.regelbereit_stunden < 1 %}<p class="note err">Der Speicher konnte im Zeitraum kaum nachregeln (Akku leer oder Abgabe am Limit). Die Werte sind deshalb wenig aussagekräftig.</p>{% endif %}
+<div class="grid">
+  <div class="card"><div class="label">Regelbereit</div><div class="value">{{ r.regelbereit_stunden|de(1) }} h</div><div class="label">von {{ r.zeitraum_stunden|de(0) }} h</div></div>
+  <div class="card"><div class="label">Davon nahe 0 W (±50 W)</div><div class="value">{{ r.anteil_nahe_null|pct }}</div></div>
+  <div class="card"><div class="label">Typische Netzleistung dabei</div><div class="value">{{ r.median_netz|de(0) }} W</div><div class="label">Median, + Bezug</div></div>
+  <div class="card"><div class="label">Vermeidbarer Netzbezug</div><div class="value">{{ r.vermeidbarer_netzbezug|de(2) }} kWh</div><div class="label">{{ r.vermeidbare_kosten|de(2) }} €</div></div>
+  <div class="card"><div class="label">Einspeisung</div><div class="value">{{ r.einspeisung|de(2) }} kWh</div><div class="label">Wert bei Eigenverbrauch {{ r.einspeisung_wert|de(2) }} €</div></div>
+  <div class="card"><div class="label">Lastsprünge über 300 W</div><div class="value">{{ r.lastspruenge }}</div><div class="label">nicht ausgeregelt in 5 min: {{ r.nicht_ausgeregelt }}</div></div>
+  <div class="card"><div class="label">Reaktionszeit</div><div class="value">{{ r.reaktionszeit_median|de(0) }} s</div><div class="label">Median bis zurück auf ±50 W</div></div>
+  <div class="card"><div class="label">Abgabe über Limit ({{ r.limit|de(0) }} W)</div><div class="value">{{ r.anteil_ueber_limit|pct }}</div><div class="label">höchster Wert {{ r.max_abgabe|de(0) }} W</div></div>
+</div>
+{% endif %}
+{% endblock %}

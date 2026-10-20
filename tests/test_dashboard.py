@@ -23,3 +23,13 @@ def test_dashboard(tmp_path, monkeypatch):
         assert r.status_code == 200
         assert "40 %" in r.text and "Jetzt eintragen" in r.text
         assert client.get("/?zeitraum=unsinn").status_code == 200
+
+
+def test_regulation_page(tmp_path, monkeypatch):
+    monkeypatch.setenv("BALKONAUT_DATA", str(tmp_path))
+    with TestClient(app) as client:
+        assert "Noch keine Messwerte" in client.get("/nulleinspeisung").text
+        now = int(time.time())
+        for t in range(now - 600, now, 10):
+            app.state.storage.add(t, {"grid_power": 20, "output_power": 300, "pv_ac_power": 0, "battery_soc": 50})
+        assert "100 %" in client.get("/nulleinspeisung").text

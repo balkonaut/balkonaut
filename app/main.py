@@ -99,6 +99,18 @@ def dashboard(request: Request, zeitraum: str = "tag"):
     })
 
 
+@app.get("/nulleinspeisung")
+def zero_feed_in(request: Request):
+    cfg = config.load(request.app.state.config_path)
+    storage = request.app.state.storage
+    latest = {k: v for k, (_, v) in storage.latest().items()}
+    since = int(time.time()) - 7 * 86400
+    series = storage.series(since, ["grid_power", "output_power", "pv_ac_power", "battery_soc"])
+    r = analytics.regulation(series, cfg["prices"], soc_min=latest.get("battery_soc_min") or 10,
+                             limit=latest.get("output_power_limit") or 800)
+    return templates.TemplateResponse(request, "regulation.html", {"r": r})
+
+
 @app.get("/einstellungen")
 def settings(request: Request):
     cfg = config.load(request.app.state.config_path)
