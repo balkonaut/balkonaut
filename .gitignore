@@ -9,3 +9,4 @@ data/
 *.egg-info/
 build/
 .DS_Store
+site/

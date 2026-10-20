@@ -14,6 +14,8 @@ dependencies = []
 [project.optional-dependencies]
 app = ["fastapi>=0.151", "uvicorn>=0.54"]
 dev = ["pytest>=9.1", "httpx2>=2.15"]
+# ponytail: MkDocs 2.0 bricht Material for MkDocs, daher <2. Bei P4 prüfen, ob Zensical (Nachfolger vom Material-Team) stabil ist.
+docs = ["mkdocs-material>=9.7", "mkdocs>=1.6,<2"]
 
 [tool.setuptools.packages.find]
 where = ["core"]

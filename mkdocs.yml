@@ -1,0 +1,15 @@
+site_name: BalkonBilanz Handbuch
+theme:
+  name: material
+  language: de
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Dunkles Design
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Helles Design
