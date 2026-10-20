@@ -6,6 +6,7 @@ last (letzter Wert, für Zähler und Ladestand), n (Anzahl Rohwerte).
 Tageswerte entstehen in der Auswertung aus den Stundenwerten, damit Tagesgrenzen in Ortszeit liegen.
 """
 import bisect
+import json
 import sqlite3
 
 RAW_DAYS = 14  # ponytail: feste Aufbewahrung der Rohwerte, konfigurierbar machen, falls jemand mehr braucht
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS raw (key TEXT, ts INTEGER, value REAL, PRIMARY KEY (k
 CREATE TABLE IF NOT EXISTS hourly (
     key TEXT, hour INTEGER, mean REAL, mean_pos REAL, mean_neg REAL, last REAL, n INTEGER,
     PRIMARY KEY (key, hour)) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS regulation_daily (day TEXT PRIMARY KEY, data TEXT);
 """
 
 
@@ -89,11 +91,21 @@ class Storage:
             self.db.executemany("INSERT OR IGNORE INTO hourly VALUES (?, ?, ?, ?, ?, ?, ?)", rows)
         return len({r[1] for r in rows})
 
-    def series(self, since, keys):
-        """Rohwerte ab since als {ts: {Messgröße: Wert}}, zeitlich sortiert."""
+    def series(self, since, keys, until=float("inf")):
+        """Rohwerte in [since, until) als {ts: {Messgröße: Wert}}, zeitlich sortiert."""
         out = {}
         marks = ",".join("?" * len(keys))
         for ts, key, value in self.db.execute(
-                f"SELECT ts, key, value FROM raw WHERE ts >= ? AND key IN ({marks}) ORDER BY ts", (since, *keys)):
+                f"SELECT ts, key, value FROM raw WHERE ts >= ? AND ts < ? AND key IN ({marks}) ORDER BY ts",
+                (since, until, *keys)):
             out.setdefault(ts, {})[key] = value
         return out
+
+    def regulation_days(self, first, last):
+        """Gespeicherte Tageswerte der Regelgüte {JJJJ-MM-TT: dict} für first bis last (Text-Datum, einschließlich)."""
+        return {day: json.loads(data) for day, data in self.db.execute(
+            "SELECT day, data FROM regulation_daily WHERE day BETWEEN ? AND ?", (first, last))}
+
+    def save_regulation_day(self, day, data):
+        with self.db:
+            self.db.execute("INSERT OR REPLACE INTO regulation_daily VALUES (?, ?)", (day, json.dumps(data)))

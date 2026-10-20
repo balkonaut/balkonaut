@@ -336,3 +336,29 @@ def month_report(rows, d, prices, now, profile=None, commissioned=None):
         "erwartet": expected,
         "tage": history(rows, bars, prices),
     }
+
+
+def combine_regulation(days):
+    """Tageswerte der Regelgüte zu einem Zeitraum zusammenfassen; Anteile und Mediane nach Stunden gewichtet."""
+    days = [d for d in days if d]
+    if not days:
+        return None
+    hours = sum(d["zeitraum_stunden"] for d in days)
+    ready = sum(d["regelbereit_stunden"] for d in days)
+
+    def weighted(key, weight):
+        pairs = [(d[key], d[weight]) for d in days if d[key] is not None and d[weight]]
+        total = sum(w for _, w in pairs)
+        return sum(v * w for v, w in pairs) / total if total else None
+
+    out = {k: sum(d[k] for d in days) for k in ("vermeidbarer_netzbezug", "vermeidbare_kosten", "einspeisung",
+                                                  "einspeisung_wert", "lastspruenge", "nicht_ausgeregelt")}
+    reactions = [d["reaktionszeit_median"] for d in days if d["reaktionszeit_median"] is not None]
+    out.update(zeitraum_stunden=hours, regelbereit_stunden=ready,
+               anteil_nahe_null=weighted("anteil_nahe_null", "regelbereit_stunden"),
+               median_netz=weighted("median_netz", "regelbereit_stunden"),  # Näherung: gewichtetes Mittel der Tagesmediane
+               reaktionszeit_median=statistics.median(reactions) if reactions else None,
+               limit=max(d["limit"] for d in days),
+               max_abgabe=max((d["max_abgabe"] for d in days if d["max_abgabe"] is not None), default=None),
+               anteil_ueber_limit=weighted("anteil_ueber_limit", "zeitraum_stunden"), tage=len(days))
+    return out

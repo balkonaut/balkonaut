@@ -139,3 +139,16 @@ def test_yield_watch():
     assert {x["code"] for x in w["warnungen"]} == {"ertrag_niedrig", "ungleich"}
     assert all(x["wechselrichter"] == "ac" for x in w["warnungen"])
     assert yield_watch([], 0)["warnungen"] == []
+
+
+def test_combine_regulation():
+    from balkonaut.analytics import combine_regulation
+    day = {"zeitraum_stunden": 24, "regelbereit_stunden": 6, "anteil_nahe_null": 0.5, "median_netz": 40,
+           "vermeidbarer_netzbezug": 0.2, "vermeidbare_kosten": 0.06, "einspeisung": 0.1, "einspeisung_wert": 0.03,
+           "lastspruenge": 3, "reaktionszeit_median": 30, "nicht_ausgeregelt": 1, "limit": 800, "max_abgabe": 900,
+           "anteil_ueber_limit": 0.1}
+    other = day | {"regelbereit_stunden": 2, "anteil_nahe_null": 1.0, "reaktionszeit_median": None, "max_abgabe": 700}
+    c = combine_regulation([day, other])
+    assert c["tage"] == 2 and c["regelbereit_stunden"] == 8 and c["lastspruenge"] == 6
+    assert c["anteil_nahe_null"] == (0.5 * 6 + 1.0 * 2) / 8 and c["max_abgabe"] == 900 and c["reaktionszeit_median"] == 30
+    assert combine_regulation([]) is None

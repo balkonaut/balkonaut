@@ -64,7 +64,8 @@ Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Mes
 Die Seite *Bericht* fasst einen Monat zusammen: Bilanz im Vergleich zu Vormonat und Vorjahresmonat,
 erzeugte gegen laut PVGIS erwartete Energie, Tageswerte als Diagramm und die Akku-Kennzahlen.
 Mit *Drucken / als PDF speichern* entsteht daraus eine druckfertige Seite oder PDF-Datei. Die Regelgüte der
-Nulleinspeisung ist nicht enthalten, weil sie die 10-Sekunden-Werte braucht, die nur 14 Tage aufbewahrt werden.
+Nulleinspeisung speichert Balkonaut einmal pro Tag für den Vortag, der Bericht fasst diese Tageswerte zusammen.
+Sie beginnen mit dem Tag, an dem Balkonaut selbst zu messen begann; importierter Verlauf enthält keine 10-Sekunden-Werte.
 
 ## Nulleinspeisung
 

@@ -4,7 +4,7 @@ import logging
 import math
 import time
 from contextlib import asynccontextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -15,7 +15,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import config
 from balkonaut import analytics, collector, pvgis
-from balkonaut.storage import Storage
+from balkonaut.storage import RAW_DAYS, Storage
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
@@ -90,7 +90,8 @@ async def lifespan(app):
     if ha := cfg.get("home_assistant"):
         adapter = config.adapter(ha)
         tasks = [asyncio.create_task(collector.run(adapter, app.state.storage)),
-                 asyncio.create_task(load_profile(app, adapter, data / "ertragsprofil.json"))]
+                 asyncio.create_task(load_profile(app, adapter, data / "ertragsprofil.json")),
+                 asyncio.create_task(regulation_job(app))]
     yield
     for task in tasks:
         task.cancel()
@@ -147,6 +148,10 @@ def report_data(request, monat):
     r = analytics.month_report(rows, day, cfg["prices"], time.time(), request.app.state.profile, config.commissioned(cfg))
     if r["weiter"] > today:
         r["weiter"] = None
+    first = day.replace(day=1)
+    last = (first + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+    stored = request.app.state.storage.regulation_days(first.isoformat(), last.isoformat())
+    r["nulleinspeisung"] = analytics.combine_regulation(stored.values())
     return r
 
 
@@ -210,14 +215,41 @@ def history(request: Request, ansicht: str = "tag", datum: str = ""):
     })
 
 
+REGULATION_KEYS = ["grid_power", "output_power", "pv_ac_power", "battery_soc"]
+
+
+def regulation_between(storage, prices, start, end):
+    latest = {k: v for k, (_, v) in storage.latest().items()}
+    series = storage.series(start, REGULATION_KEYS, end)
+    return analytics.regulation(series, prices, soc_min=latest.get("battery_soc_min") or 10,
+                                limit=latest.get("output_power_limit") or 800)
+
+
+def store_regulation_days(storage, cfg):
+    """Regelgüte für jeden abgeschlossenen Tag mit Rohwerten berechnen, der noch nicht gespeichert ist."""
+    today = datetime.now(analytics.TZ).date()
+    days = [today - timedelta(days=i) for i in range(RAW_DAYS - 1, 0, -1)]
+    stored = storage.regulation_days(days[0].isoformat(), days[-1].isoformat())
+    for day in days:
+        if day.isoformat() not in stored:
+            start = datetime.combine(day, datetime.min.time(), analytics.TZ).timestamp()
+            r = regulation_between(storage, cfg["prices"], start, start + 86400)
+            if r:
+                storage.save_regulation_day(day.isoformat(), r)
+
+
+async def regulation_job(app):
+    while True:  # stündlich; neue Tage kommen nach Mitternacht dazu
+        try:
+            await asyncio.to_thread(store_regulation_days, app.state.storage, config.load(app.state.config_path))
+        except Exception:
+            log.exception("Tageswerte der Regelgüte nicht gespeichert")
+        await asyncio.sleep(3600)
+
+
 def regulation_data(request):
     cfg = config.load(request.app.state.config_path)
-    storage = request.app.state.storage
-    latest = {k: v for k, (_, v) in storage.latest().items()}
-    since = int(time.time()) - 7 * 86400
-    series = storage.series(since, ["grid_power", "output_power", "pv_ac_power", "battery_soc"])
-    return analytics.regulation(series, cfg["prices"], soc_min=latest.get("battery_soc_min") or 10,
-                                limit=latest.get("output_power_limit") or 800)
+    return regulation_between(request.app.state.storage, cfg["prices"], int(time.time()) - 7 * 86400, time.time())
 
 
 @app.get("/nulleinspeisung", include_in_schema=False)

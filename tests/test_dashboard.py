@@ -66,3 +66,19 @@ def test_report(client):
     assert client.get("/bericht?monat=unsinn").status_code == 200
     j = client.get("/api/v1/bericht?monat=2026-02").json()
     assert len(j["tage"]) == 28 and j["vorjahr"]["ersparnis"] == 0
+
+
+def test_store_regulation_days(client):
+    from datetime import datetime, timedelta
+    from app.main import store_regulation_days
+    from balkonaut.analytics import TZ
+    storage = app.state.storage
+    yesterday = datetime.now(TZ).date() - timedelta(days=1)
+    t0 = int(datetime.combine(yesterday, datetime.min.time(), TZ).timestamp())
+    for t in range(t0, t0 + 3600, 10):
+        storage.add(t, {"grid_power": 20, "output_power": 300, "pv_ac_power": 0, "battery_soc": 50})
+    store_regulation_days(storage, {"prices": {"energy": 0.3, "feed_in": 0}})
+    days = storage.regulation_days(yesterday.isoformat(), yesterday.isoformat())
+    assert days[yesterday.isoformat()]["anteil_nahe_null"] == 1
+    r = client.get(f"/api/v1/bericht?monat={yesterday:%Y-%m}").json()
+    assert r["nulleinspeisung"]["tage"] == 1

@@ -40,5 +40,15 @@ erreicht: {{ (r.bilanz.erzeugung / r.erwartet)|pct }}.</p>{% endif %}
   <div class="card"><div class="label">Stunden voll / leer</div><div class="value">{{ r.akku.stunden_voll }} / {{ r.akku.stunden_leer }}</div></div>
   <div class="card"><div class="label">Gesundheit (SoH)</div><div class="value">{{ r.akku.gesundheit|de(0) }} %</div></div>
 </div>
+{% set n = r.nulleinspeisung %}
+{% if n %}
+<h2>Nulleinspeisung</h2>
+<div class="grid">
+  <div class="card"><div class="label">Regelbereit</div><div class="value">{{ n.regelbereit_stunden|de(0) }} h</div><div class="label">an {{ n.tage }} Tagen</div></div>
+  <div class="card"><div class="label">Davon nahe 0 W</div><div class="value">{{ n.anteil_nahe_null|pct }}</div></div>
+  <div class="card"><div class="label">Vermeidbarer Netzbezug</div><div class="value">{{ n.vermeidbarer_netzbezug|de(1) }} kWh</div><div class="label">{{ n.vermeidbare_kosten|de(2) }} €</div></div>
+  <div class="card"><div class="label">Abgabe über Limit</div><div class="value">{{ n.anteil_ueber_limit|pct }}</div><div class="label">höchster Wert {{ n.max_abgabe|de(0) }} W</div></div>
+</div>
+{% endif %}
 <p class="label">Erstellt mit Balkonaut. Netzwerte setzen eine korrekt montierte Netzmessung voraus.</p>
 {% endblock %}

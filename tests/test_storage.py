@@ -26,3 +26,10 @@ def test_hourly_includes_running_hour():
     assert s.hourly() == []
     rows = s.hourly(H + 1800)  # halbe Stunde vorbei
     assert rows == [("grid_power", H, 50.0, 100.0, -50.0, -200.0), ("output_energy", H, 5.05, 5.05, 0.0, 10.2)]
+
+
+def test_regulation_days():
+    s = Storage(":memory:")
+    s.save_regulation_day("2026-10-01", {"a": 1})
+    s.save_regulation_day("2026-11-01", {"a": 2})
+    assert s.regulation_days("2026-10-01", "2026-10-31") == {"2026-10-01": {"a": 1}}
