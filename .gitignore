@@ -1,0 +1,11 @@
+.gitea-token
+.env
+__pycache__/
+*.pyc
+.venv/
+data/
+.ha-token
+.pytest_cache/
+*.egg-info/
+build/
+.DS_Store

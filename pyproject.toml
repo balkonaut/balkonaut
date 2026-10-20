@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "balkonbilanz"
+version = "0.1.0"
+description = "Analyse- und Entscheidungstool für Balkonkraftwerke mit Speicher"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+dependencies = []
+
+[project.optional-dependencies]
+app = ["fastapi>=0.151", "uvicorn>=0.54"]
+dev = ["pytest>=9.1", "httpx2>=2.15"]
+
+[tool.setuptools.packages.find]
+where = ["core"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
