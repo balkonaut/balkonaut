@@ -20,6 +20,9 @@ home_assistant:
     battery_soc_min: [number.ezhi_soc_minimum, 1]
     battery_soc_max: [number.ezhi_soc_maximum, 1]
     output_power_limit: [sensor.ezhi_power_limit, 1]   # optional, eingestelltes Limit des Speichers
+    # optional, Prognose „Erzeugung heute“ der Fläche am Speicher bzw. am zweiten Wechselrichter (Forecast.Solar)
+    pv_forecast_today: [sensor.energy_production_today_2, 1]
+    pv_ac_forecast_today: [sensor.energy_production_today, 1]
 prices:
   energy: 0.30   # Arbeitspreis €/kWh
   feed_in: 0.0   # Einspeisevergütung €/kWh

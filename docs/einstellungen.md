@@ -36,6 +36,7 @@ Die Verbindung steht in `data/config.yaml` im Abschnitt `home_assistant`:
 | `battery_soh` | Akku-Gesundheit in % (optional) | |
 | `battery_soc_min`, `battery_soc_max` | eingestellte Lade-Untergrenze und -Obergrenze in % (optional) | |
 | `output_power_limit` | eingestelltes Abgabelimit des Speichers in W (optional, sonst 800 W) | |
+| `pv_forecast_today`, `pv_ac_forecast_today` | Prognose „Erzeugung heute“ in kWh für die Fläche am Speicher bzw. am zweiten Wechselrichter, z. B. aus Forecast.Solar (optional) | |
 
 Welche Quelle für welche Größe am besten geeignet ist, steht unter [Messquellen](messquellen.md).
 Nach einer Änderung an `config.yaml` den Container neu starten.

@@ -135,3 +135,20 @@ def test_solar_planes(monkeypatch):
     }
     monkeypatch.setattr(ha, "_get", lambda path, timeout=10: answers[path])
     assert ha.solar_planes() == (50.0, 10.0, [(30, 150, 0.87)])
+
+
+def test_yield_watch():
+    from balkonaut.analytics import yield_watch
+    day0 = datetime(2026, 10, 10, tzinfo=TZ).timestamp()
+    rows = []
+    for h in range(24 * 8):  # 8 Tage, gewertet werden die 7 vollen Tage vor dem 18.10.
+        t = day0 + h * 3600
+        rows += [("pv_forecast_today", t, 2.0, 2.0, 0, 2.0), ("pv_ac_forecast_today", t, 2.0, 2.0, 0, 2.0),
+                 ("pv_energy", t, 0, 0, 0, 100 + h * 2.0 / 24),  # Speicher: 2 kWh am Tag = 100 %
+                 ("pv_ac_power", t, 1.0 / 24 * 1000, 0, 0, None)]  # zweiter: 1 kWh am Tag = 50 %
+    w = yield_watch(sorted(rows), datetime(2026, 10, 18, 12, tzinfo=TZ).timestamp())
+    assert abs(w["wechselrichter"]["speicher"]["quote"] - 1) < 0.01
+    assert abs(w["wechselrichter"]["ac"]["quote"] - 0.5) < 0.01
+    assert {x["code"] for x in w["warnungen"]} == {"ertrag_niedrig", "ungleich"}
+    assert all(x["wechselrichter"] == "ac" for x in w["warnungen"])
+    assert yield_watch([], 0)["warnungen"] == []

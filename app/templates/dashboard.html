@@ -17,8 +17,8 @@
   <div class="card"><div class="label">Akku {{ "lädt" if (live.battery_power or 0) > 5 else "entlädt" if (live.battery_power or 0) < -5 else "" }}</div><div class="value">{{ live.battery_soc|de(0) }} %</div><div class="label">{{ live.battery_power|de(0) }} W</div></div>
 </div>
 {% if live_age is none %}<p class="label">Noch keine Messwerte.</p>
-{% elif live_age > 120 %}<p class="note err">Keine aktuellen Messwerte, letzter Stand vor {{ live_age|ago }}. Verbindung zu Home Assistant prüfen.</p>
 {% else %}<p class="label">Stand vor {{ live_age|ago }}</p>{% endif %}
+{% for w in warnings %}<p class="note err">{{ w.text }}</p>{% endfor %}
 
 <h2>Bilanz</h2>
 <div class="tabs">{% for key, name in periods %}<a href="?zeitraum={{ key }}" class="{{ 'on' if key == period }}">{{ name }}</a>{% endfor %}</div>

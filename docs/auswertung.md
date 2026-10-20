@@ -17,6 +17,20 @@ grün der Teil des Hausverbrauchs, den das Balkonkraftwerk gedeckt hat, gelb der
 die Erzeugung. Mit *zurück* und *weiter* blätterst du durch die Zeiträume, darunter steht die Bilanz des
 gewählten Zeitraums.
 
+## Warnungen
+
+Die Übersicht zeigt Warnungen oben an, die Schnittstelle liefert sie unter `warnungen`:
+
+| Warnung | Wann |
+|---|---|
+| Keine Messwerte | Seit über 2 Minuten kam nichts von Home Assistant |
+| Ertrag niedrig | Ein Wechselrichter lieferte in den letzten 7 Tagen weniger als 60 % der Prognose seiner Fläche |
+| Ungleich | Ein Wechselrichter erreicht seine Prognose deutlich schlechter als der andere. Weil beide unter demselben Wetter arbeiten, deutet das auf Verschattung, Verschmutzung oder einen Defekt an einem Modulpaar |
+
+Für die Ertragswarnungen braucht Balkonaut die Prognose je Fläche (`pv_forecast_today`, `pv_ac_forecast_today`,
+siehe [Einstellungen](einstellungen.md)) und mindestens 3 Tage Daten. Ein voller Akku kann die Erzeugung am Speicher
+abregeln und so eine Warnung „Ertrag niedrig“ auslösen, obwohl alles in Ordnung ist.
+
 ## Begriffe
 
 | Wert | Bedeutung |

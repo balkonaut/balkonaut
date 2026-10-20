@@ -269,3 +269,42 @@ def history(rows, bars, prices):
         x = balance([r for r in rows if r[1] < b], a, prices)
         out.append({"label": label, "own": x["eigenverbrauch"], "grid": x["netzbezug"], "gen": x["erzeugung"]})
     return out
+
+
+LOW = 0.6  # Ertrag unter 60 % der Prognose gilt als niedrig
+UNEVEN = 0.7  # ein Wechselrichter erreicht weniger als 70 % der Prognosetreue des anderen
+INVERTERS = {  # Name: (Erzeugung als Zähler, als Leistung, Prognose für heute)
+    "speicher": ("pv_energy", "pv_power", "pv_forecast_today"),
+    "ac": ("", "pv_ac_power", "pv_ac_forecast_today"),
+}
+
+
+def yield_watch(rows, now, days=7):
+    """Ertrag je Wechselrichter gegen die Tagesprognose seiner Fläche über die letzten vollen Tage.
+
+    Die Prognose eines Tages ist der Mittelwert des Sensors „Erzeugung heute“ über die Stunden des Tages.
+    """
+    # ponytail: ein voller Akku regelt die PV am Speicher ab und senkt dessen Ertrag; Tage mit vollem Akku ausklammern, falls das stört
+    end = periods(now)["tag"]
+    start = datetime.combine(datetime.fromtimestamp(end, TZ).date() - timedelta(days=days), time(), TZ).timestamp()
+    wh, counter, hours, energy = _collect([r for r in rows if r[1] < end], start)
+    result, warnings = {}, []
+    for name, (counter_key, power_key, forecast_key) in INVERTERS.items():
+        by_day = defaultdict(list)
+        for hour, (mean, *_) in hours.get(forecast_key, {}).items():
+            by_day[datetime.fromtimestamp(hour, TZ).date()].append(mean)
+        forecast = sum(sum(v) / len(v) for v in by_day.values())
+        actual = counter[counter_key] if counter_key in counter else wh[power_key] / 1000
+        result[name] = {"ertrag": actual, "prognose": forecast, "tage": len(by_day),
+                        "quote": actual / forecast if forecast >= 1 else None}
+    label = {"speicher": "Speicher-Wechselrichter", "ac": "zweiter Wechselrichter"}
+    for name, r in result.items():
+        if r["quote"] is not None and r["tage"] >= 3 and r["quote"] < LOW:
+            warnings.append({"code": "ertrag_niedrig", "wechselrichter": name,
+                             "text": f"{label[name]}: {r['quote']:.0%} der Prognose in den letzten {r['tage']} Tagen"})
+    q = [r["quote"] for r in result.values() if r["quote"] and r["tage"] >= 3]
+    if len(q) == 2 and min(q) / max(q) < UNEVEN:
+        weak = min(result, key=lambda n: result[n]["quote"] or 0)
+        warnings.append({"code": "ungleich", "wechselrichter": weak,
+                         "text": f"{label[weak]} bleibt deutlich hinter dem anderen zurück (Verschattung, Verschmutzung, Defekt?)"})
+    return {"wechselrichter": result, "warnungen": warnings}

@@ -13,6 +13,8 @@ Eine technische Übersicht aller Abfragen liefert `http://<adresse>:8000/docs`.
 
 ## Aufbau von `/api/v1/status`
 
+- `warnungen`: Liste mit `code` (`keine_messwerte`, `ertrag_niedrig`, `ungleich`), `text` und ggf. `wechselrichter`
+- `ertrag.speicher|ac`: `ertrag` und `prognose` (kWh) der letzten 7 vollen Tage, `quote` (Anteil), `tage`
 - `stand`: Zeitpunkt des letzten Messwerts
 - `live`: letzter Wert je Messgröße (Namen wie in den [Einstellungen](einstellungen.md), Leistung in W)
 - `bilanz.tag|monat|jahr|gesamt`: `erzeugung`, `abgabe`, `netzbezug`, `einspeisung`, `eigenverbrauch`,
@@ -48,6 +50,8 @@ rest:
       - name: Balkonaut amortisiert am
         value_template: "{{ value_json.amortisation.amortisiert_am }}"
         device_class: date
+      - name: Balkonaut Warnungen
+        value_template: "{{ value_json.warnungen | count }}"
       - name: Balkonaut Akku Vollzyklen
         value_template: "{{ value_json.akku.gesamt.zyklen_gesamt | round(0) }}"
 ```
