@@ -1,5 +1,6 @@
 import asyncio
 import os
+from datetime import date
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -66,7 +67,7 @@ def bilanz(request: Request):
     rows = request.app.state.storage.hourly(int(time.time()))
     result = {name: analytics.balance(rows, start, cfg["prices"])
               for name, start in analytics.periods(time.time()).items()}
-    result["amortisation"] = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"])
+    result["amortisation"] = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"], config.commissioned(cfg))
     return result
 
 
@@ -87,10 +88,10 @@ def dashboard(request: Request, zeitraum: str = "tag"):
         b = analytics.balance([r for r in rows if r[1] < h0 + 3600], h0, cfg["prices"])
         hours.append({"label": i, "own": b["eigenverbrauch"] * 1000, "grid": b["netzbezug"] * 1000})
     peak = max(h["own"] + h["grid"] for h in hours)
-    a = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"])
+    a = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"], config.commissioned(cfg))
     return templates.TemplateResponse(request, "dashboard.html", {
         "periods": PERIODS, "period": period, "b": analytics.balance(rows, starts[period], cfg["prices"]),
-        "akku": analytics.battery(rows, starts[period], cfg["prices"]),
+        "akku": analytics.battery(rows, starts[period], cfg["prices"], config.commissioned(cfg)),
         "live": live, "live_age": int(now - max(ts for ts, _ in latest.values())) if latest else None,
         "hours": hours, "peak": peak, "scale": 140 / peak if peak else 0, "a": a,
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
@@ -110,11 +111,12 @@ async def save_settings(request: Request):
     cfg = config.load(request.app.state.config_path)
     try:
         values = {k: float(form[k].replace(",", ".")) for k in ("energy", "feed_in", "cost")}
-        if min(values.values()) < 0:
+        day = date.fromisoformat(form["commissioned"]) if form.get("commissioned") else None
+        if min(values.values()) < 0 or (day and day > date.today()):
             raise ValueError
     except (KeyError, ValueError):
         return templates.TemplateResponse(request, "settings.html", {"cfg": cfg, "error": True}, status_code=400)
     cfg["prices"].update(energy=values["energy"], feed_in=values["feed_in"])
-    cfg["system"]["cost"] = values["cost"]
+    cfg["system"].update(cost=values["cost"], commissioned=day)
     config.save(request.app.state.config_path, cfg)
     return RedirectResponse("/einstellungen?gespeichert=1", status_code=303)

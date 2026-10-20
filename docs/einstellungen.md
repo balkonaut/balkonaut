@@ -7,6 +7,7 @@ Unter `http://<adresse>:8000/einstellungen` trägst du ein:
 - **Arbeitspreis Netzstrom** in €/kWh, also was eine Kilowattstunde aus dem Netz kostet (ohne Grundgebühr).
 - **Einspeisevergütung** in €/kWh. Bei den meisten Balkonkraftwerken 0.
 - **Anschaffungskosten** der Anlage in €, inklusive Speicher.
+- **Inbetriebnahme** (optional): Datum, ab dem der Abgabezähler am Einspeisepunkt zählt, meist die Inbetriebnahme. Verbessert die Amortisationsrechnung.
 
 Kommazahlen gehen mit Komma oder Punkt.
 

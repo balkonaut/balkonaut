@@ -66,3 +66,14 @@ def test_battery():
     assert (b["stunden_voll"], b["einspeisung_bei_vollem_akku"]) == (1, 0.3)
     assert (b["stunden_leer"], b["netzbezug_bei_leerem_akku"]) == (1, 0.8)
     assert battery([], 0, PRICES)["zyklen"] is None  # ohne Daten
+
+
+def test_amortization_with_commissioning():
+    from datetime import date
+    end = datetime(2026, 10, 20, tzinfo=TZ).timestamp()
+    rows = [("output_energy", end - 7200, 1, 1, 0, 730.0), ("output_energy", end - 3600, 1, 1, 0, 730.5)]
+    a = amortization(rows, PRICES, cost=500, commissioned=date(2025, 10, 20))  # genau ein Jahr
+    assert a["basis"] == "inbetriebnahme" and a["zaehler_plausibel"]
+    assert abs(a["ersparnis_pro_jahr"] / a["bisher_gespart"] - 1) < 0.001  # ein Jahr: Jahresersparnis = bisher
+    assert a["amortisiert_am"] > date(2026, 10, 20)
+    assert not amortization(rows, PRICES, 500, date(2026, 10, 1))["zaehler_plausibel"]  # 730 kWh in 19 Tagen

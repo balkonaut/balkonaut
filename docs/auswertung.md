@@ -43,9 +43,13 @@ Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Mes
 - **Bisher gespart**: Stand des Abgabezählers am Einspeisepunkt mal gemessener Eigenverbrauchsquote
   mal Arbeitspreis. Der Zähler läuft meist seit Inbetriebnahme, damit zählen auch die Monate,
   bevor Balkonaut lief. Ohne Abgabezähler zählt nur der Messzeitraum.
-- **Ersparnis pro Jahr**: Durchschnitt pro Messtag mal 365.
-- **Jahre bis zur Amortisation**: Anschaffungskosten minus bisher gespart, geteilt durch die Ersparnis pro Jahr.
+- **Ersparnis pro Jahr**: Mit eingetragenem Datum der Inbetriebnahme die bisherige Ersparnis geteilt durch
+  die Jahre seitdem. Ohne Datum der Durchschnitt pro Messtag mal 365.
+- **Amortisiert**: Monat, in dem die Anschaffungskosten voraussichtlich erreicht sind, und die Jahre bis dahin.
+- **Plausibilität**: Ist der Abgabezähler höher, als ein Balkonkraftwerk mit 800 W seit dem eingetragenen Datum
+  hätte liefern können, erscheint ein Hinweis. Dann stimmt meist das Datum nicht.
+- **Vollzyklen pro Jahr** (Bereich Akku): Vollzyklen seit Inbetriebnahme geteilt durch die Jahre seitdem.
 
-!!! warning "Näherung"
-    Die Hochrechnung aufs Jahr kennt noch keinen Jahresverlauf. Mit Daten aus Herbst oder Winter
+!!! warning "Näherung ohne Datum der Inbetriebnahme"
+    Die Hochrechnung aus den Messtagen kennt keinen Jahresverlauf. Mit Daten aus Herbst oder Winter
     fällt sie zu niedrig aus, mit Sommerdaten zu hoch. Aussagekräftig wird sie nach einem vollen Jahr.

@@ -8,7 +8,7 @@
   button { margin-top: 1.5rem; padding: .5rem 1.5rem; font-size: 1rem; }
 </style>
 <h1>Einstellungen</h1>
-{% if error %}<p class="note err">Bitte nur Zahlen ab 0 eingeben.</p>
+{% if error %}<p class="note err">Bitte nur Zahlen ab 0 und kein Datum in der Zukunft eingeben.</p>
 {% elif request.query_params.get("gespeichert") %}<p class="note ok">Gespeichert.</p>{% endif %}
 <form method="post">
   <label for="energy">Arbeitspreis Netzstrom (€/kWh)</label>
@@ -17,6 +17,10 @@
   <input id="feed_in" name="feed_in" inputmode="decimal" required value="{{ cfg.prices.feed_in }}">
   <label for="cost">Anschaffungskosten der Anlage (€)</label>
   <input id="cost" name="cost" inputmode="decimal" required value="{{ cfg.system.cost }}">
+  <label for="commissioned">Inbetriebnahme (optional)</label>
+  <input id="commissioned" name="commissioned" type="date" value="{{ cfg.system.commissioned or '' }}">
+  <p class="label">Datum, ab dem der Abgabezähler am Einspeisepunkt zählt, meist die Inbetriebnahme.
+  Damit rechnet die Amortisation mit dem echten Durchschnitt statt einer Hochrechnung.</p>
   <button type="submit">Speichern</button>
 </form>
 {% endblock %}

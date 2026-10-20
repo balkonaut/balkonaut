@@ -41,7 +41,7 @@
 
 <h2>Akku</h2>
 <div class="grid">
-  <div class="card"><div class="label">Vollzyklen im Zeitraum</div><div class="value">{{ akku.zyklen|de(1) }}</div><div class="label">gesamt {{ akku.zyklen_gesamt|de(0) }}</div></div>
+  <div class="card"><div class="label">Vollzyklen im Zeitraum</div><div class="value">{{ akku.zyklen|de(1) }}</div><div class="label">gesamt {{ akku.zyklen_gesamt|de(0) }}{% if akku.zyklen_pro_jahr %}, {{ akku.zyklen_pro_jahr|de(0) }} pro Jahr{% endif %}</div></div>
   <div class="card"><div class="label">Gesundheit (SoH)</div><div class="value">{{ akku.gesundheit|de(0) }} %</div><div class="label">Kapazität {{ akku.kapazitaet|de(2) }} kWh</div></div>
   <div class="card"><div class="label">Wirkungsgrad Akku</div><div class="value">{{ akku.wirkungsgrad|pct }}</div></div>
   <div class="card"><div class="label">Verluste Speicher-Wechselrichter</div><div class="value">{{ akku.verluste_wechselrichter|pct }}</div></div>
@@ -68,9 +68,11 @@
   <div class="bar"><span style="width: {{ progress }}%"></span></div>
   <div class="grid">
     <div><div class="label">Noch offen</div><div class="value">{{ a.rest|de(0) }} €</div></div>
-    <div><div class="label">Ersparnis pro Jahr (hochgerechnet)</div><div class="value">{{ a.ersparnis_pro_jahr|de(0) }} €</div></div>
-    <div><div class="label">Amortisiert in</div><div class="value">{% if a.jahre_bis_amortisation is none %}–{% else %}{{ a.jahre_bis_amortisation|de(1) }} Jahren{% endif %}</div></div>
+    <div><div class="label">Ersparnis pro Jahr ({{ "Durchschnitt seit Inbetriebnahme" if a.basis == "inbetriebnahme" else "hochgerechnet" }})</div><div class="value">{{ a.ersparnis_pro_jahr|de(0) }} €</div></div>
+    <div><div class="label">Amortisiert</div><div class="value">{% if a.jahre_bis_amortisation is none %}–{% elif a.rest == 0 %}bereits{% else %}{{ a.amortisiert_am.strftime("%m/%Y") }}{% endif %}</div>
+      {% if a.jahre_bis_amortisation %}<div class="label">in {{ a.jahre_bis_amortisation|de(1) }} Jahren</div>{% endif %}</div>
   </div>
-  <p class="label">Näherung auf Basis von {{ a.messtage|de(1) }} Messtagen, ohne Jahresverlauf.</p>
+  {% if a.basis == "messtage" %}<p class="label">Näherung auf Basis von {{ a.messtage|de(1) }} Messtagen, ohne Jahresverlauf. Mit dem <a href="/einstellungen">Datum der Inbetriebnahme</a> wird sie genauer.</p>{% endif %}
+  {% if not a.zaehler_plausibel %}<p class="note err">Der Abgabezähler ist für den Zeitraum seit der Inbetriebnahme zu hoch. Stimmt das Datum?</p>{% endif %}
 </div>
 {% endblock %}

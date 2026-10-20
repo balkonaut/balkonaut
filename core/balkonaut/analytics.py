@@ -3,10 +3,20 @@
 Begriffe und Formeln: docs/auswertung.md
 """
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo("Europe/Berlin")  # ponytail: feste Zeitzone, konfigurierbar machen für Nutzer außerhalb DE/AT
+MAX_KWH_PER_DAY = 0.8 * 24  # ponytail: 800-W-Grenze für Balkonkraftwerke in DE; Limit aus HA lesen, falls nötig
+
+
+def _years_since(rows, commissioned):
+    """Jahre von der Inbetriebnahme (date) bis zur letzten Stunde in rows, None ohne Datum oder Daten."""
+    if not commissioned or not rows:
+        return None
+    end = max(h for _, h, *_ in rows) + 3600
+    years = (end - datetime.combine(commissioned, time(), TZ).timestamp()) / (365.25 * 86400)
+    return years if years > 0 else None
 
 
 def periods(now):
@@ -61,35 +71,44 @@ def balance(rows, start, prices):
     }
 
 
-def amortization(rows, prices, cost):
+def amortization(rows, prices, cost, commissioned=None):
     """Bisherige Ersparnis und Restlaufzeit bis zur Amortisation.
 
-    Bisherige Ersparnis: Stand des Abgabezählers (seit Zählerstart, meist seit Inbetriebnahme)
-    mal gemessener Eigenverbrauchsquote mal Arbeitspreis; ohne Zähler nur der Messzeitraum.
-    Jährliche Ersparnis: Tagesdurchschnitt des Messzeitraums mal 365.
+    Bisherige Ersparnis: Stand des Abgabezählers mal gemessener Eigenverbrauchsquote mal Arbeitspreis;
+    ohne Zähler nur der Messzeitraum. Ersparnis pro Jahr: mit Datum der Inbetriebnahme (Start des
+    Abgabezählers) der Durchschnitt seitdem, sonst Tagesdurchschnitt des Messzeitraums mal 365.
     """
-    # ponytail: Hochrechnung ohne Saisonverlauf, Herbstdaten unterschätzen das Jahr. Prognose ab P3.
     total = balance(rows, 0, prices)
     hours = [h for _, h, *_ in rows]
     days = (max(hours) - min(hours) + 3600) / 86400 if hours else 0
-    per_year = total["ersparnis"] / days * 365 if days else 0.0
     meter = [last for key, _, _, _, _, last in rows if key == "output_energy" and last is not None]
     if meter and total["eigenverbrauchsquote"] is not None:
         saved = meter[-1] * total["eigenverbrauchsquote"] * prices["energy"]
     else:
         saved = total["ersparnis"]
+    years = _years_since(rows, commissioned)
+    if years and meter:
+        per_year, basis = saved / years, "inbetriebnahme"
+    else:
+        # ponytail: Hochrechnung ohne Saisonverlauf, Herbstdaten unterschätzen das Jahr. Prognose ab P3.
+        per_year, basis = (total["ersparnis"] / days * 365 if days else 0.0), "messtage"
     remaining = max(cost - saved, 0.0)
+    years_left = remaining / per_year if per_year else None
     return {
         "kosten": cost,
         "bisher_gespart": saved,
         "ersparnis_pro_jahr": per_year,
+        "basis": basis,
         "rest": remaining,
-        "jahre_bis_amortisation": remaining / per_year if per_year else None,
+        "jahre_bis_amortisation": years_left,
+        "amortisiert_am": (datetime.fromtimestamp(max(hours) + 3600, TZ) + timedelta(days=years_left * 365.25)).date()
+        if years_left is not None and hours else None,
+        "zaehler_plausibel": not (years and meter) or meter[-1] / (years * 365.25) <= MAX_KWH_PER_DAY,
         "messtage": days,
     }
 
 
-def battery(rows, start, prices):
+def battery(rows, start, prices, commissioned=None):
     """Akku-Auswertung ab start: Zyklen, Gesundheit, Wirkungsgrad, Zeiten mit vollem/leerem Akku."""
     wh, counter, hours, energy = _collect(rows, start)
 
@@ -122,6 +141,8 @@ def battery(rows, start, prices):
     return {
         "zyklen": discharge / cap if cap and discharge is not None else None,
         "zyklen_gesamt": latest("battery_discharge_energy") / cap if cap and latest("battery_discharge_energy") else None,
+        "zyklen_pro_jahr": latest("battery_discharge_energy") / cap / years
+        if cap and latest("battery_discharge_energy") and (years := _years_since(rows, commissioned)) else None,
         "gesundheit": latest("battery_soh"),
         "kapazitaet": cap,
         "wirkungsgrad": efficiency,
