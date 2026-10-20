@@ -1,0 +1,99 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Balkonaut verbinden",
+        "description": "Adresse der Balkonaut-App, z. B. http://192.168.1.10:8000",
+        "data": {
+          "url": "Adresse"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Balkonaut ist unter dieser Adresse nicht erreichbar."
+    },
+    "abort": {
+      "already_configured": "Diese Balkonaut-App ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen",
+        "data": {
+          "scan_interval": "Abfrageintervall in Minuten"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "ersparnis_tag": {
+        "name": "Ersparnis heute"
+      },
+      "erzeugung_tag": {
+        "name": "Erzeugung heute"
+      },
+      "eigenverbrauch_tag": {
+        "name": "Eigenverbrauch heute"
+      },
+      "netzbezug_tag": {
+        "name": "Netzbezug heute"
+      },
+      "autarkie_tag": {
+        "name": "Autarkie heute"
+      },
+      "ersparnis_monat": {
+        "name": "Ersparnis Monat"
+      },
+      "erzeugung_monat": {
+        "name": "Erzeugung Monat"
+      },
+      "eigenverbrauch_monat": {
+        "name": "Eigenverbrauch Monat"
+      },
+      "netzbezug_monat": {
+        "name": "Netzbezug Monat"
+      },
+      "autarkie_monat": {
+        "name": "Autarkie Monat"
+      },
+      "ersparnis_jahr": {
+        "name": "Ersparnis Jahr"
+      },
+      "erzeugung_jahr": {
+        "name": "Erzeugung Jahr"
+      },
+      "eigenverbrauch_jahr": {
+        "name": "Eigenverbrauch Jahr"
+      },
+      "netzbezug_jahr": {
+        "name": "Netzbezug Jahr"
+      },
+      "autarkie_jahr": {
+        "name": "Autarkie Jahr"
+      },
+      "bisher_gespart": {
+        "name": "Bisher gespart"
+      },
+      "rest": {
+        "name": "Bis zur Amortisation"
+      },
+      "ersparnis_pro_jahr": {
+        "name": "Ersparnis pro Jahr"
+      },
+      "amortisiert_am": {
+        "name": "Amortisiert am"
+      },
+      "vollzyklen": {
+        "name": "Akku Vollzyklen"
+      },
+      "akku_gesundheit": {
+        "name": "Akku Gesundheit"
+      },
+      "akku_wirkungsgrad": {
+        "name": "Akku Wirkungsgrad (Monat)"
+      }
+    }
+  }
+}

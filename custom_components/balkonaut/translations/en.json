@@ -1,0 +1,99 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Balkonaut",
+        "description": "Address of the Balkonaut app, e.g. http://192.168.1.10:8000",
+        "data": {
+          "url": "Address"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Balkonaut cannot be reached at this address."
+    },
+    "abort": {
+      "already_configured": "This Balkonaut app is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "scan_interval": "Polling interval in minutes"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "ersparnis_tag": {
+        "name": "Savings today"
+      },
+      "erzeugung_tag": {
+        "name": "Generation today"
+      },
+      "eigenverbrauch_tag": {
+        "name": "Self-consumption today"
+      },
+      "netzbezug_tag": {
+        "name": "Grid import today"
+      },
+      "autarkie_tag": {
+        "name": "Self-sufficiency today"
+      },
+      "ersparnis_monat": {
+        "name": "Savings month"
+      },
+      "erzeugung_monat": {
+        "name": "Generation month"
+      },
+      "eigenverbrauch_monat": {
+        "name": "Self-consumption month"
+      },
+      "netzbezug_monat": {
+        "name": "Grid import month"
+      },
+      "autarkie_monat": {
+        "name": "Self-sufficiency month"
+      },
+      "ersparnis_jahr": {
+        "name": "Savings year"
+      },
+      "erzeugung_jahr": {
+        "name": "Generation year"
+      },
+      "eigenverbrauch_jahr": {
+        "name": "Self-consumption year"
+      },
+      "netzbezug_jahr": {
+        "name": "Grid import year"
+      },
+      "autarkie_jahr": {
+        "name": "Self-sufficiency year"
+      },
+      "bisher_gespart": {
+        "name": "Saved so far"
+      },
+      "rest": {
+        "name": "Remaining to payback"
+      },
+      "ersparnis_pro_jahr": {
+        "name": "Savings per year"
+      },
+      "amortisiert_am": {
+        "name": "Payback date"
+      },
+      "vollzyklen": {
+        "name": "Battery full cycles"
+      },
+      "akku_gesundheit": {
+        "name": "Battery health"
+      },
+      "akku_wirkungsgrad": {
+        "name": "Battery efficiency (month)"
+      }
+    }
+  }
+}

@@ -62,6 +62,20 @@ Die Zahl gibt an, wie viele Tage vor dem ersten eigenen Messwert übernommen wer
 Stunden, die Balkonaut schon selbst gemessen hat, bleiben unverändert. Der Befehl kann gefahrlos
 mehrfach laufen.
 
+## Home-Assistant-Integration
+
+Die Integration holt die Werte der laufenden Balkonaut-App als Gerät *Balkonaut* mit Sensoren nach Home Assistant
+(Bilanz für heute, Monat und Jahr, Amortisation, Akku). Sie ersetzt die REST-Sensoren aus der YAML-Konfiguration.
+
+1. Den Ordner `custom_components/balkonaut` aus diesem Repository nach `config/custom_components/balkonaut` in
+   Home Assistant kopieren, z. B. mit dem Add-on *Samba share* oder *Studio Code Server*.
+2. Home Assistant neu starten.
+3. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Balkonaut*, Adresse der App eingeben
+   (z. B. `http://192.168.1.10:8000`).
+
+Das Abfrageintervall (Standard 5 Minuten) lässt sich danach unter *Konfigurieren* ändern. Die Installation über
+HACS folgt, sobald das Repository öffentlich ist.
+
 ## In Home Assistant einbinden
 
 Übersicht und Handbuch lassen sich als eigene Dashboards in die Seitenleiste von Home Assistant holen:

@@ -22,3 +22,4 @@ where = ["core"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+testpaths = ["tests"]  # tests_ha braucht Home Assistant, eigener Lauf
