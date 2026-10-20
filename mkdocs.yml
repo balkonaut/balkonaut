@@ -3,6 +3,7 @@ nav:
   - index.md
   - installation.md
   - einstellungen.md
+  - auswertung.md
   - messquellen.md
 theme:
   name: material

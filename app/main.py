@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import parse_qs
@@ -9,7 +10,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app import config
-from balkonaut import collector
+from balkonaut import analytics, collector
 from balkonaut.homeassistant import HomeAssistant
 from balkonaut.storage import Storage
 
@@ -22,10 +23,11 @@ async def lifespan(app):
     data.mkdir(parents=True, exist_ok=True)
     app.state.config_path = data / "config.yaml"
     cfg = config.load(app.state.config_path)
+    app.state.storage = Storage(data / "balkonaut.db")
     task = None
     if ha := cfg.get("home_assistant"):
         adapter = HomeAssistant(ha["url"], ha["token"], {k: tuple(v) for k, v in ha["entities"].items()})
-        task = asyncio.create_task(collector.run(adapter, Storage(data / "balkonaut.db")))
+        task = asyncio.create_task(collector.run(adapter, app.state.storage))
     yield
     if task:
         task.cancel()
@@ -37,6 +39,16 @@ app = FastAPI(title="Balkonaut", lifespan=lifespan)
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/bilanz")
+def bilanz(request: Request):
+    cfg = config.load(request.app.state.config_path)
+    rows = request.app.state.storage.hourly()
+    result = {name: analytics.balance(rows, start, cfg["prices"])
+              for name, start in analytics.periods(time.time()).items()}
+    result["amortisation"] = analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"])
+    return result
 
 
 @app.get("/einstellungen")

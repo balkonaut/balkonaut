@@ -46,3 +46,7 @@ class Storage:
                     AND raw.ts >= hourly.hour AND raw.ts < hourly.hour + 3600 ORDER BY ts DESC LIMIT 1)
                 WHERE hour >= ? AND hour < ?""", (start, end))
             self.db.execute("DELETE FROM raw WHERE ts < ?", (now - RAW_DAYS * 86400,))
+
+    def hourly(self):
+        return self.db.execute(
+            "SELECT key, hour, mean, mean_pos, mean_neg, last FROM hourly ORDER BY key, hour").fetchall()
