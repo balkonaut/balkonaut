@@ -12,3 +12,4 @@ build/
 site/
 handbuch/
 .venv-ha/
+.github-token
