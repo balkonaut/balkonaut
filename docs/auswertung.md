@@ -59,6 +59,13 @@ abregeln und so eine Warnung „Ertrag niedrig“ auslösen, obwohl alles in Ord
 Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Messgrößen
 `battery_capacity`, `battery_soh`, `battery_soc_min` und `battery_soc_max` (siehe [Einstellungen](einstellungen.md)).
 
+## Monatsbericht
+
+Die Seite *Bericht* fasst einen Monat zusammen: Bilanz im Vergleich zu Vormonat und Vorjahresmonat,
+erzeugte gegen laut PVGIS erwartete Energie, Tageswerte als Diagramm und die Akku-Kennzahlen.
+Mit *Drucken / als PDF speichern* entsteht daraus eine druckfertige Seite oder PDF-Datei. Die Regelgüte der
+Nulleinspeisung ist nicht enthalten, weil sie die 10-Sekunden-Werte braucht, die nur 14 Tage aufbewahrt werden.
+
 ## Nulleinspeisung
 
 Die Seite *Nulleinspeisung* zeigt für die letzten 7 Tage, wie gut der Speicher den Netzanschluss auf 0 W regelt.

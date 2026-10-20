@@ -30,11 +30,16 @@
   .tabs { display: flex; gap: .5rem; flex-wrap: wrap; }
   .tabs a { padding: .25rem .75rem; border: 1px solid var(--line); border-radius: 999px; text-decoration: none; color: var(--ink); }
   .tabs a.on { background: var(--ink); color: var(--bg); }
+  @media print {
+    :root { --bg: #fff; --card: #fff; --ink: #000; --muted: #444; --line: #ccc; }
+    nav, .noprint { display: none; }
+    .card { break-inside: avoid; }
+  }
 </style>
 </head>
 <body>
 <main>
-<nav><b><img src="/handbuch/assets/logo.svg" alt="" width="28" height="28" style="vertical-align:middle;margin-right:.4rem">Balkonaut</b><a href="/">Übersicht</a><a href="/verlauf">Verlauf</a><a href="/nulleinspeisung">Nulleinspeisung</a><a href="/einstellungen">Einstellungen</a><a href="/handbuch/">Handbuch</a></nav>
+<nav><b><img src="/handbuch/assets/logo.svg" alt="" width="28" height="28" style="vertical-align:middle;margin-right:.4rem">Balkonaut</b><a href="/">Übersicht</a><a href="/verlauf">Verlauf</a><a href="/nulleinspeisung">Nulleinspeisung</a><a href="/bericht">Bericht</a><a href="/einstellungen">Einstellungen</a><a href="/handbuch/">Handbuch</a></nav>
 {% block content %}{% endblock %}
 </main>
 </body>

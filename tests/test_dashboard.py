@@ -66,3 +66,13 @@ def test_api_v1(tmp_path, monkeypatch):
         assert len(v["balken"]) == 7 and v["titel"].startswith("KW")
         assert client.get("/api/v1/nulleinspeisung").json()["regelbereit_stunden"] >= 0
         assert client.get("/api/bilanz").status_code == 404
+
+
+def test_report(tmp_path, monkeypatch):
+    monkeypatch.setenv("BALKONAUT_DATA", str(tmp_path))
+    with TestClient(app) as client:
+        r = client.get("/bericht?monat=2026-02")
+        assert r.status_code == 200 and "Monatsbericht Februar 2026" in r.text and "monat=2026-01" in r.text
+        assert client.get("/bericht?monat=unsinn").status_code == 200
+        j = client.get("/api/v1/bericht?monat=2026-02").json()
+        assert len(j["tage"]) == 28 and j["vorjahr"]["ersparnis"] == 0

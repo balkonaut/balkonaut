@@ -133,6 +133,32 @@ def api_history(request: Request, ansicht: str = "tag", datum: str = ""):
     return history_data(request, ansicht, datum)
 
 
+def report_data(request, monat):
+    cfg = config.load(request.app.state.config_path)
+    today = datetime.now(analytics.TZ).date()
+    try:
+        day = date.fromisoformat(monat + "-01") if monat else today
+    except ValueError:
+        day = today
+    rows = request.app.state.storage.hourly(int(time.time()))
+    r = analytics.month_report(rows, day, cfg["prices"], time.time(), request.app.state.profile, config.commissioned(cfg))
+    if r["weiter"] > today:
+        r["weiter"] = None
+    return r
+
+
+@app.get("/api/v1/bericht")
+def api_report(request: Request, monat: str = ""):
+    """Monatsbericht (monat=JJJJ-MM, Standard: aktueller Monat)."""
+    return report_data(request, monat)
+
+
+@app.get("/bericht", include_in_schema=False)
+def report(request: Request, monat: str = ""):
+    r = report_data(request, monat)
+    return templates.TemplateResponse(request, "report.html", {"r": r, "chart": chart(r["tage"])})
+
+
 @app.get("/api/v1/nulleinspeisung")
 def api_regulation(request: Request):
     """Regelgüte der Nulleinspeisung der letzten 7 Tage, null ohne Messwerte."""
