@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from balkonaut.analytics import TZ, amortization, balance, battery, periods
-from balkonaut.homeassistant import HomeAssistant
 
 PRICES = {"energy": 0.30, "feed_in": 0.10}
 
@@ -123,18 +122,6 @@ def test_expected_share_and_profile():
     assert a["jahresverlauf"] and a["erwarteter_ertrag_jahr"] == 240
     # Januar bringt laut Profil 10/240 des Jahres, nach Tagen wären es 31/365,25
     assert abs(a["ersparnis_pro_jahr"] / flat["ersparnis_pro_jahr"] - (240 / 10) / (365.25 / 31)) < 1e-9
-
-
-def test_solar_planes(monkeypatch):
-    ha = HomeAssistant("http://ha", "t", {})
-    answers = {
-        "/api/config/config_entries/entry?domain=forecast_solar": [{"entry_id": "a"}],
-        "/api/diagnostics/config_entry/a": {"data": {"entry": {"subentries": [
-            {"data": {"declination": 30, "azimuth": 150, "modules_power": 870}}]}}},
-        "/api/config": {"latitude": 50.0, "longitude": 10.0},
-    }
-    monkeypatch.setattr(ha, "_get", lambda path, timeout=10: answers[path])
-    assert ha.solar_planes() == (50.0, 10.0, [(30, 150, 0.87)])
 
 
 def test_yield_watch():

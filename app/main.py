@@ -2,10 +2,9 @@ import asyncio
 import json
 import logging
 import math
-import os
-from datetime import date, datetime
 import time
 from contextlib import asynccontextmanager
+from datetime import date, datetime
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -16,7 +15,6 @@ from fastapi.templating import Jinja2Templates
 
 from app import config
 from balkonaut import analytics, collector, pvgis
-from balkonaut.homeassistant import HomeAssistant
 from balkonaut.storage import Storage
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -37,6 +35,14 @@ templates.env.filters.update(
 )
 PERIODS = [("tag", "Heute"), ("monat", "Monat"), ("jahr", "Jahr"), ("gesamt", "Gesamt")]
 VIEWS = [("tag", "Tag"), ("woche", "Woche"), ("monat", "Monat"), ("jahr", "Jahr")]
+
+
+def parse_day(text, today):
+    """Datum aus der Adresszeile, bei leerer oder ungültiger Angabe heute."""
+    try:
+        return date.fromisoformat(text) if text else today
+    except ValueError:
+        return today
 
 
 def chart(bars):
@@ -74,7 +80,7 @@ async def load_profile(app, adapter, cache):
 
 @asynccontextmanager
 async def lifespan(app):
-    data = Path(os.environ.get("BALKONAUT_DATA", "data"))
+    data = config.data_dir()
     data.mkdir(parents=True, exist_ok=True)
     app.state.config_path = data / "config.yaml"
     cfg = config.load(app.state.config_path)
@@ -82,7 +88,7 @@ async def lifespan(app):
     app.state.profile = None
     tasks = []
     if ha := cfg.get("home_assistant"):
-        adapter = HomeAssistant(ha["url"], ha["token"], {k: tuple(v) for k, v in ha["entities"].items()})
+        adapter = config.adapter(ha)
         tasks = [asyncio.create_task(collector.run(adapter, app.state.storage)),
                  asyncio.create_task(load_profile(app, adapter, data / "ertragsprofil.json"))]
     yield
@@ -136,10 +142,7 @@ def api_history(request: Request, ansicht: str = "tag", datum: str = ""):
 def report_data(request, monat):
     cfg = config.load(request.app.state.config_path)
     today = datetime.now(analytics.TZ).date()
-    try:
-        day = date.fromisoformat(monat + "-01") if monat else today
-    except ValueError:
-        day = today
+    day = parse_day(monat + "-01" if monat else "", today)
     rows = request.app.state.storage.hourly(int(time.time()))
     r = analytics.month_report(rows, day, cfg["prices"], time.time(), request.app.state.profile, config.commissioned(cfg))
     if r["weiter"] > today:
@@ -188,10 +191,7 @@ def dashboard(request: Request, zeitraum: str = "tag"):
 def history_data(request, ansicht, datum):
     cfg = config.load(request.app.state.config_path)
     today = datetime.now(analytics.TZ).date()
-    try:
-        day = date.fromisoformat(datum) if datum else today
-    except ValueError:
-        day = today
+    day = parse_day(datum, today)
     view = ansicht if ansicht in dict(VIEWS) else "tag"
     title, buckets, prev, nxt = analytics.buckets(view, day)
     rows = request.app.state.storage.hourly(int(time.time()))

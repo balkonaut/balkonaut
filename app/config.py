@@ -1,7 +1,11 @@
 """Konfiguration aus config.yaml im Datenverzeichnis."""
+import os
 from datetime import date
+from pathlib import Path
 
 import yaml
+
+from balkonaut.homeassistant import HomeAssistant
 
 DEFAULTS = {
     "prices": {"energy": 0.0, "feed_in": 0.0},  # €/kWh
@@ -25,3 +29,13 @@ def commissioned(cfg):
     """Datum der Inbetriebnahme als date oder None (YAML liefert date oder Text)."""
     value = cfg["system"]["commissioned"]
     return date.fromisoformat(value) if isinstance(value, str) else value
+
+
+def data_dir():
+    """Datenverzeichnis mit config.yaml und Datenbank (im Container /data)."""
+    return Path(os.environ.get("BALKONAUT_DATA", "data"))
+
+
+def adapter(ha):
+    """Home-Assistant-Adapter aus dem Abschnitt home_assistant der Konfiguration."""
+    return HomeAssistant(ha["url"], ha["token"], {k: tuple(v) for k, v in ha["entities"].items()})

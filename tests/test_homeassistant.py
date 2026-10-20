@@ -21,3 +21,15 @@ def test_read(monkeypatch):
                                                 "battery_soc": ("sensor.missing", 1)})
     monkeypatch.setattr(ha, "_state", states.get)
     assert ha.read() == {"grid_power": 570.4, "output_power": 96, "battery_soc": None}
+
+
+def test_solar_planes(monkeypatch):
+    ha = HomeAssistant("http://ha", "t", {})
+    answers = {
+        "/api/config/config_entries/entry?domain=forecast_solar": [{"entry_id": "a"}],
+        "/api/diagnostics/config_entry/a": {"data": {"entry": {"subentries": [
+            {"data": {"declination": 30, "azimuth": 150, "modules_power": 870}}]}}},
+        "/api/config": {"latitude": 50.0, "longitude": 10.0},
+    }
+    monkeypatch.setattr(ha, "_get", lambda path, timeout=10: answers[path])
+    assert ha.solar_planes() == (50.0, 10.0, [(30, 150, 0.87)])

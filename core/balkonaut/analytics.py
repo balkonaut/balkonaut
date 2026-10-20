@@ -279,14 +279,14 @@ INVERTERS = {  # Name: (Erzeugung als Zähler, als Leistung, Prognose für heute
 }
 
 
-def yield_watch(rows, now, days=7):
+def yield_watch(rows, now):
     """Ertrag je Wechselrichter gegen die Tagesprognose seiner Fläche über die letzten vollen Tage.
 
     Die Prognose eines Tages ist der Mittelwert des Sensors „Erzeugung heute“ über die Stunden des Tages.
     """
     # ponytail: ein voller Akku regelt die PV am Speicher ab und senkt dessen Ertrag; Tage mit vollem Akku ausklammern, falls das stört
     end = periods(now)["tag"]
-    start = datetime.combine(datetime.fromtimestamp(end, TZ).date() - timedelta(days=days), time(), TZ).timestamp()
+    start = datetime.combine(datetime.fromtimestamp(end, TZ).date() - timedelta(days=7), time(), TZ).timestamp()
     wh, counter, hours, energy = _collect([r for r in rows if r[1] < end], start)
     result, warnings = {}, []
     for name, (counter_key, power_key, forecast_key) in INVERTERS.items():
