@@ -120,6 +120,20 @@ Assistant entpacken (z. B. mit dem Add-on *Samba share* oder *Studio Code Server
 Integration wie oben hinzufügen. Updates müssen dann ebenfalls von Hand kopiert werden. Der Ordner im Repository
 allein reicht nicht, weil er die Rechenlogik aus `core/` nur verlinkt; das Zip enthält sie.
 
+### Karte für das Dashboard
+
+Die Integration bringt eine Lovelace-Karte mit Energiefluss, Akku-Ring mit SoC-Grenzen und Restzeit sowie Ersparnis
+und Autarkie von heute mit. Sie wird automatisch geladen, ein Eintrag unter *Ressourcen* ist nicht nötig. Im
+Dashboard *Bearbeiten → Karte hinzufügen* und nach *Balkonaut* suchen, oder als YAML:
+
+```yaml
+type: custom:balkonaut-card
+```
+
+Im eigenständigen Betrieb zeigt die Karte die Leistungen live aus den zugeordneten Entitäten. Mit einer
+Balkonaut-App kommen sie aus deren letztem Stand. Optional: `title` für eine eigene Überschrift, `entry_id`, wenn
+mehrere Balkonaut-Einträge eingerichtet sind (ohne Angabe nimmt die Karte den eigenständigen).
+
 ### Einstellungen, Diagnose, Störungen
 
 - Unter *Konfigurieren*: das Abfrageintervall (Standard 5 Minuten), im eigenständigen Betrieb außerdem Preise,

@@ -12,15 +12,19 @@ from pathlib import Path
 import time
 
 import aiohttp
+import voluptuous as vol
 
+from homeassistant.components import websocket_api
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL, Platform
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.loader import async_get_integration
 
 from .core import analytics
 from .core.homeassistant import normalize
@@ -40,6 +44,8 @@ KEYS = ["grid_power", "pv_power", "pv_ac_power", "battery_power", "battery_soc",
         "pv_forecast_today", "pv_ac_forecast_today"]
 SIGNED_KEYS = ["grid_power", "pv_power", "pv_ac_power", "battery_power", "output_power"]
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.EVENT, Platform.SENSOR]
+CARD_URL = "/balkonaut/balkonaut-card.js"
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 _LOGGER = logging.getLogger(__name__)
 
 type BalkonautConfigEntry = ConfigEntry[BalkonautCoordinator]
@@ -153,6 +159,37 @@ def _store(storage: Storage, ts: int, values: dict) -> None:
 def _open_storage(path: Path) -> Storage:
     path.parent.mkdir(exist_ok=True)
     return Storage(path)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """WebSocket-Befehl und Lovelace-Karte, unabhängig von den Einträgen."""
+    websocket_api.async_register_command(hass, ws_status)
+    if "http" in hass.config.components:
+        from homeassistant.components.http import StaticPathConfig
+
+        card = Path(__file__).parent / "frontend" / "balkonaut-card.js"
+        await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(card), cache_headers=False)])
+    if "frontend" in hass.config.components:  # Karte ohne manuellen Ressourcen-Eintrag laden
+        from homeassistant.components.frontend import add_extra_js_url
+
+        version = (await async_get_integration(hass, DOMAIN)).version
+        add_extra_js_url(hass, f"{CARD_URL}?v={version}")
+    return True
+
+
+@websocket_api.websocket_command({vol.Required("type"): "balkonaut/status", vol.Optional("entry_id"): str})
+@callback
+def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+    """Status für Karte und Panel: berechnete Werte und, im eigenständigen Betrieb, die zugeordneten Entitäten
+    für Live-Werte. Ohne entry_id der eigenständige Eintrag, sonst der erste."""
+    entries = sorted(hass.config_entries.async_loaded_entries(DOMAIN), key=lambda e: CONF_ENTITIES not in e.data)
+    entry = next((e for e in entries if e.entry_id == msg.get("entry_id", e.entry_id)), None)
+    if entry is None:
+        connection.send_error(msg["id"], "not_found", "Kein Balkonaut-Eintrag geladen")
+        return
+    connection.send_result(msg["id"], {
+        "entry_id": entry.entry_id, "entities": entry.data.get(CONF_ENTITIES), "invert": entry.data.get(CONF_INVERT, []),
+        "status": entry.runtime_data.data})
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) -> bool:

@@ -2,16 +2,21 @@
   "domain": "balkonaut",
   "name": "Balkonaut",
   "after_dependencies": [
+    "frontend",
+    "http",
     "recorder"
   ],
   "codeowners": [
     "@Gruudash"
   ],
   "config_flow": true,
+  "dependencies": [
+    "websocket_api"
+  ],
   "documentation": "https://github.com/balkonaut/balkonaut",
   "integration_type": "service",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/balkonaut/balkonaut/issues",
   "requirements": [],
-  "version": "0.2.1"
+  "version": "0.3.0"
 }

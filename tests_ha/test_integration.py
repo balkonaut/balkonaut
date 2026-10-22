@@ -172,3 +172,22 @@ async def test_standalone_backfill(hass, freezer):
     hours = [h for key, h, mean, *_ in hourly if key == "grid_power" and mean == 400]
     assert len(hours) >= 4  # volle Stunden vor der ersten eigenen Messung
     assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_websocket_and_card(hass, hass_ws_client, hass_client):
+    hass.states.async_set("sensor.soc", "50", {"unit_of_measurement": "%"})
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone",
+                            data={"entities": {"battery_soc": "sensor.soc"}, "invert": ["output_power"]})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    ws = await hass_ws_client(hass)
+    await ws.send_json({"id": 1, "type": "balkonaut/status"})
+    msg = await ws.receive_json()
+    assert msg["success"] and msg["result"]["entities"] == {"battery_soc": "sensor.soc"}
+    assert msg["result"]["invert"] == ["output_power"] and "tag" in msg["result"]["status"]["bilanz"]
+    await ws.send_json({"id": 2, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})
+    assert (await ws.receive_json())["error"]["code"] == "not_found"
+    resp = await (await hass_client()).get("/balkonaut/balkonaut-card.js")
+    assert resp.status == 200 and "customElements.define" in await resp.text()
+    assert await hass.config_entries.async_unload(entry.entry_id)
