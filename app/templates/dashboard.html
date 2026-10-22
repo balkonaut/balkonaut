@@ -109,7 +109,8 @@
         {% for m in gauge.marks %}<line class="t-{{ m.key }}" x1="{{ m.x1 }}" y1="{{ m.y1 }}" x2="{{ m.x2 }}" y2="{{ m.y2 }}"/>{% endfor %}
       </svg>
       <div><div class="value">{{ gauge.soc|de(0) }}<span class="unit">%</span></div>
-        <div class="label">{{ "lädt" if (batt or 0) > 5 else "entlädt" if (batt or 0) < -5 else "ruht" }}{% if (batt or 0)|abs > 5 %} mit {{ batt|abs_de(0) }} W{% endif %}</div></div>
+        <div class="label">{{ "lädt" if (batt or 0) > 5 else "entlädt" if (batt or 0) < -5 else "ruht" }}{% if (batt or 0)|abs > 5 %} mit {{ batt|abs_de(0) }} W{% endif %}</div>
+        {% if gauge.rest %}{% set m = gauge.rest.minutes %}<div class="label">{{ gauge.rest.target|de(0) }} % in ca. {% if m >= 60 %}{{ m // 60 }} h {% endif %}{{ m % 60 }} min</div>{% endif %}</div>
     </div>
     {% if gauge.marks %}<div class="lim-key">{% for m in gauge.marks %}<span><i class="t-{{ m.key }}"></i>{{ m.name }} {{ m.value|de(0) }} %</span>{% endfor %}</div>{% endif %}
     {% else %}<p class="label">Noch kein Ladestand.</p>{% endif %}

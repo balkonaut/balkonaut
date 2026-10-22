@@ -75,7 +75,14 @@ def soc_gauge(live):
                           "x1": round(50 + 34 * c, 2), "y1": round(50 + 34 * s, 2),
                           "x2": round(50 + 50 * c, 2), "y2": round(50 + 50 * s, 2)})
     share = (soc - lo) / (hi - lo) if hi > lo else 1
-    return {"soc": soc, "lo": lo, "hi": hi, "hue": round(min(max(share, 0), 1) * 130), "marks": marks}
+    # Restzeit bis zur Obergrenze (laden) bzw. Minimum oder Entladeschutz (entladen)
+    # ponytail: ohne Wandlungsverluste und bei gleichbleibender Leistung, Verlauf glätten falls es springt
+    power, cap, rest = live.get("battery_power") or 0, live.get("battery_capacity"), None
+    target = hi if power > 0 else max(lo, live.get("battery_discharge_protection") or 0)
+    if cap and abs(power) >= 20 and (target - soc) * power > 0:
+        minutes = round((target - soc) / 100 * cap * 60000 / power)
+        rest = {"target": target, "minutes": minutes} if minutes <= 48 * 60 else None
+    return {"soc": soc, "lo": lo, "hi": hi, "hue": round(min(max(share, 0), 1) * 130), "marks": marks, "rest": rest}
 
 
 log = logging.getLogger(__name__)

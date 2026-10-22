@@ -35,6 +35,10 @@ Bereiche außerhalb sind abgedunkelt:
 
 Alle drei sind optional (siehe [Einstellungen](einstellungen.md)). Fehlen die Grenzen, rechnet die Farbe mit 0 bis 100 %.
 
+Lädt oder entlädt der Akku, steht unter dem Ladestand, wann er bei gleichbleibender Leistung die Obergrenze bzw. die
+Untergrenze erreicht (beim Entladen der höhere Wert aus Minimum und Entladeschutz). Dafür braucht Balkonaut die
+Akkukapazität (`battery_capacity`). Wandlungsverluste sind nicht eingerechnet, die Angabe ist deshalb etwas optimistisch.
+
 ## Verlauf
 
 Die Seite *Verlauf* zeigt Tag (Stunden), Woche, Monat (je Tag) und Jahr (je Monat) als Balkendiagramm:

@@ -94,3 +94,8 @@ def test_soc_gauge():
     assert g["hue"] == 65 and g["marks"] == []
     top = soc_gauge({"battery_soc": 1, "battery_soc_max": 25})["marks"][0]  # 25 % liegt im gedrehten Ring rechts
     assert (top["x1"], top["y1"]) == (50, 84)
+    live = {"battery_soc": 50, "battery_soc_min": 10, "battery_soc_max": 95, "battery_capacity": 6.0}
+    assert soc_gauge({**live, "battery_power": 600})["rest"] == {"target": 95, "minutes": 270}  # 2,7 kWh mit 0,6 kW
+    assert soc_gauge({**live, "battery_power": -600, "battery_discharge_protection": 12})["rest"]["target"] == 12
+    assert soc_gauge({**live, "battery_power": 5})["rest"] is None  # ruht
+    assert soc_gauge({**live, "battery_soc": 96, "battery_power": 300})["rest"] is None  # über der Grenze
