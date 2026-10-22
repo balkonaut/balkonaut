@@ -5,15 +5,40 @@ Balkonaut rechnet aus den Messwerten für **heute**, **diesen Monat**, **dieses 
 
 ## Übersicht
 
-Die Startseite `http://<adresse>:8000/` zeigt die aktuellen Leistungswerte, die Bilanz für den
-gewählten Zeitraum, den heutigen Hausverbrauch je Stunde (Anteil Balkonkraftwerk und Netz) und den
-Stand der Amortisation. Sie lädt sich jede Minute neu. Sind die letzten Messwerte älter als
-zwei Minuten, erscheint ein Hinweis: Dann ist meist Home Assistant nicht erreichbar.
+Die Startseite `http://<adresse>:8000/` zeigt oben die Ersparnis von heute, den Energiefluss, den Akku
+und die Autarkie von heute. Darunter folgen die Bilanz für den gewählten Zeitraum, die Akku-Kennzahlen,
+der heutige Hausverbrauch je Stunde (Anteil Balkonkraftwerk und Netz) und der Stand der Amortisation.
+Die Seite lädt sich jede Minute neu. Sind die letzten Messwerte älter als zwei Minuten, wird der Punkt
+neben „Energiefluss jetzt“ orange und oben erscheint ein Hinweis: Dann ist meist Home Assistant nicht erreichbar.
+
+Hell oder dunkel richtet sich nach der Einstellung des Geräts.
+
+### Energiefluss
+
+Das Bild zeigt, wohin die Leistung gerade fließt: von der **Sonne** (beide Wechselrichter zusammen) in den
+Speicher-Wechselrichter, von dort in den **Akku** oder ins **Haus**, und zwischen **Netz** und Haus.
+Je mehr Leistung, desto dicker die Leitung und desto schneller laufen die Striche. Die Laufrichtung zeigt,
+ob der Akku lädt oder entlädt und ob Strom aus dem Netz kommt oder eingespeist wird. Der Wert am Haus ist der
+Hausverbrauch, also Abgabe des Balkonkraftwerks plus Netzbezug.
+
+### Akku
+
+Der Ring zeigt den Ladestand. Seine Farbe geht von Rot an der eingestellten Untergrenze bis Grün an der
+Obergrenze. Die Grenzen erscheinen als farbige Striche im Ring und im Akku-Feld des Energieflusses, die
+Bereiche außerhalb sind abgedunkelt:
+
+| Strich | Bedeutung | Messgröße |
+|---|---|---|
+| rot | Minimum, darunter entlädt der Speicher nicht | `battery_soc_min` |
+| orange | Entladeschutz | `battery_discharge_protection` |
+| grün | Maximum, darüber lädt der Speicher nicht | `battery_soc_max` |
+
+Alle drei sind optional (siehe [Einstellungen](einstellungen.md)). Fehlen die Grenzen, rechnet die Farbe mit 0 bis 100 %.
 
 ## Verlauf
 
 Die Seite *Verlauf* zeigt Tag (Stunden), Woche, Monat (je Tag) und Jahr (je Monat) als Balkendiagramm:
-grün der Teil des Hausverbrauchs, den das Balkonkraftwerk gedeckt hat, gelb der Netzbezug, der dunkle Strich
+grün der Teil des Hausverbrauchs, den das Balkonkraftwerk gedeckt hat, blau der Netzbezug, der gelbe Strich
 die Erzeugung. Mit *zurück* und *weiter* blätterst du durch die Zeiträume, darunter steht die Bilanz des
 gewählten Zeitraums.
 

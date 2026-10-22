@@ -82,3 +82,15 @@ def test_store_regulation_days(client):
     assert days[yesterday.isoformat()]["anteil_nahe_null"] == 1
     r = client.get(f"/api/v1/bericht?monat={yesterday:%Y-%m}").json()
     assert r["nulleinspeisung"]["tage"] == 1
+
+
+def test_soc_gauge():
+    from app.main import soc_gauge
+    assert soc_gauge({}) is None
+    g = soc_gauge({"battery_soc": 10, "battery_soc_min": 10, "battery_soc_max": 95, "battery_discharge_protection": 12})
+    assert g["hue"] == 0 and [m["key"] for m in g["marks"]] == ["lo", "prot", "hi"]
+    assert soc_gauge({"battery_soc": 95, "battery_soc_min": 10, "battery_soc_max": 95})["hue"] == 130
+    g = soc_gauge({"battery_soc": 50})  # ohne Grenzen: 0 bis 100 %
+    assert g["hue"] == 65 and g["marks"] == []
+    top = soc_gauge({"battery_soc": 1, "battery_soc_max": 25})["marks"][0]  # 25 % liegt im gedrehten Ring rechts
+    assert (top["x1"], top["y1"]) == (50, 84)

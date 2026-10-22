@@ -3,26 +3,128 @@
 {% block title %}Übersicht{% endblock %}
 {% block content %}
 <style>
-  h2 { font-size: 1.1rem; margin: 1.75rem 0 .5rem; }
-  .bar { height: .75rem; background: var(--line); border-radius: 999px; overflow: hidden; margin: .5rem 0; }
+  .bento { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); }
+  .span2 { grid-column: span 2; } .row2 { grid-row: span 2; }
+  @media (max-width: 960px) { .bento { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .bento { grid-template-columns: 1fr; } .span2 { grid-column: auto; } .row2 { grid-row: auto; } }
+  .eyebrow { display: flex; align-items: center; gap: 8px; }
+  .chip { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 4px; }
+  .big { font: 600 clamp(34px, 5vw, 52px)/1.05 var(--mono); letter-spacing: -.04em; font-variant-numeric: tabular-nums; margin: 12px 0; }
+  .unit { font-size: .55em; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
+  .hero { border-top: 3px solid var(--sun); }
+  .hero p { margin: 0; font-size: 17px; max-width: 34ch; }
+
+  .live { display: inline-flex; align-items: center; gap: 8px; font: 12px var(--mono); color: var(--muted); }
+  .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--leaf); }
+  .live.stale i { background: var(--warn); }
+
+  .flow svg { margin: 8px 0; }
+  .lane { fill: none; stroke: var(--line); }
+  .pulse { fill: none; stroke: currentColor; stroke-dasharray: 8 16; animation: run 2s linear infinite; filter: drop-shadow(0 0 4px currentColor); }
+  .pulse.rev { animation-direction: reverse; }
+  @keyframes run { to { stroke-dashoffset: -24; } }
+  .node > rect:first-child { fill: var(--card); stroke: var(--c); stroke-width: 1.5; rx: 6px; }
+  .node .ico { color: var(--c); stroke-width: 1.8; }
+  .node .lbl { font: 600 11px var(--mono); fill: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+  .node .w { font: 700 19px var(--mono); fill: var(--ink); }
+  .hub rect { fill: var(--sun-soft); stroke: var(--sun); stroke-width: 1.5; rx: 4px; }
+  .hub text { font: 700 11px var(--mono); fill: var(--sun-ink); text-anchor: middle; letter-spacing: .06em; }
+
+  /* Akku-Ring: Farbe nach Ladestand zwischen den Grenzen, gesperrte Bereiche gedämpft */
+  .ring { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+  .ring svg { flex: none; width: 96px; height: 96px; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 10; }
+  .ring .track { stroke: var(--line); }
+  .ring .lock { stroke: var(--muted); stroke-opacity: .4; }
+  .ring .seg { stroke: var(--card); stroke-width: 12; stroke-dasharray: 2 11.2; }
+  .ring line { stroke-width: 3; }
+  .soc { stroke: hsl(var(--soc-h) 72% var(--soc-l)); fill: hsl(var(--soc-h) 72% var(--soc-l)); }
+  .t-lo { stroke: var(--lim-lo); fill: var(--lim-lo); background: var(--lim-lo); }
+  .t-prot { stroke: var(--lim-prot); fill: var(--lim-prot); background: var(--lim-prot); }
+  .t-hi { stroke: var(--leaf); fill: var(--leaf); background: var(--leaf); }
+  .lim-key { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .lim-key i { display: inline-block; width: 3px; height: 12px; margin-right: 5px; vertical-align: -2px; }
+
+  .bar { height: 10px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 8px 0 16px; }
   .bar span { display: block; height: 100%; background: var(--leaf); }
 </style>
 {% if not prices_set %}<p class="note err">Arbeitspreis und Anschaffungskosten fehlen, Euro-Beträge stehen deshalb auf 0. <a href="/einstellungen">Jetzt eintragen</a></p>{% endif %}
-
-<h2>Jetzt</h2>
-<div class="grid">
-  <div class="card"><div class="label">Balkonkraftwerk ins Haus</div><div class="value">{{ live.output_power|de(0) }} W</div></div>
-  <div class="card"><div class="label">PV-Erzeugung</div><div class="value">{{ live.pv|de(0) }} W</div></div>
-  <div class="card"><div class="label">{{ "Einspeisung" if (live.grid_power or 0) < 0 else "Netzbezug" }}</div><div class="value">{{ live.grid_power|abs_de(0) }} W</div></div>
-  <div class="card"><div class="label">Akku {{ "lädt" if (live.battery_power or 0) > 5 else "entlädt" if (live.battery_power or 0) < -5 else "" }}</div><div class="value">{{ live.battery_soc|de(0) }} %</div><div class="label">{{ live.battery_power|de(0) }} W</div></div>
-</div>
-{% if live_age is none %}<p class="label">Noch keine Messwerte.</p>
-{% else %}<p class="label">Stand vor {{ live_age|ago }}</p>{% endif %}
 {% for w in warnings %}<p class="note err">{{ w.text }}</p>{% endfor %}
+
+{% macro line(d, watts, color, reverse=false) %}{% set a = (watts or 0)|abs %}{% set width = (2 + [8, a / 80]|min)|round(1) %}
+  <path class="lane" d="{{ d }}" stroke-width="{{ width }}"/>
+  {% if a >= 5 %}<path class="pulse{{ ' rev' if reverse }}" d="{{ d }}" stroke-width="{{ width }}" style="color:{{ color }};animation-duration:{{ [0.5, 2.4 - a / 400]|max|round(2) }}s"/>{% endif %}
+{% endmacro %}
+{% macro node(x, y, color, label, watts, icon) %}
+  <g class="node" transform="translate({{ x }} {{ y }})" style="--c:{{ color }}"><rect width="120" height="56"/>
+    <text class="lbl" x="10" y="19">{{ label }}</text><svg x="100" y="7" width="16" height="16" viewBox="0 0 24 24" class="ico"><use href="#i-{{ icon }}"/></svg>
+    <text class="w" x="10" y="41">{{ watts|abs_de(0) }} W</text>{{ caller() if caller }}</g>
+{% endmacro %}
+{% set batt = live.get("battery_power") %}{% set grid = live.get("grid_power") %}{% set out = live.get("output_power") %}
+{% set house = out + grid if out is not none and grid is not none else none %}
+
+<div class="bento" style="margin-top:8px">
+  <section class="card span2 hero">
+    <div class="eyebrow"><span class="chip" style="background:var(--sun-soft);color:var(--sun-ink)"><svg class="ico" aria-hidden="true"><use href="#i-coins"/></svg></span>Heute gespart</div>
+    <div class="big">{{ heute.ersparnis|de(2) }}<span class="unit">€</span></div>
+    <p>Heute <b>{{ heute.erzeugung|de(1) }} kWh</b> erzeugt, <b>{{ heute.autarkiegrad|pct }}</b> des Hausverbrauchs selbst gedeckt.</p>
+  </section>
+
+  <section class="card span2 row2 flow" aria-labelledby="flow-h">
+    <div class="eyebrow" style="justify-content:space-between">
+      <span id="flow-h">Energiefluss jetzt</span>
+      {% if live_age is none %}<span class="live stale"><i></i>Noch keine Messwerte</span>
+      {% else %}<span class="live{{ ' stale' if live_age > 120 }}"><i></i>vor {{ live_age|ago }}</span>{% endif %}
+    </div>
+    <svg viewBox="0 0 400 330" role="img" aria-label="Sonne {{ live.pv|de(0) }} W, Akku {{ batt|de(0) }} W, Haus {{ house|de(0) }} W, Netz {{ grid|de(0) }} W">
+      {{ line("M200 66 V145", live.pv, "var(--sun)") }}
+      {{ line("M170 165 H124", batt, "var(--batt-flow)", (batt or 0) < 0) }}
+      {{ line("M230 165 H276", house, "var(--leaf)") }}
+      {{ line("M200 185 V264", grid, "var(--sky)", (grid or 0) > 0) }}
+      <g class="hub"><rect x="170" y="145" width="60" height="40"/><text x="200" y="169">EZHI</text></g>
+      {{ node(140, 10, "var(--sun)", "Sonne", live.pv, "sun") }}
+      {% call node(4, 137, "var(--batt-flow)", "Akku lädt" if (batt or 0) > 5 else "Akku entlädt" if (batt or 0) < -5 else "Akku", batt, "batt") %}
+        {% if gauge %}<rect x="10" y="47" width="100" height="3" fill="var(--line)"/>
+        <rect x="10" y="47" width="{{ gauge.lo }}" height="3" fill="var(--muted)" fill-opacity=".45"/>
+        <rect x="{{ 10 + gauge.hi }}" y="47" width="{{ 100 - gauge.hi }}" height="3" fill="var(--muted)" fill-opacity=".45"/>
+        <rect class="soc" x="10" y="47" width="{{ [gauge.soc, 100]|min }}" height="3" style="--soc-h:{{ gauge.hue }}"/>
+        {% for m in gauge.marks %}<rect class="t-{{ m.key }}" x="{{ 9 + m.value }}" y="43" width="2" height="11"/>{% endfor %}{% endif %}
+      {% endcall %}
+      {{ node(276, 137, "var(--leaf)", "Haus", house, "home") }}
+      {{ node(140, 264, "var(--sky)", "Einspeisung" if (grid or 0) < -5 else "Netzbezug", grid, "pole") }}
+    </svg>
+    <p class="label" style="margin:0">Der EZHI verteilt die Sonnenenergie auf Akku und Haus. Die Leitungen werden mit der Leistung dicker und schneller.</p>
+  </section>
+
+  <section class="card">
+    <div class="eyebrow"><span class="chip" style="background:var(--batt-soft);color:var(--batt)"><svg class="ico" aria-hidden="true"><use href="#i-batt"/></svg></span>Akku</div>
+    {% if gauge %}{% set C = 2.639 %}
+    <div class="ring">
+      <svg viewBox="0 0 100 100" role="img" aria-label="Ladestand {{ gauge.soc|de(0) }} %">
+        <circle class="track" cx="50" cy="50" r="42"/>
+        <circle class="lock" cx="50" cy="50" r="42" stroke-dasharray="{{ gauge.lo * C }} 264"/>
+        <circle class="lock" cx="50" cy="50" r="42" stroke-dasharray="0 {{ gauge.hi * C }} {{ (100 - gauge.hi) * C }} 264"/>
+        <circle class="soc" cx="50" cy="50" r="42" style="--soc-h:{{ gauge.hue }};fill:none" stroke-dasharray="{{ [gauge.soc, 100]|min * C }} 264"/>
+        <circle class="seg" cx="50" cy="50" r="42"/>
+        {% for m in gauge.marks %}<line class="t-{{ m.key }}" x1="{{ m.x1 }}" y1="{{ m.y1 }}" x2="{{ m.x2 }}" y2="{{ m.y2 }}"/>{% endfor %}
+      </svg>
+      <div><div class="value">{{ gauge.soc|de(0) }}<span class="unit">%</span></div>
+        <div class="label">{{ "lädt" if (batt or 0) > 5 else "entlädt" if (batt or 0) < -5 else "ruht" }}{% if (batt or 0)|abs > 5 %} mit {{ batt|abs_de(0) }} W{% endif %}</div></div>
+    </div>
+    {% if gauge.marks %}<div class="lim-key">{% for m in gauge.marks %}<span><i class="t-{{ m.key }}"></i>{{ m.name }} {{ m.value|de(0) }} %</span>{% endfor %}</div>{% endif %}
+    {% else %}<p class="label">Noch kein Ladestand.</p>{% endif %}
+  </section>
+
+  <section class="card">
+    <div class="eyebrow"><span class="chip" style="background:var(--leaf-soft);color:var(--leaf)"><svg class="ico" aria-hidden="true"><use href="#i-home"/></svg></span>Autarkie heute</div>
+    <div class="value" style="margin-top:14px">{{ heute.autarkiegrad|pct }}</div>
+    <div class="label">Eigenverbrauchsquote {{ heute.eigenverbrauchsquote|pct }}</div>
+  </section>
+</div>
 
 <h2>Bilanz</h2>
 <div class="tabs">{% for key, name in periods %}<a href="?zeitraum={{ key }}" class="{{ 'on' if key == period }}">{{ name }}</a>{% endfor %}</div>
-<div class="grid" style="margin-top:.75rem">
+<div class="grid" style="margin-top:16px">
   <div class="card"><div class="label">Ersparnis</div><div class="value">{{ b.ersparnis|de(2) }} €</div></div>
   <div class="card"><div class="label">Eigenverbrauch</div><div class="value">{{ b.eigenverbrauch|de(1) }} kWh</div></div>
   <div class="card"><div class="label">Autarkiegrad</div><div class="value">{{ b.autarkiegrad|pct }}</div></div>
@@ -43,7 +145,7 @@
   <div class="card"><div class="label">Stunden mit leerem Akku</div><div class="value">{{ akku.stunden_leer }}</div><div class="label">dabei Netzbezug {{ akku.netzbezug_bei_leerem_akku|de(1) }} kWh ({{ akku.kosten_bei_leerem_akku|de(2) }} €)</div></div>
 </div>
 
-<h2>Heute nach Stunden <a href="/verlauf" style="font-size:.85rem;font-weight:400">Verlauf</a></h2>
+<h2>Woher kam dein Strom? <a href="/verlauf" style="font-family:system-ui,sans-serif;text-transform:none;letter-spacing:0;font-weight:400">Verlauf</a></h2>
 <div class="card">
   {% include "_chart.html" %}
 </div>

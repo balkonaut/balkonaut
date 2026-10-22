@@ -58,6 +58,26 @@ def chart(bars):
     return {"bars": bars, "scale": 140 / peak if peak else 0, "ticks": ticks}
 
 
+def soc_gauge(live):
+    """Akku-Ring: Ladestand, Farbton von 0 (rot, Untergrenze) bis 130 (grün, Obergrenze) und Grenzmarken
+    als Striche im Ring (viewBox 100, Radius 34 bis 50). None ohne Ladestand."""
+    soc = live.get("battery_soc")
+    if soc is None:
+        return None
+    lo, hi = live.get("battery_soc_min") or 0, live.get("battery_soc_max") or 100
+    marks = []
+    for key, name, value in (("lo", "Minimum", live.get("battery_soc_min")),
+                             ("prot", "Entladeschutz", live.get("battery_discharge_protection")),
+                             ("hi", "Maximum", live.get("battery_soc_max"))):
+        if value is not None:
+            c, s = math.cos(value / 100 * 2 * math.pi), math.sin(value / 100 * 2 * math.pi)
+            marks.append({"key": key, "name": name, "value": value,
+                          "x1": round(50 + 34 * c, 2), "y1": round(50 + 34 * s, 2),
+                          "x2": round(50 + 50 * c, 2), "y2": round(50 + 50 * s, 2)})
+    share = (soc - lo) / (hi - lo) if hi > lo else 1
+    return {"soc": soc, "lo": lo, "hi": hi, "hue": round(min(max(share, 0), 1) * 130), "marks": marks}
+
+
 log = logging.getLogger(__name__)
 
 
@@ -186,7 +206,8 @@ def dashboard(request: Request, zeitraum: str = "tag"):
     a = st["amortisation"]
     return templates.TemplateResponse(request, "dashboard.html", {
         "periods": PERIODS, "period": period, "b": st["bilanz"][period], "akku": st["akku"][period],
-        "live": live, "live_age": int(time.time() - st["stand"].timestamp()) if st["stand"] else None,
+        "heute": st["bilanz"]["tag"], "live": live, "gauge": soc_gauge(live),
+        "live_age": int(time.time() - st["stand"].timestamp()) if st["stand"] else None,
         "chart": chart(bars), "a": a, "warnings": st["warnungen"],
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
         "prices_set": cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0,
