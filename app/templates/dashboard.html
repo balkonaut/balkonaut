@@ -48,7 +48,7 @@
   .bar { height: 10px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 8px 0 16px; }
   .bar span { display: block; height: 100%; background: var(--leaf); }
 </style>
-{% if not prices_set %}<p class="note err">Arbeitspreis und Anschaffungskosten fehlen, Euro-Beträge stehen deshalb auf 0. <a href="/einstellungen">Jetzt eintragen</a></p>{% endif %}
+{% if not prices_set %}<p class="note err">Arbeitspreis und Anschaffungskosten fehlen, Euro-Beträge stehen deshalb auf 0. <a href="einstellungen">Jetzt eintragen</a></p>{% endif %}
 {% for w in warnings %}<p class="note err">{{ w.text }}</p>{% endfor %}
 
 {% macro line(d, watts, color, reverse=false) %}{% set a = (watts or 0)|abs %}{% set width = (2 + [8, a / 80]|min)|round(1) %}
@@ -149,7 +149,7 @@
   <div class="card"><div class="label">Stunden mit leerem Akku</div><div class="value">{{ akku.stunden_leer }}</div><div class="label">dabei Netzbezug {{ akku.netzbezug_bei_leerem_akku|de(1) }} kWh ({{ akku.kosten_bei_leerem_akku|de(2) }} €)</div></div>
 </div>
 
-<h2>Woher kam dein Strom? <a href="/verlauf" style="font-family:system-ui,sans-serif;text-transform:none;letter-spacing:0;font-weight:400">Verlauf</a></h2>
+<h2>Woher kam dein Strom? <a href="verlauf" style="font-family:system-ui,sans-serif;text-transform:none;letter-spacing:0;font-weight:400">Verlauf</a></h2>
 <div class="card">
   {% include "_chart.html" %}
 </div>
@@ -164,7 +164,7 @@
     <div><div class="label">Amortisiert</div><div class="value">{% if a.jahre_bis_amortisation is none %}–{% elif a.rest == 0 %}bereits{% else %}{{ a.amortisiert_am.strftime("%m/%Y") }}{% endif %}</div>
       {% if a.jahre_bis_amortisation %}<div class="label">in {{ a.jahre_bis_amortisation|de(1) }} Jahren</div>{% endif %}</div>
   </div>
-  {% if a.basis == "messtage" %}<p class="label">Hochgerechnet aus {{ a.messtage|de(1) }} Messtagen{{ " nach erwartetem Jahresverlauf" if a.jahresverlauf else ", ohne Jahresverlauf" }}. Mit dem <a href="/einstellungen">Datum der Inbetriebnahme</a> wird sie genauer.</p>{% endif %}
+  {% if a.basis == "messtage" %}<p class="label">Hochgerechnet aus {{ a.messtage|de(1) }} Messtagen{{ " nach erwartetem Jahresverlauf" if a.jahresverlauf else ", ohne Jahresverlauf" }}. Mit dem <a href="einstellungen">Datum der Inbetriebnahme</a> wird sie genauer.</p>{% endif %}
   {% if a.erwarteter_ertrag_jahr %}<p class="label">Erwarteter Jahresertrag laut PVGIS: {{ a.erwarteter_ertrag_jahr|de(0) }} kWh.</p>{% endif %}
   {% if not a.zaehler_plausibel %}<p class="note err">Der Abgabezähler ist für den Zeitraum seit der Inbetriebnahme zu hoch. Stimmt das Datum?</p>{% endif %}
 </div>

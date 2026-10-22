@@ -23,4 +23,5 @@
   Damit rechnet die Amortisation mit dem echten Durchschnitt statt einer Hochrechnung.</p>
   <button type="submit">Speichern</button>
 </form>
+{% if integration_url() %}<p class="label">Adresse für die Home-Assistant-Integration: <code>{{ integration_url() }}</code></p>{% endif %}
 {% endblock %}

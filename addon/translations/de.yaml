@@ -1,0 +1,60 @@
+configuration:
+  entities:
+    name: Entitäten
+    description: Welche Home-Assistant-Entität liefert welche Messgröße. Leer lassen, was es nicht gibt.
+    fields:
+      grid_power:
+        name: Netzleistung
+        description: Leistung am Netzanschluss über alle Phasen in W, + Bezug, − Einspeisung
+      pv_power:
+        name: PV-Leistung am Speicher
+        description: PV-Leistung am Speicher-Wechselrichter in W
+      pv_ac_power:
+        name: PV-Leistung Zusatz
+        description: Weitere Erzeugung in W, z. B. ein Mikrowechselrichter am Speicher
+      battery_power:
+        name: Akkuleistung
+        description: In W, + Laden, − Entladen
+      battery_soc:
+        name: Ladestand
+        description: Akku-Ladestand in %
+      output_power:
+        name: Abgabe ins Haus
+        description: Leistung des Balkonkraftwerks ins Hausnetz in W, + Abgabe
+      output_energy:
+        name: Zähler Abgabe
+        description: Energiezähler der Abgabe ins Hausnetz
+      pv_energy:
+        name: Zähler PV
+        description: Energiezähler der PV-Erzeugung
+      battery_charge_energy:
+        name: Zähler Akku laden
+      battery_discharge_energy:
+        name: Zähler Akku entladen
+      battery_capacity:
+        name: Akkukapazität
+        description: Nutzbare Kapazität in kWh
+      battery_soh:
+        name: Akku-Gesundheit
+        description: State of Health in %
+      battery_soc_min:
+        name: Ladestand Minimum
+        description: Eingestellte Untergrenze in %
+      battery_soc_max:
+        name: Ladestand Maximum
+        description: Eingestellte Obergrenze in %
+      battery_discharge_protection:
+        name: Entladeschutz
+        description: Eingestellter Entladeschutz in %
+      output_power_limit:
+        name: Abgabelimit
+        description: Eingestelltes Abgabelimit des Speichers in W, sonst 800 W
+      pv_forecast_today:
+        name: Prognose Speicher
+        description: Prognose „Erzeugung heute“ in kWh für die Fläche am Speicher, z. B. Forecast.Solar
+      pv_ac_forecast_today:
+        name: Prognose Zusatz
+        description: Prognose „Erzeugung heute“ in kWh für die Fläche am zweiten Wechselrichter
+  invert:
+    name: Vorzeichen drehen
+    description: Messgrößen, deren Entität das umgekehrte Vorzeichen liefert, z. B. Abgabe ins Haus beim EZHI

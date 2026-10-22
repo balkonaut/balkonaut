@@ -21,6 +21,7 @@ def test_dashboard(client):
     assert r.status_code == 200
     assert "40 %" in r.text and "Jetzt eintragen" in r.text
     assert client.get("/?zeitraum=unsinn").status_code == 200
+    assert 'href="verlauf"' in r.text and 'href="/' not in r.text  # relativ, für Ingress
 
 
 def test_regulation_page(client):

@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import math
+import socket
 import time
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta
@@ -9,7 +10,7 @@ from pathlib import Path
 from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -33,7 +34,10 @@ templates.env.filters.update(
     pct=lambda v: "–" if v is None else de(v * 100, 0) + " %",
     ago=lambda s: f"{s} s" if s < 120 else f"{s // 60} min" if s < 7200 else f"{s // 3600} h",
 )
+# Adresse, unter der die Integration das Add-on erreicht (Hostname des Add-on-Containers im HA-Netz)
+templates.env.globals["integration_url"] = lambda: f"http://{socket.gethostname()}:8000" if config.addon() else None
 PERIODS = [("tag", "Heute"), ("monat", "Monat"), ("jahr", "Jahr"), ("gesamt", "Gesamt")]
+SUPERVISOR_IP = "172.30.32.2"  # Absender von Ingress-Anfragen im Add-on
 VIEWS = [("tag", "Tag"), ("woche", "Woche"), ("monat", "Monat"), ("jahr", "Jahr")]
 
 
@@ -125,6 +129,16 @@ async def lifespan(app):
 
 
 app = FastAPI(title="Balkonaut", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def addon_writes_via_ingress(request: Request, call_next):
+    """Im Add-on ändern nur Anfragen über Ingress (vom Supervisor) die Einstellungen; lesen dürfen auch
+    andere Container im HA-Netz, z. B. die Integration."""
+    sender = request.client and request.client.host
+    if config.addon() and request.method not in ("GET", "HEAD") and sender != SUPERVISOR_IP:
+        return PlainTextResponse("Einstellungen nur über Home Assistant änderbar", status_code=403)
+    return await call_next(request)
 # Gebautes Handbuch (MkDocs), im Container unter /srv/handbuch
 app.mount("/handbuch", StaticFiles(directory=Path(__file__).parent.parent / "handbuch", html=True, check_dir=False))
 
@@ -305,4 +319,4 @@ async def save_settings(request: Request):
     cfg["prices"].update(energy=values["energy"], feed_in=values["feed_in"])
     cfg["system"].update(cost=values["cost"], commissioned=day)
     config.save(request.app.state.config_path, cfg)
-    return RedirectResponse("/einstellungen?gespeichert=1", status_code=303)
+    return RedirectResponse("einstellungen?gespeichert=1", status_code=303)  # relativ wegen Ingress

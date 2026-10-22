@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {% block head %}{% endblock %}
-<link rel="icon" href="/handbuch/assets/logo.svg" type="image/svg+xml">
+<link rel="icon" href="handbuch/assets/logo.svg" type="image/svg+xml">
 <title>{% block title %}{% endblock %} · Balkonaut</title>
 <style>
   /* Farben aus dem Logo: Himmel #2f6690, Sonne #f2b733. Hell wie Papier, dunkel als Blaupause. */
@@ -84,11 +84,12 @@
 </svg>
 <main>
 <header>
-  <div class="brand"><img src="/handbuch/assets/logo.svg" alt="" width="36" height="36">Balkonaut</div>
+  <div class="brand"><img src="handbuch/assets/logo.svg" alt="" width="36" height="36">Balkonaut</div>
   <nav aria-label="Bereiche">
-    {% for href, name, icon in [("/", "Übersicht", "dash"), ("/verlauf", "Verlauf", "hist"), ("/nulleinspeisung", "Nulleinspeisung", "pulse"),
-                                ("/bericht", "Bericht", "file"), ("/einstellungen", "Einstellungen", "set"), ("/handbuch/", "Handbuch", "book")] %}
-    <a href="{{ href }}" aria-label="{{ name }}"{% if request.url.path == href %} aria-current="page"{% endif %}><svg class="ico" aria-hidden="true"><use href="#i-{{ icon }}"/></svg><span>{{ name }}</span></a>
+    {# Links relativ, damit sie auch unter dem Ingress-Pfad des Add-ons stimmen #}
+    {% for slug, name, icon in [("", "Übersicht", "dash"), ("verlauf", "Verlauf", "hist"), ("nulleinspeisung", "Nulleinspeisung", "pulse"),
+                                ("bericht", "Bericht", "file"), ("einstellungen", "Einstellungen", "set"), ("handbuch/", "Handbuch", "book")] %}
+    <a href="{{ slug or './' }}" aria-label="{{ name }}"{% if request.url.path == '/' + slug %} aria-current="page"{% endif %}><svg class="ico" aria-hidden="true"><use href="#i-{{ icon }}"/></svg><span>{{ name }}</span></a>
     {% endfor %}
   </nav>
 </header>

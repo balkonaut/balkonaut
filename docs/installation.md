@@ -1,6 +1,29 @@
 # Installation
 
-Balkonaut läuft als Docker-Container, zum Beispiel auf einer NAS.
+Balkonaut läuft als Add-on in Home Assistant oder als eigener Docker-Container, zum Beispiel auf einer NAS.
+
+## Als Home-Assistant-Add-on
+
+Das Add-on braucht Home Assistant OS oder Supervised (dort gibt es den Add-on-Store, in neueren Versionen „Apps“).
+Einen eigenen Server braucht es nicht, die Weboberfläche erscheint in der Seitenleiste von Home Assistant.
+
+1. *Einstellungen → Add-ons → Add-on-Store*, oben rechts die drei Punkte → *Repositories*, dort
+   `https://github.com/balkonaut/balkonaut` eintragen und *Hinzufügen*.
+2. Im Store *Balkonaut* öffnen und *Installieren*.
+3. Im Reiter *Konfiguration* unter *Entitäten* eintragen, welche Entität welche Messgröße liefert (Bedeutung siehe
+   [Einstellungen](einstellungen.md)). Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter
+   *Vorzeichen drehen* auswählen, beim EZHI zum Beispiel *output_power*. *Speichern*.
+4. *Starten* und *In Seitenleiste anzeigen* einschalten. Preise und Anschaffungskosten unter *Einstellungen* in
+   Balkonaut eintragen.
+
+Das Add-on greift über Home Assistant auf die Entitäten zu, ein Token ist nicht nötig. Alle Daten liegen im
+Add-on und sind in den Backups von Home Assistant enthalten. Änderungen an den Entitäten wirken nach einem
+Neustart des Add-ons. Die Übernahme des Verlaufs (siehe unten) ist im Add-on noch nicht möglich.
+
+Für die [Integration](#home-assistant-integration) als Adresse die eintragen, die Balkonaut im Add-on unter
+*Einstellungen* anzeigt (Form `http://…-balkonaut:8000`).
+
+## Als Docker-Container
 
 1. Repository herunterladen und in das Verzeichnis wechseln.
 2. Konfiguration anlegen: `config.example.yaml` nach `data/config.yaml` kopieren und anpassen
