@@ -362,3 +362,24 @@ def combine_regulation(days):
                max_abgabe=max((d["max_abgabe"] for d in days if d["max_abgabe"] is not None), default=None),
                anteil_ueber_limit=weighted("anteil_ueber_limit", "zeitraum_stunden"), tage=len(days))
     return out
+
+
+def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
+    """Gesamtstand wie /api/v1/status: Warnungen, Ertrag, letzte Messwerte, Bilanz und Akku für heute, Monat,
+    Jahr und gesamt sowie Amortisation. rows: Stundenwerte, latest: {Messgröße: (ts, wert)}."""
+    starts = periods(now)
+    watch = yield_watch(rows, now)
+    warnings = watch["warnungen"]
+    stand = max((ts for ts, _ in latest.values()), default=None)
+    if stand is not None and now - stand > 120:
+        warnings = [{"code": "keine_messwerte",
+                     "text": "Seit über 2 Minuten keine Messwerte, Verbindung zu Home Assistant prüfen"}] + warnings
+    return {
+        "warnungen": warnings,
+        "ertrag": watch["wechselrichter"],
+        "stand": datetime.fromtimestamp(stand, TZ) if stand is not None else None,
+        "live": {k: v for k, (_, v) in latest.items()},
+        "bilanz": {name: balance(rows, start, prices) for name, start in starts.items()},
+        "akku": {name: battery(rows, start, prices, commissioned) for name, start in starts.items()},
+        "amortisation": amortization(rows, prices, cost, commissioned, profile),
+    }

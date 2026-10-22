@@ -1,0 +1,28 @@
+# Integration für HACS: bei einem Release custom_components/balkonaut als Zip anhängen.
+# core/ liegt dort als Symlink und kommt als echte Dateien ins Zip (zip folgt Symlinks).
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Version prüfen
+        run: |
+          version=$(jq -r .version custom_components/balkonaut/manifest.json)
+          [ "v$version" = "${{ github.event.release.tag_name }}" ] || { echo "manifest.json $version passt nicht zu ${{ github.event.release.tag_name }}"; exit 1; }
+      - name: Zip bauen und anhängen
+        run: |
+          cd custom_components/balkonaut
+          zip -r ../../balkonaut.zip . -x "*/__pycache__/*" "__pycache__/*"
+          cd ../..
+          gh release upload "${{ github.event.release.tag_name }}" balkonaut.zip --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -2,7 +2,43 @@
   "config": {
     "step": {
       "user": {
-        "title": "Connect Balkonaut",
+        "title": "Balkonaut",
+        "description": "How should Balkonaut work?",
+        "menu_options": {
+          "standalone": "Standalone in Home Assistant",
+          "app": "With a Balkonaut app (Docker or add-on)"
+        }
+      },
+      "standalone": {
+        "title": "Assign entities",
+        "description": "Which entity provides which measurement? Leave missing ones empty. Balkonaut reads the values every 10 seconds and stores them in the Home Assistant configuration folder.",
+        "data": {
+          "grid_power": "Grid power",
+          "pv_power": "PV power at storage",
+          "pv_ac_power": "PV power, additional inverter",
+          "battery_power": "Battery power",
+          "battery_soc": "State of charge",
+          "output_power": "Output to the house",
+          "output_energy": "Output energy meter",
+          "pv_energy": "PV energy meter",
+          "battery_charge_energy": "Battery charge meter",
+          "battery_discharge_energy": "Battery discharge meter",
+          "battery_capacity": "Battery capacity",
+          "battery_soh": "Battery health",
+          "battery_soc_min": "Minimum state of charge",
+          "battery_soc_max": "Maximum state of charge",
+          "battery_discharge_protection": "Discharge protection",
+          "output_power_limit": "Output power limit",
+          "pv_forecast_today": "Forecast at storage",
+          "pv_ac_forecast_today": "Forecast, additional inverter",
+          "invert": "Invert sign"
+        },
+        "data_description": {
+          "invert": "Measurements whose entity reports the opposite sign, e.g. output to the house on the APsystems EZHI"
+        }
+      },
+      "app": {
+        "title": "Connect Balkonaut app",
         "description": "Address of the Balkonaut app, e.g. http://192.168.1.10:8000",
         "data": {
           "url": "Address"
@@ -10,7 +46,8 @@
       }
     },
     "error": {
-      "cannot_connect": "Balkonaut cannot be reached at this address."
+      "cannot_connect": "Balkonaut cannot be reached at this address.",
+      "no_entities": "Please select at least one entity."
     },
     "abort": {
       "already_configured": "This Balkonaut app is already configured."
@@ -117,6 +154,17 @@
     "unreachable": {
       "title": "Balkonaut unreachable",
       "description": "Home Assistant has not reached the Balkonaut app at {url} for several polls. Is the container running and is the address still correct? This notice disappears once the app responds again."
+    }
+  },
+  "selector": {
+    "invert": {
+      "options": {
+        "grid_power": "Grid power",
+        "pv_power": "PV power at storage",
+        "pv_ac_power": "PV power, additional inverter",
+        "battery_power": "Battery power",
+        "output_power": "Output to the house"
+      }
     }
   }
 }

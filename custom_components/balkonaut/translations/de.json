@@ -2,7 +2,43 @@
   "config": {
     "step": {
       "user": {
-        "title": "Balkonaut verbinden",
+        "title": "Balkonaut",
+        "description": "Wie soll Balkonaut arbeiten?",
+        "menu_options": {
+          "standalone": "Eigenständig in Home Assistant",
+          "app": "Mit einer Balkonaut-App (Docker oder Add-on)"
+        }
+      },
+      "standalone": {
+        "title": "Entitäten zuordnen",
+        "description": "Welche Entität liefert welche Messgröße? Nicht vorhandene leer lassen. Balkonaut liest die Werte alle 10 Sekunden und speichert sie im Home-Assistant-Konfigurationsordner.",
+        "data": {
+          "grid_power": "Netzleistung",
+          "pv_power": "PV-Leistung am Speicher",
+          "pv_ac_power": "PV-Leistung Zusatz",
+          "battery_power": "Akkuleistung",
+          "battery_soc": "Ladestand",
+          "output_power": "Abgabe ins Haus",
+          "output_energy": "Zähler Abgabe",
+          "pv_energy": "Zähler PV",
+          "battery_charge_energy": "Zähler Akku laden",
+          "battery_discharge_energy": "Zähler Akku entladen",
+          "battery_capacity": "Akkukapazität",
+          "battery_soh": "Akku-Gesundheit",
+          "battery_soc_min": "Ladestand Minimum",
+          "battery_soc_max": "Ladestand Maximum",
+          "battery_discharge_protection": "Entladeschutz",
+          "output_power_limit": "Abgabelimit",
+          "pv_forecast_today": "Prognose Speicher",
+          "pv_ac_forecast_today": "Prognose Zusatz",
+          "invert": "Vorzeichen drehen"
+        },
+        "data_description": {
+          "invert": "Messgrößen, deren Entität das umgekehrte Vorzeichen liefert, z. B. Abgabe ins Haus beim APsystems EZHI"
+        }
+      },
+      "app": {
+        "title": "Balkonaut-App verbinden",
         "description": "Adresse der Balkonaut-App, z. B. http://192.168.1.10:8000",
         "data": {
           "url": "Adresse"
@@ -10,7 +46,8 @@
       }
     },
     "error": {
-      "cannot_connect": "Balkonaut ist unter dieser Adresse nicht erreichbar."
+      "cannot_connect": "Balkonaut ist unter dieser Adresse nicht erreichbar.",
+      "no_entities": "Bitte mindestens eine Entität wählen."
     },
     "abort": {
       "already_configured": "Diese Balkonaut-App ist bereits eingerichtet."
@@ -117,6 +154,17 @@
     "unreachable": {
       "title": "Balkonaut nicht erreichbar",
       "description": "Home Assistant erreicht die Balkonaut-App unter {url} seit mehreren Abfragen nicht. Läuft der Container? Ist die Adresse noch richtig? Der Hinweis verschwindet, sobald die App wieder antwortet."
+    }
+  },
+  "selector": {
+    "invert": {
+      "options": {
+        "grid_power": "Netzleistung",
+        "pv_power": "PV-Leistung am Speicher",
+        "pv_ac_power": "PV-Leistung Zusatz",
+        "battery_power": "Akkuleistung",
+        "output_power": "Abgabe ins Haus"
+      }
     }
   }
 }

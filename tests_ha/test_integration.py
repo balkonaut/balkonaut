@@ -16,9 +16,16 @@ STATUS = {
 }
 
 
+async def start_flow(hass, step):
+    """Einrichtung starten und im Menü die Betriebsart wählen."""
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+    assert result["type"] is FlowResultType.MENU
+    return await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": step})
+
+
 async def test_config_flow(hass, aioclient_mock):
     aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
-    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+    result = await start_flow(hass, "app")
     assert result["type"] is FlowResultType.FORM
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_URL: f" {URL}/ "})
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -27,7 +34,7 @@ async def test_config_flow(hass, aioclient_mock):
 
 async def test_config_flow_cannot_connect(hass, aioclient_mock):
     aioclient_mock.get(f"{URL}/api/v1/status", status=500)
-    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+    result = await start_flow(hass, "app")
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_URL: URL})
     assert result["type"] is FlowResultType.FORM and result["errors"] == {"base": "cannot_connect"}
 
@@ -104,3 +111,26 @@ async def test_unreachable_issue_and_diagnostics(hass, aioclient_mock):
 
     diag = await async_get_config_entry_diagnostics(hass, entry)
     assert diag["entry"]["data"][CONF_URL] == "**REDACTED**" and diag["status"]["bilanz"]["tag"]["ersparnis"] == 1.25
+
+
+async def test_standalone(hass):
+    hass.states.async_set("sensor.soc", "50", {"unit_of_measurement": "%"})
+    hass.states.async_set("sensor.abgabe", "-0.2", {"unit_of_measurement": "kW"})
+    hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
+    result = await start_flow(hass, "standalone")
+    assert (await hass.config_entries.flow.async_configure(result["flow_id"], {}))["errors"] == {"base": "no_entities"}
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {
+        "battery_soc": "sensor.soc", "output_power": "sensor.abgabe", "grid_power": "sensor.netz", "invert": ["output_power"]})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"] == {"entities": {"grid_power": "sensor.netz", "battery_soc": "sensor.soc",
+                                           "output_power": "sensor.abgabe"}, "invert": ["output_power"]}
+    await hass.async_block_till_done()
+    assert (await start_flow(hass, "standalone"))["reason"] == "already_configured"  # nur eine eigene Datenbank
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    coordinator = entry.runtime_data
+    latest = await hass.async_add_executor_job(coordinator.storage.latest)
+    assert {k: v for k, (_, v) in latest.items()} == {"battery_soc": 50, "output_power": 200, "grid_power": 300}
+    assert coordinator.data["live"]["output_power"] == 200 and "tag" in coordinator.data["bilanz"]
+    assert len(hass.states.async_entity_ids("sensor")) == 3 + 22
+    assert await hass.config_entries.async_unload(entry.entry_id)

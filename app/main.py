@@ -156,24 +156,8 @@ def api_status(request: Request):
     cfg = config.load(request.app.state.config_path)
     storage = request.app.state.storage
     now = time.time()
-    rows = storage.hourly(int(now))
-    latest = storage.latest()
-    starts = analytics.periods(now)
-    watch = analytics.yield_watch(rows, now)
-    warnings = watch["warnungen"]
-    if latest and now - max(ts for ts, _ in latest.values()) > 120:
-        warnings = [{"code": "keine_messwerte", "text": "Seit über 2 Minuten keine Messwerte, Verbindung zu Home Assistant prüfen"}] + warnings
-    return {
-        "warnungen": warnings,
-        "ertrag": watch["wechselrichter"],
-        "stand": datetime.fromtimestamp(max(ts for ts, _ in latest.values()), analytics.TZ) if latest else None,
-        "live": {k: v for k, (_, v) in latest.items()},
-        "bilanz": {name: analytics.balance(rows, start, cfg["prices"]) for name, start in starts.items()},
-        "akku": {name: analytics.battery(rows, start, cfg["prices"], config.commissioned(cfg))
-                 for name, start in starts.items()},
-        "amortisation": analytics.amortization(rows, cfg["prices"], cfg["system"]["cost"], config.commissioned(cfg),
-                                               request.app.state.profile),
-    }
+    return analytics.status(storage.hourly(int(now)), storage.latest(), now, cfg["prices"], cfg["system"]["cost"],
+                            config.commissioned(cfg), request.app.state.profile)
 
 
 @app.get("/api/v1/verlauf")

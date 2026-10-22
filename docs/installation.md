@@ -89,25 +89,35 @@ mehrfach laufen.
 
 ## Home-Assistant-Integration
 
-Die Integration holt die Werte der laufenden Balkonaut-App nach Home Assistant: 22 Sensoren (Bilanz für heute,
-Monat und Jahr, Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Die App muss dafür
-laufen und von Home Assistant aus erreichbar sein.
+Die Integration bringt Balkonaut nach Home Assistant: 22 Sensoren (Bilanz für heute, Monat und Jahr,
+Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Beim Einrichten gibt es zwei Betriebsarten:
+
+- **Eigenständig in Home Assistant**: Die Integration misst selbst. Man ordnet jeder Messgröße eine Entität zu
+  (Bedeutung siehe [Einstellungen](einstellungen.md)), Balkonaut liest die Werte alle 10 Sekunden und speichert sie
+  in `balkonaut/balkonaut.db` im Konfigurationsordner von Home Assistant. Eine App, ein Container oder ein Add-on ist
+  nicht nötig. Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter *Vorzeichen drehen* wählen, beim
+  EZHI zum Beispiel *Abgabe ins Haus*. Euro-Beträge stehen vorerst auf 0, Preise und Kosten kommen in einer der
+  nächsten Versionen als Optionen dazu. Die Weboberfläche mit Energiefluss und Verlauf gibt es in dieser Betriebsart
+  noch nicht.
+- **Mit einer Balkonaut-App**: Die Integration holt die Werte von einer laufenden Docker-App oder dem Add-on ab. Die
+  App muss laufen und von Home Assistant aus erreichbar sein.
 
 ### Installation über HACS
 
 1. In Home Assistant *HACS* öffnen, oben rechts die drei Punkte → *Benutzerdefinierte Repositories*.
 2. Als Repository `https://github.com/balkonaut/balkonaut` eintragen, Typ *Integration*, *Hinzufügen*.
 3. In HACS nach *Balkonaut* suchen, *Herunterladen*, danach Home Assistant neu starten.
-4. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Balkonaut*, Adresse der App eingeben
-   (z. B. `http://192.168.1.10:8000`).
+4. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Balkonaut*, Betriebsart wählen und entweder die
+   Entitäten zuordnen oder die Adresse der App eingeben (z. B. `http://192.168.1.10:8000`).
 
 Neue Versionen bietet HACS danach als Update an.
 
 ### Manuelle Installation
 
-Den Ordner `custom_components/balkonaut` aus dem Repository nach `config/custom_components/balkonaut` in Home
-Assistant kopieren (z. B. mit dem Add-on *Samba share* oder *Studio Code Server*), Home Assistant neu starten und die
-Integration wie oben hinzufügen. Updates müssen dann ebenfalls von Hand kopiert werden.
+Unter *Releases* auf GitHub `balkonaut.zip` herunterladen, nach `config/custom_components/balkonaut` in Home
+Assistant entpacken (z. B. mit dem Add-on *Samba share* oder *Studio Code Server*), Home Assistant neu starten und die
+Integration wie oben hinzufügen. Updates müssen dann ebenfalls von Hand kopiert werden. Der Ordner im Repository
+allein reicht nicht, weil er die Rechenlogik aus `core/` nur verlinkt; das Zip enthält sie.
 
 ### Einstellungen, Diagnose, Störungen
 
