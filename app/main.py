@@ -5,7 +5,7 @@ import math
 import socket
 import time
 from contextlib import asynccontextmanager
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -15,8 +15,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app import config
-from balkonaut import analytics, collector, pvgis
-from balkonaut.storage import RAW_DAYS, Storage
+from balkonaut import analytics, collector, pvgis, views
+from balkonaut.storage import Storage
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
@@ -39,15 +39,6 @@ templates.env.filters.update(
 templates.env.globals["integration_url"] = lambda: f"http://{socket.gethostname()}:8000" if config.addon() else None
 PERIODS = [("tag", "Heute"), ("monat", "Monat"), ("jahr", "Jahr"), ("gesamt", "Gesamt")]
 SUPERVISOR_IP = "172.30.32.2"  # Absender von Ingress-Anfragen im Add-on
-VIEWS = [("tag", "Tag"), ("woche", "Woche"), ("monat", "Monat"), ("jahr", "Jahr")]
-
-
-def parse_day(text, today):
-    """Datum aus der Adresszeile, bei leerer oder ungültiger Angabe heute."""
-    try:
-        return date.fromisoformat(text) if text else today
-    except ValueError:
-        return today
 
 
 def chart(bars):
@@ -168,17 +159,8 @@ def api_history(request: Request, ansicht: str = "tag", datum: str = ""):
 
 def report_data(request, monat):
     cfg = config.load(request.app.state.config_path)
-    today = datetime.now(analytics.TZ).date()
-    day = parse_day(monat + "-01" if monat else "", today)
-    rows = request.app.state.storage.hourly(int(time.time()))
-    r = analytics.month_report(rows, day, cfg["prices"], time.time(), request.app.state.profile, config.commissioned(cfg))
-    if r["weiter"] > today:
-        r["weiter"] = None
-    first = day.replace(day=1)
-    last = (first + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-    stored = request.app.state.storage.regulation_days(first.isoformat(), last.isoformat())
-    r["nulleinspeisung"] = analytics.combine_regulation(stored.values())
-    return r
+    return views.report(request.app.state.storage, monat, cfg["prices"], time.time(), request.app.state.profile,
+                        config.commissioned(cfg))
 
 
 @app.get("/api/v1/bericht")
@@ -222,53 +204,23 @@ def dashboard(request: Request, zeitraum: str = "tag"):
 
 def history_data(request, ansicht, datum):
     cfg = config.load(request.app.state.config_path)
-    today = datetime.now(analytics.TZ).date()
-    day = parse_day(datum, today)
-    view = ansicht if ansicht in dict(VIEWS) else "tag"
-    title, buckets, prev, nxt = analytics.buckets(view, day)
-    rows = request.app.state.storage.hourly(int(time.time()))
-    bars = analytics.history(rows, buckets, cfg["prices"])
-    total = analytics.balance([r for r in rows if r[1] < buckets[-1][2]], buckets[0][1], cfg["prices"])
-    return {"ansicht": view, "titel": title, "zurueck": prev, "weiter": nxt if nxt <= today else None,
-            "balken": bars, "bilanz": total}
+    return views.history(request.app.state.storage, ansicht, datum, cfg["prices"], time.time())
 
 
 @app.get("/verlauf", include_in_schema=False)
 def history(request: Request, ansicht: str = "tag", datum: str = ""):
     d = history_data(request, ansicht, datum)
     return templates.TemplateResponse(request, "history.html", {
-        "views": VIEWS, "view": d["ansicht"], "title": d["titel"], "prev": d["zurueck"], "next": d["weiter"],
+        "views": views.VIEWS.items(), "view": d["ansicht"], "title": d["titel"], "prev": d["zurueck"], "next": d["weiter"],
         "chart": chart(d["balken"]), "b": d["bilanz"],
     })
-
-
-REGULATION_KEYS = ["grid_power", "output_power", "pv_ac_power", "battery_soc"]
-
-
-def regulation_between(storage, prices, start, end):
-    latest = {k: v for k, (_, v) in storage.latest().items()}
-    series = storage.series(start, REGULATION_KEYS, end)
-    return analytics.regulation(series, prices, soc_min=latest.get("battery_soc_min") or 10,
-                                limit=latest.get("output_power_limit") or 800)
-
-
-def store_regulation_days(storage, cfg):
-    """Regelgüte für jeden abgeschlossenen Tag mit Rohwerten berechnen, der noch nicht gespeichert ist."""
-    today = datetime.now(analytics.TZ).date()
-    days = [today - timedelta(days=i) for i in range(RAW_DAYS - 1, 0, -1)]
-    stored = storage.regulation_days(days[0].isoformat(), days[-1].isoformat())
-    for day in days:
-        if day.isoformat() not in stored:
-            start = datetime.combine(day, datetime.min.time(), analytics.TZ).timestamp()
-            r = regulation_between(storage, cfg["prices"], start, start + 86400)
-            if r:
-                storage.save_regulation_day(day.isoformat(), r)
 
 
 async def regulation_job(app):
     while True:  # stündlich; neue Tage kommen nach Mitternacht dazu
         try:
-            await asyncio.to_thread(store_regulation_days, app.state.storage, config.load(app.state.config_path))
+            await asyncio.to_thread(views.store_regulation_days, app.state.storage,
+                                    config.load(app.state.config_path)["prices"], time.time())
         except Exception:
             log.exception("Tageswerte der Regelgüte nicht gespeichert")
         await asyncio.sleep(3600)
@@ -276,7 +228,7 @@ async def regulation_job(app):
 
 def regulation_data(request):
     cfg = config.load(request.app.state.config_path)
-    return regulation_between(request.app.state.storage, cfg["prices"], int(time.time()) - 7 * 86400, time.time())
+    return views.regulation_week(request.app.state.storage, cfg["prices"], time.time())
 
 
 @app.get("/nulleinspeisung", include_in_schema=False)

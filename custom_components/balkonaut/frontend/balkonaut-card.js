@@ -19,8 +19,8 @@ const STYLE = `
   ha-card { padding: 16px; }
   .head { display: flex; justify-content: space-between; align-items: center; font: 600 12px var(--bk-mono);
     text-transform: uppercase; letter-spacing: .08em; color: var(--bk-muted); }
-  .flow { display: block; width: 100%; height: auto; margin: 8px 0; }
-  .lane { fill: none; stroke: var(--bk-line); }
+  .flow { display: block; width: 100%; max-width: 520px; height: auto; margin: 8px auto; }  /* breit nicht riesig */
+  .lane { fill: none; stroke: color-mix(in srgb, var(--bk-muted) 30%, transparent); }  /* ruhend, in hell und dunkel sichtbar */
   .pulse { fill: none; stroke: currentColor; stroke-dasharray: 8 16; animation: run 2s linear infinite;
     filter: drop-shadow(0 0 4px currentColor); }
   .pulse.rev { animation-direction: reverse; }
@@ -66,6 +66,11 @@ class BalkonautCard extends HTMLElement {
 
   getCardSize() {
     return 7;
+  }
+
+  // Abschnittsansicht: volle Breite, damit der Energiefluss lesbar bleibt; mindestens eine halbe Spalte
+  getGridOptions() {
+    return { columns: 12, min_columns: 6 };
   }
 
   static getStubConfig() {
@@ -222,6 +227,8 @@ class BalkonautCard extends HTMLElement {
   }
 }
 
-customElements.define("balkonaut-card", BalkonautCard);
-window.customCards = window.customCards || [];
-window.customCards.push({ type: "balkonaut-card", name: "Balkonaut", description: "Energiefluss und Akku-Ring", preview: true });
+if (!customElements.get("balkonaut-card")) {
+  customElements.define("balkonaut-card", BalkonautCard);
+  window.customCards = window.customCards || [];
+  window.customCards.push({ type: "balkonaut-card", name: "Balkonaut", description: "Energiefluss und Akku-Ring", preview: true });
+}

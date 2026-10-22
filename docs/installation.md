@@ -98,8 +98,7 @@ Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Beim 
   nicht nötig. Beim ersten Start übernimmt Balkonaut einmalig den Verlauf der zugeordneten Entitäten aus dem Recorder
   von Home Assistant (standardmäßig die letzten 10 Tage), die Auswertung beginnt also nicht bei null. Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter *Vorzeichen drehen* wählen, beim
   EZHI zum Beispiel *Abgabe ins Haus*. Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme stehen
-  danach unter *Konfigurieren*; ohne sie sind die Euro-Beträge 0. Die Weboberfläche mit Energiefluss und Verlauf gibt
-  es in dieser Betriebsart noch nicht.
+  danach unter *Konfigurieren*; ohne sie sind die Euro-Beträge 0.
 - **Mit einer Balkonaut-App**: Die Integration holt die Werte von einer laufenden Docker-App oder dem Add-on ab. Die
   App muss laufen und von Home Assistant aus erreichbar sein.
 
@@ -119,6 +118,13 @@ Unter *Releases* auf GitHub `balkonaut.zip` herunterladen, nach `config/custom_c
 Assistant entpacken (z. B. mit dem Add-on *Samba share* oder *Studio Code Server*), Home Assistant neu starten und die
 Integration wie oben hinzufügen. Updates müssen dann ebenfalls von Hand kopiert werden. Der Ordner im Repository
 allein reicht nicht, weil er die Rechenlogik aus `core/` nur verlinkt; das Zip enthält sie.
+
+### Balkonaut in der Seitenleiste
+
+Sobald ein Balkonaut-Eintrag eingerichtet ist, erscheint *Balkonaut* in der Seitenleiste von Home Assistant, in beiden
+Betriebsarten. Dort gibt es dieselben Ansichten wie in der Docker-App: Übersicht mit Energiefluss, Bilanz, Akku,
+heutigem Verlauf und Amortisation, außerdem *Verlauf*, *Nulleinspeisung* und den Monatsbericht zum Drucken.
+*Einstellungen* führt zu den Optionen der Integration, *Handbuch* zu diesem Handbuch auf GitHub.
 
 ### Karte für das Dashboard
 

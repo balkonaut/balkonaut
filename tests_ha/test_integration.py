@@ -188,6 +188,26 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     assert msg["result"]["invert"] == ["output_power"] and "tag" in msg["result"]["status"]["bilanz"]
     await ws.send_json({"id": 2, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})
     assert (await ws.receive_json())["error"]["code"] == "not_found"
-    resp = await (await hass_client()).get("/balkonaut/balkonaut-card.js")
-    assert resp.status == 200 and "customElements.define" in await resp.text()
+    for i, (cmd, key) in enumerate([("verlauf", "balken"), ("bericht", "tage"), ("nulleinspeisung", None)], start=3):
+        await ws.send_json({"id": i, "type": f"balkonaut/{cmd}"})
+        msg = await ws.receive_json()
+        assert msg["success"] and (key is None or key in msg["result"]), cmd
+    client = await hass_client()
+    for name in ("balkonaut-card.js", "balkonaut-panel.js"):
+        resp = await client.get(f"/balkonaut_static/{name}")
+        assert resp.status == 200 and "customElements.define" in await resp.text()
     assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_views_from_app(hass, hass_ws_client, aioclient_mock):
+    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
+    aioclient_mock.get(f"{URL}/api/v1/verlauf?ansicht=woche&datum=", json={"balken": [], "titel": "KW 43"})
+    aioclient_mock.get(f"{URL}/api/v1/nulleinspeisung", status=500)
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_URL: URL})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    ws = await hass_ws_client(hass)
+    await ws.send_json({"id": 1, "type": "balkonaut/verlauf", "ansicht": "woche"})
+    assert (await ws.receive_json())["result"]["titel"] == "KW 43"  # von der App durchgereicht
+    await ws.send_json({"id": 2, "type": "balkonaut/nulleinspeisung"})
+    assert (await ws.receive_json())["error"]["code"] == "unreachable"

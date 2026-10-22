@@ -26,7 +26,7 @@ from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.loader import async_get_integration
 
-from .core import analytics
+from .core import analytics, views
 from .core.homeassistant import normalize
 from .core.storage import Storage
 
@@ -44,7 +44,9 @@ KEYS = ["grid_power", "pv_power", "pv_ac_power", "battery_power", "battery_soc",
         "pv_forecast_today", "pv_ac_forecast_today"]
 SIGNED_KEYS = ["grid_power", "pv_power", "pv_ac_power", "battery_power", "output_power"]
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.EVENT, Platform.SENSOR]
-CARD_URL = "/balkonaut/balkonaut-card.js"
+STATIC_URL = "/balkonaut_static"  # Karte und Panel aus frontend/, getrennt vom Panel-Pfad /balkonaut
+CARD_URL = f"{STATIC_URL}/balkonaut-card.js"
+PANEL = "balkonaut"  # Pfad des Panels in der Seitenleiste
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 _LOGGER = logging.getLogger(__name__)
 
@@ -100,16 +102,30 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
         self.failures = 0
         return data
 
-    async def _local_status(self) -> dict:
-        now = time.time()
+    @property
+    def prices(self) -> dict:
         opts = self.config_entry.options
+        return {"energy": opts.get("energy", 0.0), "feed_in": opts.get("feed_in", 0.0)}
+
+    @property
+    def commissioned(self) -> date | None:
+        return date.fromisoformat(day) if (day := self.config_entry.options.get("commissioned")) else None
+
+    async def async_compute(self, func, *args):
+        """func(storage, *args) im Executor, nacheinander mit den Schreibzugriffen; Ergebnis in JSON-Form wie die App."""
         async with self.lock:
-            rows, latest = await self.hass.async_add_executor_job(
-                lambda: (self.storage.hourly(int(now)), self.storage.latest()))
-        data = await self.hass.async_add_executor_job(
-            analytics.status, rows, latest, now, {"energy": opts.get("energy", 0.0), "feed_in": opts.get("feed_in", 0.0)},
-            opts.get("cost", 0.0), date.fromisoformat(day) if (day := opts.get("commissioned")) else None)
-        return json.loads(json.dumps(data, default=str))  # gleiche Form wie die Antwort der App (Datum als Text)
+            data = await self.hass.async_add_executor_job(func, self.storage, *args)
+        return json.loads(json.dumps(data, default=str))
+
+    async def _local_status(self) -> dict:
+        def status(storage, now):
+            return analytics.status(storage.hourly(int(now)), storage.latest(), now, self.prices,
+                                    self.config_entry.options.get("cost", 0.0), self.commissioned)
+        return await self.async_compute(status, time.time())
+
+    async def async_store_regulation(self, _now=None) -> None:
+        """Regelgüte abgeschlossener Tage sichern, solange die Rohwerte noch da sind (für den Monatsbericht)."""
+        await self.async_compute(views.store_regulation_days, self.prices, time.time())
 
     def _factor(self, key: str) -> int:
         return -1 if key in self.config_entry.data.get(CONF_INVERT, []) else 1
@@ -163,33 +179,80 @@ def _open_storage(path: Path) -> Storage:
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """WebSocket-Befehl und Lovelace-Karte, unabhängig von den Einträgen."""
-    websocket_api.async_register_command(hass, ws_status)
+    for command in (ws_status, ws_history, ws_report, ws_regulation):
+        websocket_api.async_register_command(hass, command)
     if "http" in hass.config.components:
         from homeassistant.components.http import StaticPathConfig
 
-        card = Path(__file__).parent / "frontend" / "balkonaut-card.js"
-        await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(card), cache_headers=False)])
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(STATIC_URL, str(Path(__file__).parent / "frontend"), cache_headers=False)])
     if "frontend" in hass.config.components:  # Karte ohne manuellen Ressourcen-Eintrag laden
         from homeassistant.components.frontend import add_extra_js_url
 
         version = (await async_get_integration(hass, DOMAIN)).version
         add_extra_js_url(hass, f"{CARD_URL}?v={version}")
+        hass.data[DOMAIN] = version
     return True
+
+
+def _entry(hass: HomeAssistant, entry_id: str | None) -> ConfigEntry | None:
+    """Geladener Eintrag mit entry_id, ohne Angabe der eigenständige, sonst der erste."""
+    entries = sorted(hass.config_entries.async_loaded_entries(DOMAIN), key=lambda e: CONF_ENTITIES not in e.data)
+    return next((e for e in entries if e.entry_id == (entry_id or e.entry_id)), None)
 
 
 @websocket_api.websocket_command({vol.Required("type"): "balkonaut/status", vol.Optional("entry_id"): str})
 @callback
 def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
     """Status für Karte und Panel: berechnete Werte und, im eigenständigen Betrieb, die zugeordneten Entitäten
-    für Live-Werte. Ohne entry_id der eigenständige Eintrag, sonst der erste."""
-    entries = sorted(hass.config_entries.async_loaded_entries(DOMAIN), key=lambda e: CONF_ENTITIES not in e.data)
-    entry = next((e for e in entries if e.entry_id == msg.get("entry_id", e.entry_id)), None)
-    if entry is None:
+    für Live-Werte."""
+    if (entry := _entry(hass, msg.get("entry_id"))) is None:
         connection.send_error(msg["id"], "not_found", "Kein Balkonaut-Eintrag geladen")
         return
     connection.send_result(msg["id"], {
         "entry_id": entry.entry_id, "entities": entry.data.get(CONF_ENTITIES), "invert": entry.data.get(CONF_INVERT, []),
         "status": entry.runtime_data.data})
+
+
+async def _view(hass, connection, msg, path: str, params: dict, compute) -> None:
+    """Ansicht eigenständig aus der eigenen Datenbank rechnen oder von der Balkonaut-App holen (/api/v1/<path>)."""
+    if (entry := _entry(hass, msg.get("entry_id"))) is None:
+        connection.send_error(msg["id"], "not_found", "Kein Balkonaut-Eintrag geladen")
+        return
+    coordinator = entry.runtime_data
+    if coordinator.storage:
+        connection.send_result(msg["id"], await coordinator.async_compute(compute, coordinator, time.time()))
+        return
+    try:
+        async with async_get_clientsession(hass).get(f"{coordinator.url}/api/v1/{path}", params=params,
+                                                     timeout=aiohttp.ClientTimeout(total=30)) as resp:
+            resp.raise_for_status()
+            connection.send_result(msg["id"], await resp.json())
+    except (aiohttp.ClientError, TimeoutError) as err:
+        connection.send_error(msg["id"], "unreachable", f"Balkonaut-App nicht erreichbar: {err}")
+
+
+@websocket_api.websocket_command({vol.Required("type"): "balkonaut/verlauf", vol.Optional("entry_id"): str,
+                                  vol.Optional("ansicht", default="tag"): str, vol.Optional("datum", default=""): str})
+@websocket_api.async_response
+async def ws_history(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+    await _view(hass, connection, msg, "verlauf", {"ansicht": msg["ansicht"], "datum": msg["datum"]},
+                lambda storage, c, now: views.history(storage, msg["ansicht"], msg["datum"], c.prices, now))
+
+
+@websocket_api.websocket_command({vol.Required("type"): "balkonaut/bericht", vol.Optional("entry_id"): str,
+                                  vol.Optional("monat", default=""): str})
+@websocket_api.async_response
+async def ws_report(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+    await _view(hass, connection, msg, "bericht", {"monat": msg["monat"]},
+                lambda storage, c, now: views.report(storage, msg["monat"], c.prices, now, None, c.commissioned))
+
+
+@websocket_api.websocket_command({vol.Required("type"): "balkonaut/nulleinspeisung", vol.Optional("entry_id"): str})
+@websocket_api.async_response
+async def ws_regulation(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+    await _view(hass, connection, msg, "nulleinspeisung", {},
+                lambda storage, c, now: views.regulation_week(storage, c.prices, now))
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) -> bool:
@@ -200,16 +263,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) ->
     if storage:
         await coordinator.async_sample()
         entry.async_on_unload(async_track_time_interval(hass, coordinator.async_sample, SAMPLE_INTERVAL))
+        entry.async_on_unload(async_track_time_interval(hass, coordinator.async_store_regulation, timedelta(hours=1)))
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     if storage and not entry.data.get(BACKFILLED) and "recorder" in hass.config.components:
         entry.async_create_background_task(hass, coordinator.async_backfill(), "balkonaut_backfill")
+    if "frontend" in hass.config.components:
+        from homeassistant.components import panel_custom
+        from homeassistant.components.frontend import DATA_PANELS
+
+        if PANEL not in hass.data[DATA_PANELS]:
+            await panel_custom.async_register_panel(
+                hass, frontend_url_path=PANEL, webcomponent_name="balkonaut-panel", sidebar_title="Balkonaut",
+                sidebar_icon="mdi:solar-power-variant", module_url=f"{STATIC_URL}/balkonaut-panel.js?v={hass.data[DOMAIN]}")
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) -> bool:
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unloaded and "frontend" in hass.config.components and not [
+            e for e in hass.config_entries.async_loaded_entries(DOMAIN) if e.entry_id != entry.entry_id]:
+        from homeassistant.components.frontend import async_remove_panel
+
+        async_remove_panel(hass, PANEL)  # letzter Eintrag weg: Panel aus der Seitenleiste nehmen
     if unloaded and (storage := entry.runtime_data.storage):
         async with entry.runtime_data.lock:
             await hass.async_add_executor_job(storage.db.close)
