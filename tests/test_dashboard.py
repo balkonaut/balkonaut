@@ -8,6 +8,7 @@ from app.main import app, de
 def test_de():
     assert de(1234.5, 1) == "1.234,5"
     assert de(None) == "–"
+    assert de(-0.01) == de(-0.0) == "0,0" and de(-0.06) == "-0,1"
 
 
 def test_dashboard(client):

@@ -7,8 +7,8 @@ Balkonaut läuft als Add-on in Home Assistant oder als eigener Docker-Container,
 Das Add-on braucht Home Assistant OS oder Supervised (dort gibt es den Add-on-Store, in neueren Versionen „Apps“).
 Einen eigenen Server braucht es nicht, die Weboberfläche erscheint in der Seitenleiste von Home Assistant.
 
-1. *Einstellungen → Add-ons → Add-on-Store*, oben rechts die drei Punkte → *Repositories*, dort
-   `https://github.com/balkonaut/balkonaut` eintragen und *Hinzufügen*.
+1. *Einstellungen → Apps* (in älteren Versionen *Add-ons*) öffnen, dort den Store, oben rechts die drei Punkte →
+   *Repositories*, `https://github.com/balkonaut/balkonaut` eintragen und *Hinzufügen*.
 2. Im Store *Balkonaut* öffnen und *Installieren*.
 3. Im Reiter *Konfiguration* unter *Entitäten* eintragen, welche Entität welche Messgröße liefert (Bedeutung siehe
    [Einstellungen](einstellungen.md)). Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter
@@ -22,6 +22,8 @@ Neustart des Add-ons. Die Übernahme des Verlaufs (siehe unten) ist im Add-on no
 
 Für die [Integration](#home-assistant-integration) als Adresse die eintragen, die Balkonaut im Add-on unter
 *Einstellungen* anzeigt (Form `http://…-balkonaut:8000`).
+
+Aus dem Handbuch geht es über *Zurück zu Balkonaut* im Menü oder über das Logo zurück zur Übersicht.
 
 ## Als Docker-Container
 

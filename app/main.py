@@ -25,6 +25,7 @@ def de(value, digits=1):
     """Zahl im deutschen Format, fehlende Werte als Strich."""
     if not isinstance(value, (int, float)):
         return "–"
+    value = round(value, digits) + 0.0  # -0.0 und gerundete Winzlinge wie -0.01 ohne Minus
     return f"{value:,.{digits}f}".replace(",", " ").replace(".", ",").replace(" ", ".")
 
 

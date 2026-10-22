@@ -1,7 +1,7 @@
 # https://contributors.home-assistant.io/apps/reference/configuration/
 # version ist zugleich der Image-Tag; die GitHub-Action baut ihn, sobald er sich hier ändert.
 name: Balkonaut
-version: "0.1.0"
+version: "0.1.1"
 slug: balkonaut
 description: Analyse- und Entscheidungstool für Balkonkraftwerke mit Speicher
 url: "https://github.com/balkonaut/balkonaut"

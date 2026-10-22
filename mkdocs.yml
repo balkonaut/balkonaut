@@ -1,4 +1,8 @@
 site_name: Balkonaut Handbuch
+# Link „Zurück zu Balkonaut“ zeigt aus dem Handbuch hinaus, ist also keine Datei in docs/
+validation:
+  nav:
+    not_found: info
 nav:
   - index.md
   - installation.md
@@ -6,6 +10,7 @@ nav:
   - auswertung.md
   - messquellen.md
   - schnittstelle.md
+  - Zurück zu Balkonaut: ../
 theme:
   name: material
   logo: assets/logo.svg
@@ -22,3 +27,5 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Helles Design
+extra:
+  homepage: ../  # Logo führt zurück in die App (Handbuch liegt unter /handbuch/)
