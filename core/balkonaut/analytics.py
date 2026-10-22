@@ -61,7 +61,8 @@ def balance(rows, start, prices):
     self_use = max(output - grid_export, 0.0)
     consumption = grid_import + self_use
     return {
-        "erzeugung": energy("pv_energy", "pv_power") + wh["pv_ac_power"] / 1000,
+        # nur positive Anteile: nachts zieht ein Wechselrichter Standby-Strom, das ist keine negative Erzeugung
+        "erzeugung": energy("pv_energy", "pv_power+") + wh["pv_ac_power+"] / 1000,
         "abgabe": output,
         "netzbezug": grid_import,
         "einspeisung": grid_export,
@@ -294,7 +295,7 @@ def yield_watch(rows, now):
         for hour, (mean, *_) in hours.get(forecast_key, {}).items():
             by_day[datetime.fromtimestamp(hour, TZ).date()].append(mean)
         forecast = sum(sum(v) / len(v) for v in by_day.values())
-        actual = counter[counter_key] if counter_key in counter else wh[power_key] / 1000
+        actual = counter[counter_key] if counter_key in counter else wh[power_key + "+"] / 1000
         result[name] = {"ertrag": actual, "prognose": forecast, "tage": len(by_day),
                         "quote": actual / forecast if forecast >= 1 else None}
     label = {"speicher": "Speicher-Wechselrichter", "ac": "zweiter Wechselrichter"}

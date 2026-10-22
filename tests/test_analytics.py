@@ -30,6 +30,8 @@ def test_balance_without_counter_and_reset():
             ("output_power", 3600, 300, 300, 0, None)]
     assert balance(rows, 0, PRICES)["abgabe"] == 0  # Rücksetzung zählt nicht
     assert balance([rows[2]], 0, PRICES)["abgabe"] == 0.3  # ohne Zähler: Leistung
+    standby = [("pv_ac_power", 3600, -2, 0, -2, None), ("pv_ac_power", 7200, 150, 150, 0, None)]
+    assert balance(standby, 0, PRICES)["erzeugung"] == 0.15  # Standby-Bezug nachts ist keine negative Erzeugung
 
 
 def test_amortization():
@@ -132,7 +134,7 @@ def test_yield_watch():
         t = day0 + h * 3600
         rows += [("pv_forecast_today", t, 2.0, 2.0, 0, 2.0), ("pv_ac_forecast_today", t, 2.0, 2.0, 0, 2.0),
                  ("pv_energy", t, 0, 0, 0, 100 + h * 2.0 / 24),  # Speicher: 2 kWh am Tag = 100 %
-                 ("pv_ac_power", t, 1.0 / 24 * 1000, 0, 0, None)]  # zweiter: 1 kWh am Tag = 50 %
+                 ("pv_ac_power", t, 1.0 / 24 * 1000, 1.0 / 24 * 1000, 0, None)]  # zweiter: 1 kWh am Tag = 50 %
     w = yield_watch(sorted(rows), datetime(2026, 10, 18, 12, tzinfo=TZ).timestamp())
     assert abs(w["wechselrichter"]["speicher"]["quote"] - 1) < 0.01
     assert abs(w["wechselrichter"]["ac"]["quote"] - 0.5) < 0.01
