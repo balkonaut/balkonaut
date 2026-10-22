@@ -58,9 +58,19 @@
       "init": {
         "title": "Optionen",
         "data": {
-          "scan_interval": "Abfrageintervall in Minuten"
+          "scan_interval": "Abfrageintervall in Minuten",
+          "energy": "Arbeitspreis Netzstrom",
+          "feed_in": "Einspeisevergütung",
+          "cost": "Anschaffungskosten der Anlage",
+          "commissioned": "Inbetriebnahme"
+        },
+        "data_description": {
+          "commissioned": "Ab diesem Tag zählt der Abgabezähler, meist die Inbetriebnahme. Damit rechnet die Amortisation mit dem echten Durchschnitt statt einer Hochrechnung."
         }
       }
+    },
+    "error": {
+      "future_date": "Das Datum liegt in der Zukunft."
     }
   },
   "entity": {

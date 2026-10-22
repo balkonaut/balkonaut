@@ -1,4 +1,5 @@
 """Einrichtung der Balkonaut-Integration: eigenständig mit Entitäten oder mit der Adresse einer Balkonaut-App."""
+from datetime import date
 from typing import Any
 
 import aiohttp
@@ -9,8 +10,12 @@ from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
+    DateSelector,
     EntitySelector,
     EntitySelectorConfig,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     SelectSelector,
     SelectSelectorConfig,
 )
@@ -67,9 +72,22 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
 
 class BalkonautOptionsFlow(OptionsFlowWithReload):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        errors = {}
         if user_input is not None:
-            return self.async_create_entry(data=user_input)
-        schema = vol.Schema({vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
-            vol.Coerce(int), vol.Range(min=1, max=60))})
-        return self.async_show_form(
-            step_id="init", data_schema=self.add_suggested_values_to_schema(schema, self.config_entry.options))
+            day = user_input.get("commissioned")
+            if day and date.fromisoformat(day) > date.today():
+                errors["commissioned"] = "future_date"
+            else:
+                return self.async_create_entry(data=user_input)
+        schema = {vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=60))}
+        if CONF_ENTITIES in self.config_entry.data:  # eigenständig: Preise und Kosten hier statt in der App
+            def number(unit, step):
+                return NumberSelector(NumberSelectorConfig(min=0, step=step, mode=NumberSelectorMode.BOX,
+                                                           unit_of_measurement=unit))
+            schema |= {vol.Required("energy", default=0.0): number("€/kWh", "any"),
+                       vol.Required("feed_in", default=0.0): number("€/kWh", "any"),
+                       vol.Required("cost", default=0.0): number("€", 1),
+                       vol.Optional("commissioned"): DateSelector()}
+        return self.async_show_form(step_id="init", errors=errors, data_schema=self.add_suggested_values_to_schema(
+            vol.Schema(schema), user_input or self.config_entry.options))

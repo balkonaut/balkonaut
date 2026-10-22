@@ -58,9 +58,19 @@
       "init": {
         "title": "Options",
         "data": {
-          "scan_interval": "Polling interval in minutes"
+          "scan_interval": "Polling interval in minutes",
+          "energy": "Grid energy price",
+          "feed_in": "Feed-in tariff",
+          "cost": "System cost",
+          "commissioned": "Commissioning date"
+        },
+        "data_description": {
+          "commissioned": "From this day on the output meter counts, usually the commissioning date. Amortization then uses the real average instead of an extrapolation."
         }
       }
+    },
+    "error": {
+      "future_date": "The date is in the future."
     }
   },
   "entity": {

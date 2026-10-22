@@ -4,7 +4,7 @@ Zwei Betriebsarten: Werte von einer laufenden Balkonaut-App abholen (Adresse) od
 messen, speichern und rechnen (Entitäten). Die Rechenlogik kommt in beiden Fällen aus core/ (balkonaut-Paket).
 """
 import asyncio
-from datetime import timedelta
+from datetime import date, timedelta
 import json
 import logging
 from pathlib import Path
@@ -100,7 +100,7 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
                 lambda: (self.storage.hourly(int(now)), self.storage.latest()))
         data = await self.hass.async_add_executor_job(
             analytics.status, rows, latest, now, {"energy": opts.get("energy", 0.0), "feed_in": opts.get("feed_in", 0.0)},
-            opts.get("cost", 0.0))
+            opts.get("cost", 0.0), date.fromisoformat(day) if (day := opts.get("commissioned")) else None)
         return json.loads(json.dumps(data, default=str))  # gleiche Form wie die Antwort der App (Datum als Text)
 
     async def async_sample(self, _now=None) -> None:

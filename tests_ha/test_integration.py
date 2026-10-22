@@ -134,3 +134,21 @@ async def test_standalone(hass):
     assert coordinator.data["live"]["output_power"] == 200 and "tag" in coordinator.data["bilanz"]
     assert len(hass.states.async_entity_ids("sensor")) == 3 + 22
     assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_standalone_options(hass):
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    hass.states.async_set("sensor.soc", "50", {"unit_of_measurement": "%"})
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", data={"entities": {"battery_soc": "sensor.soc"}, "invert": []})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    form = {CONF_SCAN_INTERVAL: 5, "energy": 0.32, "feed_in": 0.0, "cost": 1450}
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], form | {"commissioned": "2099-01-01"})
+    assert result["errors"] == {"commissioned": "future_date"}
+    result = await hass.config_entries.options.async_configure(result["flow_id"], form | {"commissioned": "2024-05-01"})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()  # Neustart mit den neuen Optionen
+    assert entry.runtime_data.data["amortisation"]["kosten"] == 1450
+    assert await hass.config_entries.async_unload(entry.entry_id)

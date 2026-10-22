@@ -96,9 +96,9 @@ Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Beim 
   (Bedeutung siehe [Einstellungen](einstellungen.md)), Balkonaut liest die Werte alle 10 Sekunden und speichert sie
   in `balkonaut/balkonaut.db` im Konfigurationsordner von Home Assistant. Eine App, ein Container oder ein Add-on ist
   nicht nötig. Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter *Vorzeichen drehen* wählen, beim
-  EZHI zum Beispiel *Abgabe ins Haus*. Euro-Beträge stehen vorerst auf 0, Preise und Kosten kommen in einer der
-  nächsten Versionen als Optionen dazu. Die Weboberfläche mit Energiefluss und Verlauf gibt es in dieser Betriebsart
-  noch nicht.
+  EZHI zum Beispiel *Abgabe ins Haus*. Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme stehen
+  danach unter *Konfigurieren*; ohne sie sind die Euro-Beträge 0. Die Weboberfläche mit Energiefluss und Verlauf gibt
+  es in dieser Betriebsart noch nicht.
 - **Mit einer Balkonaut-App**: Die Integration holt die Werte von einer laufenden Docker-App oder dem Add-on ab. Die
   App muss laufen und von Home Assistant aus erreichbar sein.
 
@@ -121,7 +121,8 @@ allein reicht nicht, weil er die Rechenlogik aus `core/` nur verlinkt; das Zip e
 
 ### Einstellungen, Diagnose, Störungen
 
-- Das Abfrageintervall (Standard 5 Minuten) lässt sich unter *Konfigurieren* ändern.
+- Unter *Konfigurieren*: das Abfrageintervall (Standard 5 Minuten), im eigenständigen Betrieb außerdem Preise,
+  Anschaffungskosten und Inbetriebnahme.
 - Antwortet die App dreimal hintereinander nicht, erscheint unter *Einstellungen → Reparaturen* ein Hinweis. Er
   verschwindet, sobald die App wieder antwortet.
 - Über *⋮ → Diagnose herunterladen* gibt es eine Datei mit Einstellungen und letzter Antwort der App, die Adresse
