@@ -77,12 +77,15 @@
       {% else %}<span class="live{{ ' stale' if live_age > 120 }}"><i></i>vor {{ live_age|ago }}</span>{% endif %}
     </div>
     <svg viewBox="0 0 400 330" role="img" aria-label="Sonne {{ live.pv|de(0) }} W, Akku {{ batt|de(0) }} W, Haus {{ house|de(0) }} W, Netz {{ grid|de(0) }} W">
-      {{ line("M200 66 V145", live.pv, "var(--sun)") }}
+      {% set pv_ac = live.get("pv_ac_power") %}
+      {% if pv_ac is none %}{{ line("M200 66 V145", live.pv, "var(--sun)") }}
+      {% else %}{{ line("M100 66 V105 H190 V145", live.get("pv_power"), "var(--sun)") }}{{ line("M300 66 V105 H210 V145", pv_ac, "var(--sun)") }}{% endif %}
       {{ line("M170 165 H124", batt, "var(--batt-flow)", (batt or 0) < 0) }}
       {{ line("M230 165 H276", house, "var(--leaf)") }}
       {{ line("M200 185 V264", grid, "var(--sky)", (grid or 0) > 0) }}
       <g class="hub"><rect x="170" y="145" width="60" height="40"/><text x="200" y="169">EZHI</text></g>
-      {{ node(140, 10, "var(--sun)", "Sonne", live.pv, "sun") }}
+      {% if pv_ac is none %}{{ node(140, 10, "var(--sun)", "Sonne", live.pv, "sun") }}
+      {% else %}{{ node(40, 10, "var(--sun)", "PV Speicher", live.get("pv_power"), "sun") }}{{ node(240, 10, "var(--sun)", "PV Zusatz", pv_ac, "sun") }}{% endif %}
       {% call node(4, 137, "var(--batt-flow)", "Akku lädt" if (batt or 0) > 5 else "Akku entlädt" if (batt or 0) < -5 else "Akku", batt, "batt") %}
         {% if gauge %}<rect x="10" y="47" width="100" height="3" fill="var(--line)"/>
         <rect x="10" y="47" width="{{ gauge.lo }}" height="3" fill="var(--muted)" fill-opacity=".45"/>

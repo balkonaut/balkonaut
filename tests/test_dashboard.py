@@ -99,3 +99,11 @@ def test_soc_gauge():
     assert soc_gauge({**live, "battery_power": -600, "battery_discharge_protection": 12})["rest"]["target"] == 12
     assert soc_gauge({**live, "battery_power": 5})["rest"] is None  # ruht
     assert soc_gauge({**live, "battery_soc": 96, "battery_power": 300})["rest"] is None  # über der Grenze
+
+
+def test_flow_inverters(client):
+    now = int(time.time())
+    app.state.storage.add(now - 10, {"pv_power": 400, "battery_soc": 50})
+    assert "PV Zusatz" not in client.get("/").text  # nur ein Wechselrichter
+    app.state.storage.add(now - 5, {"pv_power": 400, "pv_ac_power": 300, "battery_soc": 50})
+    assert "PV Speicher" in client.get("/").text and "PV Zusatz" in client.get("/").text

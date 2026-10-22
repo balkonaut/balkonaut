@@ -15,11 +15,14 @@ Hell oder dunkel richtet sich nach der Einstellung des Geräts.
 
 ### Energiefluss
 
-Das Bild zeigt, wohin die Leistung gerade fließt: von der **Sonne** (beide Wechselrichter zusammen) in den
-Speicher-Wechselrichter, von dort in den **Akku** oder ins **Haus**, und zwischen **Netz** und Haus.
+Das Bild zeigt, wohin die Leistung gerade fließt: von der **Sonne** in den Speicher-Wechselrichter, von dort in den **Akku** oder ins **Haus**, und zwischen **Netz** und Haus.
 Je mehr Leistung, desto dicker die Leitung und desto schneller laufen die Striche. Die Laufrichtung zeigt,
 ob der Akku lädt oder entlädt und ob Strom aus dem Netz kommt oder eingespeist wird. Der Wert am Haus ist der
 Hausverbrauch, also Abgabe des Balkonkraftwerks plus Netzbezug.
+
+Ist ein zweiter Wechselrichter eingetragen (`pv_ac_power`, z. B. ein Mikrowechselrichter am Speicher), zeigt das
+Bild zwei Felder: **PV Speicher** für die Module am Speicher-Wechselrichter und **PV Zusatz** für den zweiten
+Wechselrichter, jeweils mit eigener Leitung.
 
 ### Akku
 
