@@ -1,0 +1,8 @@
+import_from_app:
+  fields:
+    url:
+      required: true
+      example: "http://192.168.1.10:8000"
+      selector:
+        text:
+          type: url

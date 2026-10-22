@@ -151,6 +151,12 @@ def api_status(request: Request):
                             config.commissioned(cfg), request.app.state.profile)
 
 
+@app.get("/api/v1/export")
+def api_export(request: Request):
+    """Gesamte Historie (Stundenwerte, Tageswerte der Regelgüte) für den Umzug in die Home-Assistant-Integration."""
+    return request.app.state.storage.export()
+
+
 @app.get("/api/v1/verlauf")
 def api_history(request: Request, ansicht: str = "tag", datum: str = ""):
     """Balken einer Verlaufsansicht (tag, woche, monat, jahr) und Bilanz des Zeitraums."""

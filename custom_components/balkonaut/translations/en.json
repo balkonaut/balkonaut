@@ -176,5 +176,17 @@
         "output_power": "Output to the house"
       }
     }
+  },
+  "services": {
+    "import_from_app": {
+      "name": "Import history from Balkonaut app",
+      "description": "Imports the stored measurements of a Balkonaut app (Docker or add-on) into the standalone entry. Hours before its first own measurement are replaced by the app's more precise values, own measurements are kept.",
+      "fields": {
+        "url": {
+          "name": "App address",
+          "description": "Address of the running Balkonaut app, e.g. http://192.168.1.10:8000"
+        }
+      }
+    }
   }
 }

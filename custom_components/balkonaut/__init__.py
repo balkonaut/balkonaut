@@ -17,7 +17,8 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL, Platform
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
@@ -181,6 +182,27 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """WebSocket-Befehl und Lovelace-Karte, unabhängig von den Einträgen."""
     for command in (ws_status, ws_history, ws_report, ws_regulation):
         websocket_api.async_register_command(hass, command)
+
+    async def import_from_app(call: ServiceCall) -> ServiceResponse:
+        """Historie einer Balkonaut-App (Docker oder Add-on) in den eigenständigen Eintrag übernehmen."""
+        entry = _entry(hass, None)
+        if entry is None or not entry.runtime_data.storage:
+            raise HomeAssistantError("Kein eigenständiger Balkonaut-Eintrag eingerichtet")
+        url = call.data[CONF_URL].strip().rstrip("/")
+        try:
+            async with async_get_clientsession(hass).get(f"{url}/api/v1/export",
+                                                         timeout=aiohttp.ClientTimeout(total=300)) as resp:
+                resp.raise_for_status()
+                data = await resp.json()
+        except (aiohttp.ClientError, TimeoutError) as err:
+            raise HomeAssistantError(f"Balkonaut-App unter {url} nicht erreichbar: {err}") from err
+        hours = await entry.runtime_data.async_compute(lambda storage: storage.merge(data))
+        _LOGGER.info("Balkonaut: %s Stunden aus der App unter %s übernommen", hours, url)
+        await entry.runtime_data.async_request_refresh()
+        return {"stunden": hours}
+
+    hass.services.async_register(DOMAIN, "import_from_app", import_from_app, schema=vol.Schema(
+        {vol.Required(CONF_URL): cv.url}), supports_response=SupportsResponse.OPTIONAL)
     if "http" in hass.config.components:
         from homeassistant.components.http import StaticPathConfig
 

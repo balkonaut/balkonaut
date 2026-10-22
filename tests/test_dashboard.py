@@ -60,6 +60,7 @@ def test_api_v1(client):
     assert len(v["balken"]) == 7 and v["titel"].startswith("KW")
     assert client.get("/api/v1/nulleinspeisung").json()["regelbereit_stunden"] >= 0
     assert client.get("/api/bilanz").status_code == 404
+    assert set(client.get("/api/v1/export").json()) == {"hourly", "regulation"}
 
 
 def test_report(client):

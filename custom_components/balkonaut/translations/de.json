@@ -176,5 +176,17 @@
         "output_power": "Abgabe ins Haus"
       }
     }
+  },
+  "services": {
+    "import_from_app": {
+      "name": "Historie aus Balkonaut-App übernehmen",
+      "description": "Übernimmt die gespeicherten Messdaten einer Balkonaut-App (Docker oder Add-on) in den eigenständigen Eintrag. Stunden vor dessen erster eigener Messung werden durch die genaueren Werte der App ersetzt, eigene Messungen bleiben.",
+      "fields": {
+        "url": {
+          "name": "Adresse der App",
+          "description": "Adresse der laufenden Balkonaut-App, z. B. http://192.168.1.10:8000"
+        }
+      }
+    }
   }
 }

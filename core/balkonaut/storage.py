@@ -101,6 +101,25 @@ class Storage:
             out.setdefault(ts, {})[key] = value
         return out
 
+    def export(self):
+        """Gesamte Historie zum Umzug: Stundenwerte als Zeilen und Tageswerte der Regelgüte."""
+        return {"hourly": self.db.execute("SELECT * FROM hourly ORDER BY key, hour").fetchall(),
+                "regulation": {day: json.loads(data) for day, data in self.db.execute("SELECT * FROM regulation_daily")}}
+
+    def merge(self, data):
+        """Export einer anderen Balkonaut-Datenbank übernehmen. Stunden vor der ersten eigenen Rohmessung werden
+        ersetzt (genauer als ein Import aus dem HA-Verlauf), spätere bleiben wie selbst gemessen. Gibt die Zahl der
+        übernommenen Stunden zurück."""
+        (first,) = self.db.execute("SELECT min(ts) / 3600 * 3600 FROM raw").fetchone()
+        before = first if first is not None else float("inf")
+        rows = [tuple(r) for r in data["hourly"]]
+        with self.db:
+            self.db.executemany("INSERT OR REPLACE INTO hourly VALUES (?, ?, ?, ?, ?, ?, ?)", [r for r in rows if r[1] < before])
+            self.db.executemany("INSERT OR IGNORE INTO hourly VALUES (?, ?, ?, ?, ?, ?, ?)", [r for r in rows if r[1] >= before])
+            self.db.executemany("INSERT OR IGNORE INTO regulation_daily VALUES (?, ?)",
+                                [(day, json.dumps(v)) for day, v in data["regulation"].items()])
+        return len({r[1] for r in rows if r[1] < before})
+
     def regulation_days(self, first, last):
         """Gespeicherte Tageswerte der Regelgüte {JJJJ-MM-TT: dict} für first bis last (Text-Datum, einschließlich)."""
         return {day: json.loads(data) for day, data in self.db.execute(

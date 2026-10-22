@@ -211,3 +211,18 @@ async def test_views_from_app(hass, hass_ws_client, aioclient_mock):
     assert (await ws.receive_json())["result"]["titel"] == "KW 43"  # von der App durchgereicht
     await ws.send_json({"id": 2, "type": "balkonaut/nulleinspeisung"})
     assert (await ws.receive_json())["error"]["code"] == "unreachable"
+
+
+async def test_import_from_app(hass, aioclient_mock):
+    hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", data={"entities": {"grid_power": "sensor.netz"}, "invert": []})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    export = {"hourly": [["grid_power", 3600, 500.0, 500.0, 0.0, None, 360]], "regulation": {"1970-01-01": {"tage": 1}}}
+    aioclient_mock.get(f"{URL}/api/v1/export", json=export)
+    result = await hass.services.async_call(DOMAIN, "import_from_app", {CONF_URL: URL}, blocking=True, return_response=True)
+    assert result == {"stunden": 1}
+    hourly = await hass.async_add_executor_job(entry.runtime_data.storage.hourly)
+    assert ("grid_power", 3600, 500.0, 500.0, 0.0, None) in hourly
+    assert await hass.config_entries.async_unload(entry.entry_id)

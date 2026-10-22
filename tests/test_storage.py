@@ -33,3 +33,19 @@ def test_regulation_days():
     s.save_regulation_day("2026-10-01", {"a": 1})
     s.save_regulation_day("2026-11-01", {"a": 2})
     assert s.regulation_days("2026-10-01", "2026-10-31") == {"2026-10-01": {"a": 1}}
+
+
+def test_export_merge(tmp_path):
+    old, new = Storage(tmp_path / "alt.db"), Storage(tmp_path / "neu.db")
+    for t in range(0, 4 * 3600, 600):  # alte App: 4 Stunden je 500 W
+        old.add(t, {"grid_power": 500})
+    old.aggregate(4 * 3600)
+    old.save_regulation_day("1970-01-01", {"tage": 1})
+    new.backfill({"grid_power": [(0, 100)]}, 0, 3 * 3600)  # Recorder-Import: 3 Stunden je 100 W
+    for t in range(3 * 3600, 4 * 3600, 600):  # erste eigene Messung ab Stunde 3: 300 W
+        new.add(t, {"grid_power": 300})
+    new.aggregate(4 * 3600)
+    assert new.merge(old.export()) == 3  # Stunden vor der ersten eigenen Messung ersetzt
+    means = {h: m for k, h, m, *_ in new.hourly()}
+    assert means == {0: 500, 3600: 500, 7200: 500, 10800: 300}  # eigene Messung bleibt
+    assert new.regulation_days("1970-01-01", "1970-01-01") == {"1970-01-01": {"tage": 1}}

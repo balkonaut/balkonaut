@@ -119,6 +119,20 @@ Assistant entpacken (z. B. mit dem Add-on *Samba share* oder *Studio Code Server
 Integration wie oben hinzufügen. Updates müssen dann ebenfalls von Hand kopiert werden. Der Ordner im Repository
 allein reicht nicht, weil er die Rechenlogik aus `core/` nur verlinkt; das Zip enthält sie.
 
+### Umzug von Docker-App oder Add-on
+
+Wer bisher die Docker-App oder das Add-on genutzt hat, kann deren Messdaten in den eigenständigen Eintrag übernehmen,
+damit Monatsberichte, Jahr und Amortisation die ganze Historie kennen:
+
+1. Den eigenständigen Eintrag wie oben einrichten.
+2. *Entwicklerwerkzeuge → Aktionen*, die Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen* wählen und die
+   Adresse der laufenden App eintragen (z. B. `http://192.168.1.10:8000`), *Aktion ausführen*.
+
+Stunden vor der ersten eigenen Messung des eigenständigen Eintrags werden durch die Werte der App ersetzt, die genauer
+sind als der Verlauf aus dem Recorder. Was der eigenständige Eintrag selbst gemessen hat, bleibt. Die Antwort nennt die
+Zahl der übernommenen Stunden. Danach kann die App abgeschaltet werden. Die App muss mindestens die Version haben, die
+`/api/v1/export` kennt (siehe [Schnittstelle](schnittstelle.md)).
+
 ### Balkonaut in der Seitenleiste
 
 Sobald ein Balkonaut-Eintrag eingerichtet ist, erscheint *Balkonaut* in der Seitenleiste von Home Assistant, in beiden
