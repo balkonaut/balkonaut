@@ -4,7 +4,8 @@ Zwei Betriebsarten: Werte von einer laufenden Balkonaut-App abholen (Adresse) od
 messen, speichern und rechnen (Entitäten). Die Rechenlogik kommt in beiden Fällen aus core/ (balkonaut-Paket).
 """
 import asyncio
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
+from functools import partial
 import json
 import logging
 from pathlib import Path
@@ -31,6 +32,7 @@ FAILURES_BEFORE_ISSUE = 3  # so viele Abfragen in Folge ohne Antwort, bis HA ein
 SAMPLE_INTERVAL = timedelta(seconds=10)  # wie der Collector der App
 CONF_ENTITIES = "entities"
 CONF_INVERT = "invert"
+BACKFILLED = "backfilled"  # Verlauf aus dem Recorder schon übernommen
 # Messgrößen, die Balkonaut aus Home-Assistant-Entitäten liest (Bedeutung: Handbuch, Einstellungen)
 KEYS = ["grid_power", "pv_power", "pv_ac_power", "battery_power", "battery_soc", "output_power", "output_energy",
         "pv_energy", "battery_charge_energy", "battery_discharge_energy", "battery_capacity", "battery_soh",
@@ -103,14 +105,41 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
             opts.get("cost", 0.0), date.fromisoformat(day) if (day := opts.get("commissioned")) else None)
         return json.loads(json.dumps(data, default=str))  # gleiche Form wie die Antwort der App (Datum als Text)
 
+    def _factor(self, key: str) -> int:
+        return -1 if key in self.config_entry.data.get(CONF_INVERT, []) else 1
+
+    async def async_backfill(self) -> None:
+        """Einmalig den Verlauf aus dem Recorder als Stundenwerte vor der ersten eigenen Messung übernehmen."""
+        from homeassistant.components.recorder import get_instance, history
+
+        recorder = get_instance(self.hass)
+        until = await self.hass.async_add_executor_job(self.storage.first) or int(time.time()) // 3600 * 3600
+        start = until - recorder.keep_days * 86400
+        entities = self.config_entry.data[CONF_ENTITIES]
+        states = await recorder.async_add_executor_job(partial(
+            history.get_significant_states, self.hass, datetime.fromtimestamp(start, UTC),
+            datetime.fromtimestamp(until, UTC), list(entities.values()), significant_changes_only=False,
+            no_attributes=True))
+        series = {}
+        for key, entity_id in entities.items():
+            # Verlauf ohne Attribute: Einheit der aktuellen Entität, wie beim Import der App
+            unit = getattr(self.hass.states.get(entity_id), "attributes", {}).get("unit_of_measurement")
+            series[key] = sorted((s.last_changed.timestamp(), normalize(
+                {"state": s.state, "attributes": {"unit_of_measurement": unit}}, self._factor(key)))
+                for s in states.get(entity_id, []))
+        async with self.lock:
+            hours = await self.hass.async_add_executor_job(self.storage.backfill, series, start, until)
+        _LOGGER.info("Balkonaut: %s Stunden aus dem Verlauf von Home Assistant übernommen", hours)
+        self.hass.config_entries.async_update_entry(self.config_entry, data={**self.config_entry.data, BACKFILLED: True})
+        await self.async_request_refresh()
+
     async def async_sample(self, _now=None) -> None:
         """Aktuelle Zustände der Entitäten normalisieren und speichern, abgeschlossene Stunden aggregieren."""
-        invert = set(self.config_entry.data.get(CONF_INVERT, []))
         values = {}
         for key, entity_id in self.config_entry.data[CONF_ENTITIES].items():
             state = self.hass.states.get(entity_id)
             values[key] = normalize(state and {"state": state.state, "attributes": state.attributes},
-                                    -1 if key in invert else 1)
+                                    self._factor(key))
         ts = int(time.time())
         async with self.lock:
             await self.hass.async_add_executor_job(_store, self.storage, ts, values)
@@ -137,6 +166,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) ->
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    if storage and not entry.data.get(BACKFILLED) and "recorder" in hass.config.components:
+        entry.async_create_background_task(hass, coordinator.async_backfill(), "balkonaut_backfill")
     return True
 
 

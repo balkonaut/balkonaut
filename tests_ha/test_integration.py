@@ -152,3 +152,23 @@ async def test_standalone_options(hass):
     await hass.async_block_till_done()  # Neustart mit den neuen Optionen
     assert entry.runtime_data.data["amortisation"]["kosten"] == 1450
     assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_standalone_backfill(hass, freezer):
+    from datetime import timedelta
+    from homeassistant.util import dt as dt_util
+    from pytest_homeassistant_custom_component.components.recorder.common import async_wait_recording_done
+    now = dt_util.utcnow().replace(minute=30, second=0, microsecond=0)
+    freezer.move_to(now - timedelta(hours=5))  # Verlauf vor der Einrichtung: 5 Stunden lang 400 W Netzbezug
+    hass.states.async_set("sensor.netz", "400", {"unit_of_measurement": "W"})
+    await async_wait_recording_done(hass)
+    freezer.move_to(now)
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", data={"entities": {"grid_power": "sensor.netz"}, "invert": []})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert entry.data["backfilled"]
+    hourly = await hass.async_add_executor_job(entry.runtime_data.storage.hourly)
+    hours = [h for key, h, mean, *_ in hourly if key == "grid_power" and mean == 400]
+    assert len(hours) >= 4  # volle Stunden vor der ersten eigenen Messung
+    assert await hass.config_entries.async_unload(entry.entry_id)

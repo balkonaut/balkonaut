@@ -1,6 +1,9 @@
 {
   "domain": "balkonaut",
   "name": "Balkonaut",
+  "after_dependencies": [
+    "recorder"
+  ],
   "codeowners": [
     "@Gruudash"
   ],
@@ -10,5 +13,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/balkonaut/balkonaut/issues",
   "requirements": [],
-  "version": "0.2.0"
+  "version": "0.2.1"
 }

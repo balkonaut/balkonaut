@@ -18,7 +18,7 @@ Einen eigenen Server braucht es nicht, die Weboberfläche erscheint in der Seite
 
 Das Add-on greift über Home Assistant auf die Entitäten zu, ein Token ist nicht nötig. Alle Daten liegen im
 Add-on und sind in den Backups von Home Assistant enthalten. Änderungen an den Entitäten wirken nach einem
-Neustart des Add-ons. Die Übernahme des Verlaufs (siehe unten) ist im Add-on noch nicht möglich.
+Neustart des Add-ons. Die Übernahme des Verlaufs (siehe unten) ist im Add-on noch nicht möglich, wohl aber in der eigenständigen Integration.
 
 Für die [Integration](#home-assistant-integration) als Adresse die eintragen, die Balkonaut im Add-on unter
 *Einstellungen* anzeigt (Form `http://…-balkonaut:8000`).
@@ -95,7 +95,8 @@ Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Beim 
 - **Eigenständig in Home Assistant**: Die Integration misst selbst. Man ordnet jeder Messgröße eine Entität zu
   (Bedeutung siehe [Einstellungen](einstellungen.md)), Balkonaut liest die Werte alle 10 Sekunden und speichert sie
   in `balkonaut/balkonaut.db` im Konfigurationsordner von Home Assistant. Eine App, ein Container oder ein Add-on ist
-  nicht nötig. Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter *Vorzeichen drehen* wählen, beim
+  nicht nötig. Beim ersten Start übernimmt Balkonaut einmalig den Verlauf der zugeordneten Entitäten aus dem Recorder
+  von Home Assistant (standardmäßig die letzten 10 Tage), die Auswertung beginnt also nicht bei null. Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter *Vorzeichen drehen* wählen, beim
   EZHI zum Beispiel *Abgabe ins Haus*. Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme stehen
   danach unter *Konfigurieren*; ohne sie sind die Euro-Beträge 0. Die Weboberfläche mit Energiefluss und Verlauf gibt
   es in dieser Betriebsart noch nicht.
