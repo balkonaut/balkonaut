@@ -61,7 +61,7 @@ def balance(rows, start, prices):
     self_use = max(output - grid_export, 0.0)
     consumption = grid_import + self_use
     return {
-        # nur positive Anteile: nachts zieht ein Wechselrichter Standby-Strom, das ist keine negative Erzeugung
+        # nur positive Anteile: ein Verbraucher am Off-Grid-Port (oder Standby) ist keine negative Erzeugung
         "erzeugung": energy("pv_energy", "pv_power+") + wh["pv_ac_power+"] / 1000,
         "abgabe": output,
         "netzbezug": grid_import,

@@ -31,7 +31,7 @@ def test_balance_without_counter_and_reset():
     assert balance(rows, 0, PRICES)["abgabe"] == 0  # Rücksetzung zählt nicht
     assert balance([rows[2]], 0, PRICES)["abgabe"] == 0.3  # ohne Zähler: Leistung
     standby = [("pv_ac_power", 3600, -2, 0, -2, None), ("pv_ac_power", 7200, 150, 150, 0, None)]
-    assert balance(standby, 0, PRICES)["erzeugung"] == 0.15  # Standby-Bezug nachts ist keine negative Erzeugung
+    assert balance(standby, 0, PRICES)["erzeugung"] == 0.15  # Bezug am Off-Grid-Port ist keine negative Erzeugung
 
 
 def test_amortization():
