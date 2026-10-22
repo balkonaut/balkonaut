@@ -141,6 +141,9 @@ def test_yield_watch():
     assert {x["code"] for x in w["warnungen"]} == {"ertrag_niedrig", "ungleich"}
     assert all(x["wechselrichter"] == "ac" for x in w["warnungen"])
     assert yield_watch([], 0)["warnungen"] == []
+    young = [r for r in rows if not r[0].endswith("forecast_today") or r[1] >= day0 + 6 * 86400]  # Prognose erst 2 Tage
+    w = yield_watch(sorted(young), datetime(2026, 10, 18, 12, tzinfo=TZ).timestamp())
+    assert w["wechselrichter"]["speicher"]["tage"] == 2 and abs(w["wechselrichter"]["speicher"]["quote"] - 1) < 0.01
 
 
 def test_combine_regulation():

@@ -288,14 +288,19 @@ def yield_watch(rows, now):
     # ponytail: ein voller Akku regelt die PV am Speicher ab und senkt dessen Ertrag; Tage mit vollem Akku ausklammern, falls das stört
     end = periods(now)["tag"]
     start = datetime.combine(datetime.fromtimestamp(end, TZ).date() - timedelta(days=7), time(), TZ).timestamp()
-    wh, counter, hours, energy = _collect([r for r in rows if r[1] < end], start)
+    hours = _collect([r for r in rows if r[1] < end], start)[2]
     result, warnings = {}, []
     for name, (counter_key, power_key, forecast_key) in INVERTERS.items():
         by_day = defaultdict(list)
         for hour, (mean, *_) in hours.get(forecast_key, {}).items():
             by_day[datetime.fromtimestamp(hour, TZ).date()].append(mean)
         forecast = sum(sum(v) / len(v) for v in by_day.values())
-        actual = counter[counter_key] if counter_key in counter else wh[power_key + "+"] / 1000
+        actual = 0.0  # nur Tage mit Prognose vergleichen, sonst verzerrt eine junge Prognose die Quote
+        for day in by_day:
+            day_start = datetime.combine(day, time(), TZ).timestamp()
+            # ponytail: Tag als 24 h, an Tagen der Zeitumstellung eine Stunde daneben
+            w, c, _, _ = _collect([r for r in rows if r[1] < day_start + 86400], day_start)
+            actual += c[counter_key] if counter_key in c else w[power_key + "+"] / 1000
         result[name] = {"ertrag": actual, "prognose": forecast, "tage": len(by_day),
                         "quote": actual / forecast if forecast >= 1 else None}
     label = {"speicher": "Speicher-Wechselrichter", "ac": "zweiter Wechselrichter"}
