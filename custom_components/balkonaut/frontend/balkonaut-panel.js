@@ -177,7 +177,7 @@ class BalkonautPanel extends HTMLElement {
         ${this._box("Verluste Speicher-Wechselrichter", this._pct(k.verluste_wechselrichter))}
         ${this._box("Stunden mit vollem Akku", k.stunden_voll ?? "–", `dabei eingespeist ${this._fmt(k.einspeisung_bei_vollem_akku)} kWh`)}
         ${this._box("Stunden mit leerem Akku", k.stunden_leer ?? "–", `dabei Netzbezug ${this._fmt(k.netzbezug_bei_leerem_akku)} kWh (${this._fmt(k.kosten_bei_leerem_akku, 2)} €)`)}</div>
-      <h2>Woher kam dein Strom? Heute</h2><div class="card">${this._chart(today.balken)}</div>
+      <h2>Woher kommt dein Strom heute?</h2><div class="card">${this._chart(today.balken)}</div>
       <h2>Amortisation</h2><div class="card">
         <div class="label">Bisher gespart ${this._fmt(a.bisher_gespart, 0)} € von ${this._fmt(a.kosten, 0)} €</div>
         <div class="bar"><span style="width:${progress}%"></span></div>
