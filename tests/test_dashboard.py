@@ -108,7 +108,7 @@ def test_flow_inverters(client):
     now = int(time.time())
     app.state.storage.add(now - 10, {"pv_power": 400, "battery_soc": 50})
     page = client.get("/").text
-    assert "Zusatz-WR" not in page and ">Speicher</text>" in page  # nur ein Wechselrichter, Mitte neutral
+    assert "Zusatz-WR" not in page and ">Wechselrichter</text>" in page  # nur ein Wechselrichter, ohne Gerät neutral
     app.state.storage.add(now - 5, {"pv_power": 400, "pv_ac_power": 300, "battery_soc": 50})
     assert "Zusatz-WR" in client.get("/").text
 
@@ -121,3 +121,12 @@ def test_flow_module_labels(client, tmp_path):
     app.state.storage.add(int(time.time()) - 5, {"pv_power": 400, "pv_ac_power": 300, "battery_soc": 50})
     page = client.get("/").text
     assert ">Südost</text>" in page and ">West</text>" in page  # 251° liegt näher an West (270°) als an Südwest
+
+
+def test_flow_names(client, tmp_path):
+    """Mitte heißt wie der Speicher-Wechselrichter, der Akku wie in den Einstellungen eingetragen."""
+    (tmp_path / "config.yaml").write_text("devices:\n  - {type: apsystems_ezhi, host: 10.0.0.11}\n"
+                                          "system: {cost: 0, commissioned: null, battery_name: Phylion}\n")
+    app.state.storage.add(int(time.time()) - 5, {"pv_power": 400, "battery_power": 200, "battery_soc": 50})
+    page = client.get("/").text
+    assert ">EZHI</text>" in page and ">Phylion lädt</text>" in page

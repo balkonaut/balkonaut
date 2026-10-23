@@ -116,10 +116,12 @@
           "energy": "Arbeitspreis Netzstrom",
           "feed_in": "Einspeisevergütung",
           "cost": "Anschaffungskosten der Anlage",
-          "commissioned": "Inbetriebnahme"
+          "commissioned": "Inbetriebnahme",
+          "battery_name": "Bezeichnung des Akkus"
         },
         "data_description": {
-          "commissioned": "Ab diesem Tag zählt der Abgabezähler, meist die Inbetriebnahme. Damit rechnet die Amortisation mit dem echten Durchschnitt statt einer Hochrechnung."
+          "commissioned": "Ab diesem Tag zählt der Abgabezähler, meist die Inbetriebnahme. Damit rechnet die Amortisation mit dem echten Durchschnitt statt einer Hochrechnung.",
+          "battery_name": "Erscheint im Energiefluss statt „Akku“, z. B. der Hersteller. Den Hersteller melden die Geräte nicht verlässlich, daher von Hand."
         }
       }
     },

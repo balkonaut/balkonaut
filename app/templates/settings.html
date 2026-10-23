@@ -109,6 +109,9 @@
   <input id="feed_in" name="feed_in" inputmode="decimal" required value="{{ cfg.prices.feed_in }}">
   <label for="cost">Anschaffungskosten der Anlage (€)</label>
   <input id="cost" name="cost" inputmode="decimal" required value="{{ cfg.system.cost }}">
+  <label for="battery_name">Bezeichnung des Akkus (optional)</label>
+  <input id="battery_name" name="battery_name" maxlength="20" value="{{ cfg.system.battery_name or '' }}" placeholder="z. B. Phylion">
+  <p class="label">Erscheint im Energiefluss statt „Akku“, z. B. der Hersteller. Die Geräte melden ihn nicht verlässlich.</p>
   <label for="commissioned">Inbetriebnahme (optional)</label>
   <input id="commissioned" name="commissioned" type="date" value="{{ cfg.system.commissioned or '' }}">
   <p class="label">Datum, ab dem der Abgabezähler am Einspeisepunkt zählt, meist die Inbetriebnahme.

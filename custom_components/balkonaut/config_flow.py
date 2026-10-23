@@ -232,7 +232,7 @@ class BalkonautOptionsFlow(OptionsFlowWithReload):
             else:
                 return self.async_create_entry(data=user_input)
         schema = {vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
-            vol.Coerce(int), vol.Range(min=1, max=60))}
+            vol.Coerce(int), vol.Range(min=1, max=60)), vol.Optional("battery_name"): str}
         if CONF_ENTITIES in self.config_entry.data:  # eigenständig: Preise und Kosten hier statt in der App
             def number(unit, step):
                 return NumberSelector(NumberSelectorConfig(min=0, step=step, mode=NumberSelectorMode.BOX,

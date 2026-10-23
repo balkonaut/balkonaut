@@ -189,8 +189,8 @@ mehrere Balkonaut-Einträge eingerichtet sind (ohne Angabe nimmt die Karte den e
 
 ### Einstellungen, Diagnose, Störungen
 
-- Unter *Konfigurieren*: das Abfrageintervall (Standard 5 Minuten), im eigenständigen Betrieb außerdem Preise,
-  Anschaffungskosten und Inbetriebnahme.
+- Unter *Konfigurieren*: das Abfrageintervall (Standard 5 Minuten), die Bezeichnung des Akkus für den Energiefluss
+  (optional, z. B. der Hersteller), im eigenständigen Betrieb außerdem Preise, Anschaffungskosten und Inbetriebnahme.
 - Unter *⋮ → Neu konfigurieren*: im eigenständigen Betrieb die Zuordnung der Entitäten ändern (Schritte 2 und 3 der
   [geführten Einrichtung](#gefuhrte-einrichtung)), mit einer App deren Adresse. Eintrag und Messdaten bleiben erhalten.
   Für neu zugeordnete Entitäten übernimmt Balkonaut keinen Verlauf aus dem Recorder, sie zählen ab der Änderung.

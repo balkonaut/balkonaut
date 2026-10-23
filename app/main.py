@@ -215,6 +215,8 @@ def dashboard(request: Request, zeitraum: str = "tag"):
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
         "prices_set": cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0,
         "configured": bool(cfg.get("devices") or cfg.get("home_assistant")),
+        "hub_name": next((HUB_NAMES[d["type"]] for d in cfg.get("devices") or [] if d["type"] in HUB_NAMES), "Wechselrichter"),
+        "battery_name": (cfg["system"].get("battery_name") or "Akku")[:10],
         "modules": {inv: " + ".join(direction(p["azimuth"]).split()[0] for p in cfg.get("planes") or []
                                      if p.get("inverter", "storage") == inv) for inv in ("storage", "extra")},
     })
@@ -255,6 +257,7 @@ def zero_feed_in(request: Request):
 
 
 DEVICE_NAMES = {"apsystems_ezhi": "APsystems EZHI", "shelly_em": "Shelly Pro 3EM", "shelly_plug": "Shelly Plug"}
+HUB_NAMES = {"apsystems_ezhi": "EZHI"}  # Name in der Mitte des Energieflusses, je Speicher-Wechselrichter
 INVERTIBLE = {"shelly_plug": "output_power", "shelly_em": "grid_power"}  # Messgröße, deren Richtung vom Anschluss abhängt
 # Anzeige der aktuellen Werte: Messgröße, Name, Einheit, Richtung bei + und -
 LIVE = [("grid_power", "Netz", "W", ("Bezug", "Einspeisung")), ("pv_power", "PV", "W", None),
@@ -385,6 +388,6 @@ async def save_settings(request: Request):
     except (KeyError, ValueError):
         return await settings_page(request, cfg, 400, error=True)
     cfg["prices"].update(energy=values["energy"], feed_in=values["feed_in"])
-    cfg["system"].update(cost=values["cost"], commissioned=day)
+    cfg["system"].update(cost=values["cost"], commissioned=day, battery_name=form.get("battery_name", "").strip() or None)
     config.save(request.app.state.config_path, cfg)
     return RedirectResponse("einstellungen?gespeichert=1", status_code=303)  # relativ wegen Ingress

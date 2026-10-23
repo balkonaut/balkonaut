@@ -116,10 +116,12 @@
           "energy": "Grid energy price",
           "feed_in": "Feed-in tariff",
           "cost": "System cost",
-          "commissioned": "Commissioning date"
+          "commissioned": "Commissioning date",
+          "battery_name": "Battery name"
         },
         "data_description": {
-          "commissioned": "From this day on the output meter counts, usually the commissioning date. Amortization then uses the real average instead of an extrapolation."
+          "commissioned": "From this day on the output meter counts, usually the commissioning date. Amortization then uses the real average instead of an extrapolation.",
+          "battery_name": "Shown in the energy flow instead of “Battery”, e.g. the manufacturer. Devices do not report it reliably, so it is set by hand."
         }
       }
     },

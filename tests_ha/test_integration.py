@@ -115,12 +115,13 @@ async def test_unreachable_issue_and_diagnostics(hass, aioclient_mock):
     assert diag["entry"]["data"][CONF_URL] == "**REDACTED**" and diag["status"]["bilanz"]["tag"]["ersparnis"] == 1.25
 
 
-def device(hass, platform, name, entities):
+def device(hass, platform, name, entities, model=None):
     """Gerät mit Entitäten und Zuständen anlegen: entities = [(unique_id, entity_id, state, attributes)]."""
     from homeassistant.helpers import device_registry as dr
     owner = MockConfigEntry(domain=platform)
     owner.add_to_hass(hass)
-    dev = dr.async_get(hass).async_get_or_create(config_entry_id=owner.entry_id, identifiers={(platform, name)}, name=name)
+    dev = dr.async_get(hass).async_get_or_create(config_entry_id=owner.entry_id, identifiers={(platform, name)}, name=name,
+                                                 model=model)
     for unique_id, entity_id, state, attrs in entities:
         domain, object_id = entity_id.split(".")
         er.async_get(hass).async_get_or_create(domain, platform, unique_id, suggested_object_id=object_id,
@@ -281,8 +282,9 @@ async def test_standalone_backfill(hass, freezer):
 
 
 async def test_websocket_and_card(hass, hass_ws_client, hass_client):
-    hass.states.async_set("sensor.soc", "50", {"unit_of_measurement": "%"})
-    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone",
+    device(hass, "apsystems_ezhi_local", "EZHI", [("apsystems_EZHI_battery_soc", "sensor.soc", "50", {"unit_of_measurement": "%"})],
+           model="EZHI")
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", options={"battery_name": "Phylion"},
                             data={"entities": {"battery_soc": "sensor.soc"}, "invert": ["output_power"]})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
@@ -292,6 +294,7 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     msg = await ws.receive_json()
     assert msg["success"] and msg["result"]["entities"] == {"battery_soc": "sensor.soc"}
     assert msg["result"]["invert"] == ["output_power"] and "tag" in msg["result"]["status"]["bilanz"]
+    assert msg["result"]["names"] == {"hub": "EZHI", "battery": "Phylion"}  # Modell aus dem Geräteregister
     await ws.send_json({"id": 2, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})
     assert (await ws.receive_json())["error"]["code"] == "not_found"
     for i, (cmd, key) in enumerate([("verlauf", "balken"), ("bericht", "tage"), ("nulleinspeisung", None)], start=3):

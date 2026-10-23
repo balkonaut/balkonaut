@@ -19,7 +19,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL, Platform
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse, callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import config_validation as cv, entity_registry as er, issue_registry as ir
+from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_registry as er, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
@@ -250,7 +250,18 @@ def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnection, m
         return
     connection.send_result(msg["id"], {
         "entry_id": entry.entry_id, "entities": entry.data.get(CONF_ENTITIES), "invert": entry.data.get(CONF_INVERT, []),
-        "status": entry.runtime_data.data})
+        "status": entry.runtime_data.data,
+        "names": {"hub": _hub_name(hass, entry), "battery": entry.options.get("battery_name") or None}})
+
+
+def _hub_name(hass: HomeAssistant, entry: ConfigEntry) -> str | None:
+    """Modell des Geräts hinter den PV- bzw. Akku-Entitäten, z. B. EZHI; None, wenn keins bekannt ist."""
+    entities, entity_reg, device_reg = entry.data.get(CONF_ENTITIES) or {}, er.async_get(hass), dr.async_get(hass)
+    for key in ("pv_power", "battery_power", "battery_soc"):
+        if (e := entity_reg.async_get(entities.get(key, ""))) and e.device_id \
+                and (device := device_reg.async_get(e.device_id)) and device.model:
+            return device.model
+    return None
 
 
 async def _view(hass, connection, msg, path: str, params: dict, compute) -> None:

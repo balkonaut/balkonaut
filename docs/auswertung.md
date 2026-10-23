@@ -15,8 +15,11 @@ Hell oder dunkel richtet sich nach der Einstellung des Geräts.
 
 ### Energiefluss
 
-Das Bild zeigt, wohin die Leistung gerade fließt: von den **Modulen** in den **Speicher**, von dort in den **Akku** oder
-ins **Haus**, und zwischen **Netz** und Haus.
+Das Bild zeigt, wohin die Leistung gerade fließt: von den **Modulen** in den Wechselrichter in der Mitte, von dort in
+den **Akku** oder ins **Haus**, und zwischen **Netz** und Haus. Die Mitte trägt das Modell des Geräts (z. B. **EZHI**), in
+der Integration aus dem Geräteregister von Home Assistant; ohne bekanntes Modell heißt sie **Wechselrichter**. Den Namen
+des Akkus, z. B. den Hersteller, trägt man selbst ein (Docker-App: *Einstellungen → Preise und Anlage*, Integration:
+*Konfigurieren*), weil die Geräte ihn nicht verlässlich melden; ohne Eintrag steht dort **Akku**.
 Je mehr Leistung, desto dicker die Leitung und desto schneller laufen die Striche. Die Laufrichtung zeigt,
 ob der Akku lädt oder entlädt und ob Strom aus dem Netz kommt oder eingespeist wird. Der Wert am Haus ist der
 Hausverbrauch, also Abgabe des Balkonkraftwerks plus Netzbezug.
