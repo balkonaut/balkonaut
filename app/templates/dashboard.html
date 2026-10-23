@@ -84,7 +84,7 @@
       {% else %}{{ line("M100 66 V182 H190 V222", live.get("pv_power"), "var(--sun)") }}{{ line("M300 66 V88", pv_ac, "var(--sun)") }}
         {{ line("M300 144 V182 H210 V222", pv_ac, "var(--sun)") }}
         {{ node(40, 10, "var(--sun)", modules.storage or "Module", live.get("pv_power"), "panel") }}{{ node(240, 10, "var(--sun)", modules.extra or "Module", pv_ac, "panel") }}
-        {{ node(240, 88, "var(--sun)", "Zusatz-WR", pv_ac, "sun") }}{% endif %}
+        {{ node(240, 88, "var(--sun)", extra_name, pv_ac, "sun") }}{% endif %}
       {{ line("M150 242 H124", batt, "var(--batt-flow)", (batt or 0) < 0) }}
       {{ line("M250 242 H276", house, "var(--leaf)") }}
       {{ line("M200 262 V341", grid, "var(--sky)", (grid or 0) > 0) }}

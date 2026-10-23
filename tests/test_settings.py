@@ -11,7 +11,7 @@ def test_settings_roundtrip(client, tmp_path):
     assert client.post("/einstellungen", data={"energy": "-1", "feed_in": "0", "cost": "0"}).status_code == 400
     assert "Gespeichert" in client.get("/einstellungen?gespeichert=1").text
     cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
-    assert cfg == {"prices": {"energy": 0.32, "feed_in": 0.0}, "system": {"cost": 1499.0, "commissioned": None, "battery_name": None}}
+    assert cfg == {"prices": {"energy": 0.32, "feed_in": 0.0}, "system": {"cost": 1499.0, "commissioned": None, "battery_name": None, "extra_name": None}}
 
 
 def test_settings_commissioned(client):

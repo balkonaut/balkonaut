@@ -217,6 +217,7 @@ def dashboard(request: Request, zeitraum: str = "tag"):
         "configured": bool(cfg.get("devices") or cfg.get("home_assistant")),
         "hub_name": next((HUB_NAMES[d["type"]] for d in cfg.get("devices") or [] if d["type"] in HUB_NAMES), "Wechselrichter"),
         "battery_name": (cfg["system"].get("battery_name") or "Akku")[:10],
+        "extra_name": (cfg["system"].get("extra_name") or "Zusatz-WR")[:14],
         "modules": {inv: " + ".join(direction(p["azimuth"]).split()[0] for p in cfg.get("planes") or []
                                      if p.get("inverter", "storage") == inv) for inv in ("storage", "extra")},
     })
@@ -388,6 +389,7 @@ async def save_settings(request: Request):
     except (KeyError, ValueError):
         return await settings_page(request, cfg, 400, error=True)
     cfg["prices"].update(energy=values["energy"], feed_in=values["feed_in"])
-    cfg["system"].update(cost=values["cost"], commissioned=day, battery_name=form.get("battery_name", "").strip() or None)
+    cfg["system"].update(cost=values["cost"], commissioned=day, battery_name=form.get("battery_name", "").strip() or None,
+                         extra_name=form.get("extra_name", "").strip() or None)
     config.save(request.app.state.config_path, cfg)
     return RedirectResponse("einstellungen?gespeichert=1", status_code=303)  # relativ wegen Ingress

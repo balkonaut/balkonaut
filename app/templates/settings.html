@@ -112,6 +112,9 @@
   <label for="battery_name">Bezeichnung des Akkus (optional)</label>
   <input id="battery_name" name="battery_name" maxlength="20" value="{{ cfg.system.battery_name or '' }}" placeholder="z. B. Phylion">
   <p class="label">Erscheint im Energiefluss statt „Akku“, z. B. der Hersteller. Die Geräte melden ihn nicht verlässlich.</p>
+  <label for="extra_name">Bezeichnung des zusätzlichen Wechselrichters (optional)</label>
+  <input id="extra_name" name="extra_name" maxlength="20" value="{{ cfg.system.extra_name or '' }}" placeholder="z. B. EZ1-M">
+  <p class="label">Erscheint im Energiefluss statt „Zusatz-WR“, falls ein zweiter Wechselrichter am Speicher hängt.</p>
   <label for="commissioned">Inbetriebnahme (optional)</label>
   <input id="commissioned" name="commissioned" type="date" value="{{ cfg.system.commissioned or '' }}">
   <p class="label">Datum, ab dem der Abgabezähler am Einspeisepunkt zählt, meist die Inbetriebnahme.

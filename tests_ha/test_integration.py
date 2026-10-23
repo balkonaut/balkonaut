@@ -284,7 +284,7 @@ async def test_standalone_backfill(hass, freezer):
 async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     device(hass, "apsystems_ezhi_local", "EZHI", [("apsystems_EZHI_battery_soc", "sensor.soc", "50", {"unit_of_measurement": "%"})],
            model="EZHI")
-    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", options={"battery_name": "Phylion"},
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", options={"battery_name": "Phylion", "extra_name": "EZ1-M"},
                             data={"entities": {"battery_soc": "sensor.soc"}, "invert": ["output_power"]})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
@@ -294,13 +294,19 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     msg = await ws.receive_json()
     assert msg["success"] and msg["result"]["entities"] == {"battery_soc": "sensor.soc"}
     assert msg["result"]["invert"] == ["output_power"] and "tag" in msg["result"]["status"]["bilanz"]
-    assert msg["result"]["names"] == {"hub": "EZHI", "battery": "Phylion"}  # Modell aus dem Geräteregister
+    assert msg["result"]["names"] == {"hub": "EZHI", "battery": "Phylion", "extra": "EZ1-M"}  # Modell aus dem Register
     await ws.send_json({"id": 2, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})
     assert (await ws.receive_json())["error"]["code"] == "not_found"
     for i, (cmd, key) in enumerate([("verlauf", "balken"), ("bericht", "tage"), ("nulleinspeisung", None)], start=3):
         await ws.send_json({"id": i, "type": f"balkonaut/{cmd}"})
         msg = await ws.receive_json()
         assert msg["success"] and (key is None or key in msg["result"]), cmd
+    device(hass, "hoymiles_wifi", "HMS", [("hoymiles_x_dtu_power", "sensor.hms", "80", {"unit_of_measurement": "W"})],
+           model="HMS-800W-2T")  # eigenes Gerät am Zusatz: dessen Modell statt der Bezeichnung aus den Optionen
+    hass.config_entries.async_update_entry(entry, data={**entry.data, "entities": {"battery_soc": "sensor.soc",
+                                                                                     "pv_ac_power": "sensor.hms"}})
+    await ws.send_json({"id": 20, "type": "balkonaut/status"})
+    assert (await ws.receive_json())["result"]["names"]["extra"] == "HMS-800W-2T"
     client = await hass_client()
     for name in ("balkonaut-card.js", "balkonaut-panel.js"):
         resp = await client.get(f"/balkonaut_static/{name}")

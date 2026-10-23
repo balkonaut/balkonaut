@@ -19,7 +19,9 @@ Das Bild zeigt, wohin die Leistung gerade fließt: von den **Modulen** in den We
 den **Akku** oder ins **Haus**, und zwischen **Netz** und Haus. Die Mitte trägt das Modell des Geräts (z. B. **EZHI**), in
 der Integration aus dem Geräteregister von Home Assistant; ohne bekanntes Modell heißt sie **Wechselrichter**. Den Namen
 des Akkus, z. B. den Hersteller, trägt man selbst ein (Docker-App: *Einstellungen → Preise und Anlage*, Integration:
-*Konfigurieren*), weil die Geräte ihn nicht verlässlich melden; ohne Eintrag steht dort **Akku**.
+*Konfigurieren*), weil die Geräte ihn nicht verlässlich melden; ohne Eintrag steht dort **Akku**. Ebenso für den
+zweiten Wechselrichter: Ist er in Home Assistant ein eigenes Gerät, steht dort sein Modell, sonst die eingetragene
+Bezeichnung (z. B. **EZ1-M**, wenn der Speicher ihn am Off-Grid-Port mitmisst) oder **Zusatz-WR**.
 Je mehr Leistung, desto dicker die Leitung und desto schneller laufen die Striche. Die Laufrichtung zeigt,
 ob der Akku lädt oder entlädt und ob Strom aus dem Netz kommt oder eingespeist wird. Der Wert am Haus ist der
 Hausverbrauch, also Abgabe des Balkonkraftwerks plus Netzbezug.

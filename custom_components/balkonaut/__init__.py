@@ -251,17 +251,23 @@ def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnection, m
     connection.send_result(msg["id"], {
         "entry_id": entry.entry_id, "entities": entry.data.get(CONF_ENTITIES), "invert": entry.data.get(CONF_INVERT, []),
         "status": entry.runtime_data.data,
-        "names": {"hub": _hub_name(hass, entry), "battery": entry.options.get("battery_name") or None}})
+        "names": _names(hass, entry)})
 
 
-def _hub_name(hass: HomeAssistant, entry: ConfigEntry) -> str | None:
-    """Modell des Geräts hinter den PV- bzw. Akku-Entitäten, z. B. EZHI; None, wenn keins bekannt ist."""
+def _names(hass: HomeAssistant, entry: ConfigEntry) -> dict:
+    """Namen für den Energiefluss: Modell des Geräts hinter den Entitäten aus dem Geräteregister, sonst die Bezeichnung
+    aus den Optionen. Der zweite Wechselrichter nur, wenn er ein eigenes Gerät ist (nicht etwa der Off-Grid-Port)."""
     entities, entity_reg, device_reg = entry.data.get(CONF_ENTITIES) or {}, er.async_get(hass), dr.async_get(hass)
-    for key in ("pv_power", "battery_power", "battery_soc"):
-        if (e := entity_reg.async_get(entities.get(key, ""))) and e.device_id \
-                and (device := device_reg.async_get(e.device_id)) and device.model:
-            return device.model
-    return None
+
+    def device(*keys):
+        for key in keys:
+            if (e := entity_reg.async_get(entities.get(key, ""))) and e.device_id:
+                return device_reg.async_get(e.device_id)
+        return None
+    hub, extra = device("pv_power", "battery_power", "battery_soc"), device("pv_ac_power")
+    own_extra = extra and (not hub or extra.id != hub.id) and extra.model
+    return {"hub": hub.model if hub and hub.model else None, "battery": entry.options.get("battery_name") or None,
+            "extra": own_extra or entry.options.get("extra_name") or None}
 
 
 async def _view(hass, connection, msg, path: str, params: dict, compute) -> None:

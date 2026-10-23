@@ -126,7 +126,7 @@ def test_flow_module_labels(client, tmp_path):
 def test_flow_names(client, tmp_path):
     """Mitte heißt wie der Speicher-Wechselrichter, der Akku wie in den Einstellungen eingetragen."""
     (tmp_path / "config.yaml").write_text("devices:\n  - {type: apsystems_ezhi, host: 10.0.0.11}\n"
-                                          "system: {cost: 0, commissioned: null, battery_name: Phylion}\n")
-    app.state.storage.add(int(time.time()) - 5, {"pv_power": 400, "battery_power": 200, "battery_soc": 50})
+                                          "system: {cost: 0, commissioned: null, battery_name: Phylion, extra_name: EZ1-M}\n")
+    app.state.storage.add(int(time.time()) - 5, {"pv_power": 400, "pv_ac_power": 300, "battery_power": 200, "battery_soc": 50})
     page = client.get("/").text
-    assert ">EZHI</text>" in page and ">Phylion lädt</text>" in page
+    assert ">EZHI</text>" in page and ">Phylion lädt</text>" in page and ">EZ1-M</text>" in page
