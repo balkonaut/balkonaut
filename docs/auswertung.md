@@ -29,8 +29,9 @@ Hausverbrauch, also Abgabe des Balkonkraftwerks plus Netzbezug.
 Ist ein zweiter Wechselrichter eingetragen (`pv_ac_power`, z. B. ein Mikrowechselrichter am Speicher), zeigt das
 Bild oben zwei Modulfelder: links die Module am Speicher, rechts die Module am zweiten Wechselrichter, der als eigenes
 Feld **Zusatz-WR** dazwischen steht. Die Module eines Wechselrichters teilen sich eine Anzeige, weil die Geräte keine
-Werte je Modul liefern. In der Docker-App tragen die Modulfelder die Ausrichtung der Flächen aus den Einstellungen
-(z. B. **Südost**, **West**), sonst heißen sie **Module**.
+Werte je Modul liefern. Die Modulfelder tragen die Ausrichtung der Flächen (z. B. **Südost**, **West**): in der Docker-App aus den
+Einstellungen, in der Integration aus den Forecast.Solar-Einträgen, die der Prognose des jeweiligen Wechselrichters
+zugeordnet sind. Ohne Flächen heißen sie **Module**.
 
 ### Akku
 

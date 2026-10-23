@@ -176,13 +176,14 @@ class BalkonautCard extends HTMLElement {
     const names = this._data.names || {};
     const battName = esc((names.battery || "Akku").slice(0, 10)), hubName = esc((names.hub || "Wechselrichter").slice(0, 14));
     const extraName = esc((names.extra || "Zusatz-WR").slice(0, 14));
+    const modules = (k) => esc((names.modules?.[k] || "Module").slice(0, 14));
     const battLabel = (batt || 0) > 5 ? `${battName} lädt` : (batt || 0) < -5 ? `${battName} entlädt` : battName;
     // Module oben, je Wechselrichter ein Feld mit gemeinsamer Leistung (Werte je Modul liefern die Geräte nicht)
     const pvPart = pvAc === null
-      ? this._line("M200 66 V222", pv, "var(--bk-sun)") + this._node(140, 10, "var(--bk-sun)", "Module", pv, "panel")
+      ? this._line("M200 66 V222", pv, "var(--bk-sun)") + this._node(140, 10, "var(--bk-sun)", modules("storage"), pv, "panel")
       : this._line("M100 66 V182 H190 V222", v.pv_power, "var(--bk-sun)") + this._line("M300 66 V88", pvAc, "var(--bk-sun)")
         + this._line("M300 144 V182 H210 V222", pvAc, "var(--bk-sun)")
-        + this._node(40, 10, "var(--bk-sun)", "Module", v.pv_power, "panel") + this._node(240, 10, "var(--bk-sun)", "Module", pvAc, "panel")
+        + this._node(40, 10, "var(--bk-sun)", modules("storage"), v.pv_power, "panel") + this._node(240, 10, "var(--bk-sun)", modules("extra"), pvAc, "panel")
         + this._node(240, 88, "var(--bk-sun)", extraName, pvAc, "sun");
     return `<div class="head"><span>${this._config.title ?? "Energiefluss jetzt"}</span></div>
       <svg class="flow" viewBox="0 0 400 407" role="img"

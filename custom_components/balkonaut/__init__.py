@@ -29,6 +29,7 @@ from homeassistant.loader import async_get_integration
 
 from .core import analytics, views
 from .core.homeassistant import normalize
+from .core.profiles import direction
 from .core.storage import Storage
 
 DOMAIN = "balkonaut"
@@ -264,10 +265,17 @@ def _names(hass: HomeAssistant, entry: ConfigEntry) -> dict:
             if (e := entity_reg.async_get(entities.get(key, ""))) and e.device_id:
                 return device_reg.async_get(e.device_id)
         return None
+    def planes(key):  # Ausrichtung der Forecast.Solar-Flächen, die der Prognose dieses Wechselrichters zugeordnet ist
+        e = entity_reg.async_get(entities.get(key, ""))
+        source = e and e.platform == "forecast_solar" and hass.config_entries.async_get_entry(e.config_entry_id)
+        return " + ".join(direction(p.data["azimuth"]).split()[0] for p in source.get_subentries_of_type("plane")) \
+            if source else None
+
     hub, extra = device("pv_power", "battery_power", "battery_soc"), device("pv_ac_power")
     own_extra = extra and (not hub or extra.id != hub.id) and extra.model
     return {"hub": hub.model if hub and hub.model else None, "battery": entry.options.get("battery_name") or None,
-            "extra": own_extra or entry.options.get("extra_name") or None}
+            "extra": own_extra or entry.options.get("extra_name") or None,
+            "modules": {"storage": planes("pv_forecast_today"), "extra": planes("pv_ac_forecast_today")}}
 
 
 async def _view(hass, connection, msg, path: str, params: dict, compute) -> None:

@@ -294,7 +294,8 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     msg = await ws.receive_json()
     assert msg["success"] and msg["result"]["entities"] == {"battery_soc": "sensor.soc"}
     assert msg["result"]["invert"] == ["output_power"] and "tag" in msg["result"]["status"]["bilanz"]
-    assert msg["result"]["names"] == {"hub": "EZHI", "battery": "Phylion", "extra": "EZ1-M"}  # Modell aus dem Register
+    assert msg["result"]["names"] == {"hub": "EZHI", "battery": "Phylion", "extra": "EZ1-M",  # Modell aus dem Register
+                                      "modules": {"storage": None, "extra": None}}
     await ws.send_json({"id": 2, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})
     assert (await ws.receive_json())["error"]["code"] == "not_found"
     for i, (cmd, key) in enumerate([("verlauf", "balken"), ("bericht", "tage"), ("nulleinspeisung", None)], start=3):
@@ -303,10 +304,16 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
         assert msg["success"] and (key is None or key in msg["result"]), cmd
     device(hass, "hoymiles_wifi", "HMS", [("hoymiles_x_dtu_power", "sensor.hms", "80", {"unit_of_measurement": "W"})],
            model="HMS-800W-2T")  # eigenes Gerät am Zusatz: dessen Modell statt der Bezeichnung aus den Optionen
-    hass.config_entries.async_update_entry(entry, data={**entry.data, "entities": {"battery_soc": "sensor.soc",
-                                                                                     "pv_ac_power": "sensor.hms"}})
+    solar = MockConfigEntry(domain="forecast_solar", subentries_data=[
+        {"data": {"azimuth": 135}, "subentry_type": "plane", "title": "Ost", "unique_id": None}])
+    solar.add_to_hass(hass)
+    er.async_get(hass).async_get_or_create("sensor", "forecast_solar", f"{solar.entry_id}_energy_production_today",
+                                           suggested_object_id="prognose", config_entry=solar)
+    hass.config_entries.async_update_entry(entry, data={**entry.data, "entities": {
+        "battery_soc": "sensor.soc", "pv_ac_power": "sensor.hms", "pv_forecast_today": "sensor.prognose"}})
     await ws.send_json({"id": 20, "type": "balkonaut/status"})
-    assert (await ws.receive_json())["result"]["names"]["extra"] == "HMS-800W-2T"
+    names = (await ws.receive_json())["result"]["names"]
+    assert names["extra"] == "HMS-800W-2T" and names["modules"] == {"storage": "Südost", "extra": None}
     client = await hass_client()
     for name in ("balkonaut-card.js", "balkonaut-panel.js"):
         resp = await client.get(f"/balkonaut_static/{name}")
