@@ -262,13 +262,8 @@ LIVE = [("grid_power", "Netz", "W", ("Bezug", "Einspeisung")), ("pv_power", "PV"
 
 def device_values(dev):
     """Aktuelle Werte eines Geräts als Text mit Richtung, z. B. „Netz 312 W (Bezug)“; None, wenn es nicht antwortet."""
-    try:
-        values = devices.TYPES[dev["type"]](dev["host"])
-    except (OSError, ValueError):
+    if not (values := devices.Devices([dev]).read()):  # leer: Gerät antwortet nicht
         return None
-    for key in dev.get("invert", []):
-        if values.get(key) is not None:
-            values[key] = -values[key]
     out = []
     for key, label, unit, words in LIVE:
         if (value := values.get(key)) is not None:
