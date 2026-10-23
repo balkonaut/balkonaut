@@ -267,3 +267,22 @@ def test_marstek():
     assert suggest(local, STORAGE_KEYS)[0] == {k: f"sensor.l_{n}" for k, n in {
         "pv_power": "pv_power", "pv_energy": "total_pv_energy", "battery_power": "battery_power",
         "battery_soc": "battery_soc", "battery_capacity": "battery_rated_capacity"}.items()}
+
+
+def test_sungrow():
+    """Sungrow über die Modbus-Vorlage von mkaiser, feste unique_id aus der YAML-Datei, auch mit _inv_1."""
+    names = ("sg_total_dc_power", "sg_total_pv_generation", "sg_battery_power", "sg_battery_level",
+             "sg_total_battery_charge", "sg_total_battery_charge_from_pv", "sg_total_battery_discharge",
+             "uid_battery_capacity_high_precision", "sg_meter_active_power", "sg_total_active_power")
+    entities = [e(f"sensor.{n}", "modbus", f"{n}_inv_1") for n in names]
+    entities += [e("number.min_soc", "template", "uid_battery_min_soc_inv_1"),
+                 e("number.max_soc", "template", "uid_battery_max_soc_inv_1")]
+    found, invert = suggest(entities, ["grid_power"] + STORAGE_KEYS)
+    assert found == {"pv_power": "sensor.sg_total_dc_power", "pv_energy": "sensor.sg_total_pv_generation",
+                     "battery_power": "sensor.sg_battery_power", "battery_soc": "sensor.sg_battery_level",
+                     "battery_charge_energy": "sensor.sg_total_battery_charge",
+                     "battery_discharge_energy": "sensor.sg_total_battery_discharge",
+                     "battery_capacity": "sensor.uid_battery_capacity_high_precision",
+                     "grid_power": "sensor.sg_meter_active_power", "output_power": "sensor.sg_total_active_power",
+                     "battery_soc_min": "number.min_soc", "battery_soc_max": "number.max_soc"}
+    assert invert == ["battery_power"]

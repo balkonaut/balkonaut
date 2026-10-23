@@ -198,6 +198,18 @@ async def test_standalone_options(hass):
     assert await hass.config_entries.async_unload(entry.entry_id)
 
 
+async def test_standalone_without_device(hass):
+    """Entitäten ohne Gerät (z. B. Sungrow-Modbus-Vorlage) schlägt die Einrichtung vor, wenn ein Profil sie kennt."""
+    for unique_id, entity_id in (("sg_battery_level", "sensor.battery_level"), ("my_power", "sensor.my_power")):
+        er.async_get(hass).async_get_or_create("sensor", "modbus", unique_id, suggested_object_id=entity_id[7:])
+        hass.states.async_set(entity_id, "50", {"device_class": "power", "unit_of_measurement": "W"})
+    result = await start_flow(hass, "standalone")
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    schema = result["data_schema"].schema
+    assert {k.schema: k.description["suggested_value"] for sec in ("grid", "battery")
+            for k in schema[sec].schema.schema if k.description} == {"battery_soc": "sensor.battery_level"}
+
+
 async def test_reconfigure(hass, aioclient_mock):
     """Neu konfigurieren ändert Zuordnung oder Adresse, Eintrag und Messdaten bleiben."""
     hass.states.async_set("sensor.soc", "50", {"unit_of_measurement": "%"})

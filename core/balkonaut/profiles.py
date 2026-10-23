@@ -180,6 +180,21 @@ PROFILES = {
         (r"_battery_soc$", "battery_soc", False),
         (r"_battery_rated_capacity$", "battery_capacity", False),
     ],
+    "modbus": [  # Sungrow über die Modbus-Vorlage mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant (YAML, ohne Gerät)
+        (r"^sg_total_dc_power(_inv_\d)?$", "pv_power", False),
+        (r"^sg_total_pv_generation(_inv_\d)?$", "pv_energy", False),
+        (r"^sg_battery_power(_inv_\d)?$", "battery_power", True),  # Vorlage: negativ beim Laden
+        (r"^sg_battery_level(_inv_\d)?$", "battery_soc", False),
+        (r"^sg_total_battery_charge(_inv_\d)?$", "battery_charge_energy", False),
+        (r"^sg_total_battery_discharge(_inv_\d)?$", "battery_discharge_energy", False),
+        (r"^uid_battery_capacity_high_precision(_inv_\d)?$", "battery_capacity", False),
+        (r"^sg_meter_active_power(_inv_\d)?$", "grid_power", False),  # Vorlage: > 0 Bezug
+        (r"^sg_total_active_power(_inv_\d)?$", "output_power", False),
+    ],
+    "template": [  # Sungrow-Vorlage: Ladegrenzen als Template-Zahlen
+        (r"^uid_battery_min_soc(_inv_\d)?$", "battery_soc_min", False),
+        (r"^uid_battery_max_soc(_inv_\d)?$", "battery_soc_max", False),
+    ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
     ],

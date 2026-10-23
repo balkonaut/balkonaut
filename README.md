@@ -80,6 +80,7 @@ Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen:
 | Victron GX, aus dem Quellcode abgeleitet | Victron GX, Victron MQTT, Victron Modbus |
 | Fox ESS H1, H3, KH, EVO, aus dem Quellcode abgeleitet | FoxESS Modbus, FoxESS Cloud (HACS) |
 | Marstek Venus, aus dem Quellcode abgeleitet | Marstek Modbus, Marstek Local API (HACS) |
+| Sungrow SH*RT, SH*K, aus dem Quellcode abgeleitet | Modbus-Vorlage von mkaiser (YAML) |
 
 Andere Geräte gehen auch: Balkonaut schlägt Entitäten nach Art und Einheit vor, wenn das eindeutig ist, sonst
 wählt man selbst. Damit ein Gerät fest dazukommt, die Diagnose-Datei (*⋮ → Diagnose herunterladen*) mit Hersteller,

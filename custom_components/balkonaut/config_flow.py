@@ -1,5 +1,6 @@
 """Einrichtung der Balkonaut-Integration: eigenständig mit Entitäten oder mit der Adresse einer Balkonaut-App."""
 from datetime import date
+import re
 from typing import Any
 
 import aiohttp
@@ -34,7 +35,7 @@ from homeassistant.helpers.translation import async_get_translations
 
 from . import CONF_ENTITIES, CONF_INVERT, DEFAULT_SCAN_INTERVAL, DOMAIN, KEYS, SIGNED_KEYS, fetch_status
 from .core.homeassistant import normalize
-from .core.profiles import direction, suggest
+from .core.profiles import PROFILES, direction, suggest
 
 ROLES = ["grid_device", "storage_device", "extra_device", "output_device"]  # Geräte im ersten Schritt
 # Abschnitte der Zuordnung im zweiten Schritt, zusammen genau KEYS
@@ -128,9 +129,9 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         registry = er.async_get(self.hass)
         found, invert = {}, []
 
-        def add(role, keys, rename=None):
+        def add(entries, keys, rename=None):
             entities = []
-            for e in er.async_entries_for_device(registry, devices[role]) if devices.get(role) else []:
+            for e in entries:
                 attrs = getattr(self.hass.states.get(e.entity_id), "attributes", {})
                 entities.append({"entity_id": e.entity_id, "platform": e.platform, "unique_id": e.unique_id,
                                  "device_class": attrs.get("device_class"),
@@ -142,11 +143,18 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
             found.update({rename.get(k, k): v for k, v in new.items()})
             invert.extend(rename.get(k, k) for k in flip)
 
-        add("grid_device", ["grid_power"])
-        add("output_device", ["output_energy"])  # Zähler am Einspeisepunkt ist maßgeblich (Handbuch, Messquellen)
-        add("extra_device", ["pv_power"], {"pv_power": "pv_ac_power"})
-        add("storage_device", STORAGE_KEYS)
-        add("output_device", ["output_power"])
+        def device(role):
+            return er.async_entries_for_device(registry, devices[role]) if devices.get(role) else []
+
+        add(device("grid_device"), ["grid_power"])
+        add(device("output_device"), ["output_energy"])  # Zähler am Einspeisepunkt ist maßgeblich (Handbuch, Messquellen)
+        add(device("extra_device"), ["pv_power"], {"pv_power": "pv_ac_power"})
+        add(device("storage_device"), STORAGE_KEYS)
+        add(device("output_device"), ["output_power"])
+        # Entitäten ohne Gerät (z. B. Modbus-Vorlagen in YAML), nur wenn ein Profil sie genau kennt
+        add([e for e in registry.entities.values() if not e.device_id and not e.disabled_by
+             and any(re.search(p, e.unique_id) for p, _, _ in PROFILES.get(e.platform, []))],
+            ["grid_power"] + STORAGE_KEYS)
         if len(forecasts := self._forecasts()) == 1 and "pv_ac_power" not in found:  # bei zwei Erzeugern unklar, welcher
             found["pv_forecast_today"] = next(iter(forecasts))
         return found, invert
