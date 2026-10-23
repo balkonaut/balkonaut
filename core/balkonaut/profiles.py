@@ -76,6 +76,15 @@ PROFILES = {
         (r"_TOTAL_total_P_AC$", "pv_power", False),  # AhoyDTU: Summe aller Wechselrichter
         (r"_TOTAL_total_YieldTotal$", "pv_energy", False),
     ],
+    "anker_solix": [  # thomluther/ha-anker-solix: <Seriennummer oder Anlage>_<Schlüssel>, klein geschrieben
+        (r"_input_power$", "pv_power", False),  # Solarbank: PV-Leistung des Geräts
+        (r"_solar_power_total$", "pv_power", False),
+        (r"_battery_power_signed$", "battery_power", False),  # README: positiv beim Laden
+        (r"_state_of_charge$", "battery_soc", False),
+        (r"_ac_to_home_load$", "output_power", False),
+        (r"_grid_power_signed$", "grid_power", False),  # Vorzeichen nicht dokumentiert
+        # Energie nur als Tageswerte aus der Cloud-Statistik, daher keine Zähler; Balkonaut summiert selbst
+    ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
     ],

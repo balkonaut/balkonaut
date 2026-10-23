@@ -156,3 +156,13 @@ def test_hoymiles():
     wifi = [e("sensor.hms_power", "hoymiles_wifi", "hoymiles_01k8z3m5q7r9t1v3w5x7y9a2b4_dtu_power"),
             e("sensor.hms_port", "hoymiles_wifi", "hoymiles_01k8z3m5q7r9t1v3w5x7y9a2b4_pv_data[0].power")]
     assert suggest(wifi, ["pv_power"]) == ({"pv_power": "sensor.hms_power"}, [])
+
+
+def test_anker_solix():
+    """Anker Solarbank über ha-anker-solix, Muster aus dem Quellcode (unique_id <Kontext>_<Schlüssel>)."""
+    keys = ("input_power", "battery_power_signed", "bat_charge_power", "state_of_charge", "state_of_charge_total",
+            "ac_to_home_load", "home_demand_total", "solar_energy")
+    entities = [e(f"sensor.sb_{k}", "anker_solix", f"apc1a00012345678_{k}") for k in keys]
+    assert suggest(entities, STORAGE_KEYS) == ({
+        "pv_power": "sensor.sb_input_power", "battery_power": "sensor.sb_battery_power_signed",
+        "battery_soc": "sensor.sb_state_of_charge", "output_power": "sensor.sb_ac_to_home_load"}, [])
