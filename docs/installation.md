@@ -123,8 +123,8 @@ Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die E
    Abgabe ins Haus und Prognose. Jede Zuordnung lässt sich ändern oder ergänzen, Abschnitte ohne Vorschlag sind
    eingeklappt. Darüber stehen die aktuellen Werte mit Richtung, z. B. „Netzleistung: 312 W (Bezug)“ oder
    „Akkuleistung: 80 W (lädt)“. Passt die Richtung nicht, etwa „Abgabe ins Haus“ als Bezug während der Akku entlädt,
-   die Messgröße unter *Vorzeichen drehen* wählen. Prognosen von Forecast.Solar heißen nach der Ausrichtung ihrer
-   Flächen, z. B. „Südost 135°“.
+   die Messgröße unter *Vorzeichen drehen* wählen. Bei Prognosen von Forecast.Solar steht die
+   Ausrichtung der Flächen dabei, z. B. „Prognose Speicher: 4,2 kWh (Südost 150°)“.
 3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht, weil Messgrößen fehlen.
    *Speichern* schließt ab, *Zuordnung ändern* führt zurück zu Schritt 2.
 

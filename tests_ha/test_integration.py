@@ -147,7 +147,7 @@ async def test_standalone(hass):
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {"storage_device": ezhi, "grid_device": em})
     assert result["step_id"] == "entities"
     values = result["description_placeholders"]["values"]
-    assert "300 W (Bezug)" in values and "200 W (Abgabe ins Haus)" in values and "50 %" in values
+    assert "300 W (Bezug)" in values and "house: 200 W\n" in values and "50 %" in values
     form = {"grid": {"grid_power": "sensor.netz"}, "generation": {}, "battery": {"battery_soc": "sensor.soc"},
             "output": {"output_power": "sensor.abgabe"}, "forecast": {"pv_forecast_today": "sensor.prognose"},
             "invert": ["output_power"]}
@@ -155,8 +155,7 @@ async def test_standalone(hass):
         if sec != "invert":
             schema = result["data_schema"].schema[sec].schema.schema
             assert {k.schema: k.description["suggested_value"] for k in schema if k.description} == fields
-    options = result["data_schema"].schema["forecast"].schema.schema
-    assert [o["label"] for o in next(iter(options.values())).config["options"]] == ["Südost 135°"]
+    assert "(Südost 135°)" in values
     empty = {sec: {} for sec in form if sec != "invert"}
     assert (await hass.config_entries.flow.async_configure(result["flow_id"], empty))["errors"] == {"base": "no_entities"}
     result = await hass.config_entries.flow.async_configure(result["flow_id"], form)

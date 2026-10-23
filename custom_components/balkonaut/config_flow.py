@@ -27,10 +27,8 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
-    SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
-    SelectSelectorMode,
 )
 from homeassistant.helpers.translation import async_get_translations
 
@@ -60,7 +58,7 @@ FEATURES = {
     "Ertragswächter mit Prognose": [("pv_forecast_today", "pv_ac_forecast_today")],
 }
 SIGNS = {"grid_power": ("Bezug", "Einspeisung"), "battery_power": ("lädt", "entlädt"),
-         "output_power": ("Abgabe ins Haus", "Bezug, Vorzeichen prüfen"),
+         "output_power": ("", "Bezug, Vorzeichen prüfen"),
          "pv_power": ("", "negativ, Vorzeichen prüfen"), "pv_ac_power": ("", "negativ, Vorzeichen prüfen")}
 
 
@@ -91,11 +89,8 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_summary()
             errors["base"] = "no_entities"
         entity = EntitySelector(EntitySelectorConfig(domain=["sensor", "number", "input_number"]))
-        forecast = SelectSelector(SelectSelectorConfig(
-            options=[SelectOptionDict(value=e, label=label) for e, label in forecasts.items()],
-            custom_value=True, mode=SelectSelectorMode.DROPDOWN)) if (forecasts := self._forecasts()) else entity
         schema = {vol.Required(sec): section(
-            vol.Schema({vol.Optional(k): forecast if sec == "forecast" else entity for k in keys}),
+            vol.Schema({vol.Optional(k): entity for k in keys}),
             {"collapsed": bool(self._entities) and not any(k in self._entities for k in keys)})
             for sec, keys in SECTIONS.items()}
         schema[vol.Optional(CONF_INVERT, default=[])] = SelectSelector(SelectSelectorConfig(
@@ -157,7 +152,7 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         return found, invert
 
     def _forecasts(self) -> dict[str, str]:
-        """Prognose-Entitäten von Forecast.Solar, benannt nach der Ausrichtung ihrer Flächen."""
+        """Prognose-Entitäten von Forecast.Solar mit der Ausrichtung ihrer Flächen, z. B. „Südost 150°“."""
         out = {}
         for e in er.async_get(self.hass).entities.values():
             if e.platform == "forecast_solar" and e.unique_id.endswith("_energy_production_today") and not e.disabled_by:
@@ -169,11 +164,13 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
     async def _values(self) -> str:
         """Aktuelle Werte der zugeordneten Entitäten, mit gedrehtem Vorzeichen, damit Fehler auffallen."""
         labels = await async_get_translations(self.hass, self.hass.config.language, "config", [DOMAIN])
+        forecasts = self._forecasts()
         lines = []
         for sec, keys in SECTIONS.items():
             for key in (k for k in keys if k in self._entities):
                 label = labels.get(f"component.{DOMAIN}.config.step.entities.sections.{sec}.data.{key}", key)
-                lines.append(f"- {label}: {self._live(key)}")
+                where = f" ({forecasts[self._entities[key]]})" if self._entities[key] in forecasts else ""
+                lines.append(f"- {label}: {self._live(key)}{where}")
         return "\n".join(lines) or "–"
 
     def _live(self, key: str) -> str:
@@ -183,7 +180,7 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         if value is None:
             return "kein Wert"
         unit = "W" if key.endswith(("_power", "_limit")) else "kWh" if key.endswith(("_energy", "_today", "_capacity")) else "%"
-        text = f"{abs(value) if key in SIGNS else value:.{1 if unit == 'kWh' else 0}f} {unit}"
+        text = f"{abs(value) if key in SIGNS else value:.{1 if unit == 'kWh' else 0}f} {unit}".replace(".", ",")
         if key in SIGNS and round(value) and (word := SIGNS[key][value < 0]):
             text += f" ({word})"
         return text
