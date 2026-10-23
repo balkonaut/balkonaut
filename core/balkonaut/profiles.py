@@ -199,6 +199,17 @@ PROFILES = {
     "tibber": [  # Tibber Pulse in Home Assistant: <home_id>_rt_<Schlüssel>; nur Bezug, Einspeisung getrennt
         (r"_rt_power$", "grid_power", False),
     ],
+    "solax_modbus": [  # wills106/homeassistant-solax-modbus: <Name der Anlage>_<Schlüssel>; Vorzeichen aus der
+        # Bilanz in der Doku: battery_charge - PV + measured_power_export + house_load = 0
+        (r"_pv_power_total$", "pv_power", False),
+        (r"_total_solar_energy$", "pv_energy", False),
+        (r"_battery_power_charge$", "battery_power", False),
+        (r"_battery_capacity$", "battery_soc", False),  # SolaX nennt den Ladestand Battery Capacity
+        (r"_battery_input_energy_total$", "battery_charge_energy", False),
+        (r"_battery_output_energy_total$", "battery_discharge_energy", False),
+        (r"_measured_power$", "grid_power", True),  # positiv bei Einspeisung
+        (r"_inverter_power$", "output_power", False),
+    ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
     ],

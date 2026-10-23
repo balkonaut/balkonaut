@@ -296,3 +296,18 @@ def test_grid_meters():
     tibber = [e("sensor.t_avg", "tibber", "96a14971_rt_averagePower"), e("sensor.t", "tibber", "96a14971_rt_power"),
               e("sensor.t_prod", "tibber", "96a14971_rt_powerProduction")]
     assert suggest(tibber, ["grid_power"]) == ({"grid_power": "sensor.t"}, [])
+
+
+def test_solax():
+    """SolaX über solax_modbus, Muster und Vorzeichen aus Quellcode und Doku der Integration."""
+    keys = ("pv_power_1", "pv_power_total", "total_solar_energy", "battery_power_charge", "battery_capacity",
+            "battery_input_energy_total", "battery_output_energy_total", "measured_power", "measured_power_l1",
+            "inverter_power", "feedin_power")
+    entities = [e(f"sensor.solax_{k}", "solax_modbus", f"SolaX_{k}") for k in keys]
+    found, invert = suggest(entities, ["grid_power"] + STORAGE_KEYS)
+    assert found == {k: f"sensor.solax_{n}" for k, n in {
+        "pv_power": "pv_power_total", "pv_energy": "total_solar_energy", "battery_power": "battery_power_charge",
+        "battery_soc": "battery_capacity", "battery_charge_energy": "battery_input_energy_total",
+        "battery_discharge_energy": "battery_output_energy_total", "grid_power": "measured_power",
+        "output_power": "inverter_power"}.items()}
+    assert invert == ["grid_power"]

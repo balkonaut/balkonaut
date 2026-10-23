@@ -156,6 +156,7 @@ geprüft, *aus dem Quellcode* heißt aus dem Code der Integration abgeleitet; R�
 | Fox ESS H1, H3, KH, EVO | FoxESS Modbus oder FoxESS Cloud (HACS) | PV, Akku mit Zählern und Ladegrenzen, Netz, Abgabe; Cloud nur PV und Akku | aus dem Quellcode |
 | Marstek Venus C, D, E | Marstek Modbus oder Marstek Local API (HACS) | PV, Akku, über Modbus mit Zählern, Ladegrenzen und Abgabe (Vorzeichen prüfen) | aus dem Quellcode |
 | Sungrow SH*RT, SH*K | Modbus-Vorlage von mkaiser (YAML) | PV, Akku mit Zählern, Kapazität und Ladegrenzen, Netz, Abgabe | aus dem Quellcode |
+| SolaX X1, X3 | SolaX Modbus (HACS) | PV, Akku mit Zählern, Netz, Abgabe | aus dem Quellcode |
 
 Bei anderen Geräten schlägt Balkonaut eine Entität vor, wenn sie nach Art und Einheit eindeutig passt
 (z. B. der einzige Leistungssensor des Geräts in W). Ist das nicht eindeutig, bleibt das Feld leer und man wählt selbst.
