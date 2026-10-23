@@ -1,0 +1,39 @@
+# Docker-Image für den Betrieb ohne Home Assistant: bei Änderungen an App, Kern oder Handbuch als latest und
+# sha-<commit> für amd64 und arm64 nach ghcr.io. Die Tags des Add-ons (Version aus addon/config.yaml) bleiben unberührt.
+name: Docker
+
+on:
+  push:
+    branches: [main]
+    paths: [app/**, core/**, docs/**, Dockerfile, mkdocs.yml, pyproject.toml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: docker
+  cancel-in-progress: true
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - id: v
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.v.outputs.image }}:latest,${{ steps.v.outputs.image }}:sha-${{ github.sha }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}

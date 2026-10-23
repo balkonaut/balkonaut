@@ -1,0 +1,9 @@
+# Nicht in den Build-Kontext: Zugangsdaten, Messdaten, lokale Umgebungen und Werkzeug-Ausgaben
+.*-token
+.git
+data
+.venv*
+site
+graphify-out
+handbuch
+**/__pycache__

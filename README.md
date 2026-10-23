@@ -112,9 +112,24 @@ type: custom:balkonaut-card
 
 ## Ohne Home Assistant oder mit der Docker-App
 
-Balkonaut gibt es auch als Docker-Container, etwa für eine NAS, mit eigener Web-Oberfläche. Die Integration kann
-dann im Modus *Mit einer Balkonaut-App* deren Werte anzeigen oder die Messdaten mit der Aktion
-*Balkonaut: Historie aus Balkonaut-App übernehmen* in den eigenständigen Betrieb übernehmen.
+Balkonaut läuft auch ganz ohne Home Assistant als Docker-Container, etwa auf einer NAS oder einem Raspberry Pi,
+mit eigener Web-Oberfläche. Er liest APsystems EZHI, Shelly Pro 3EM und Shelly Plug direkt im Heimnetz und holt
+Prognose und Jahresverlauf aus Standort und Flächen:
+
+```yaml
+services:
+  balkonaut:
+    image: ghcr.io/balkonaut/balkonaut:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+```
+
+`docker compose up -d`, dann `http://<adresse>:8000/` öffnen und unter *Einstellungen* die Geräte per IP-Adresse
+hinzufügen. Wer Home Assistant hat, kann die Integration im Modus *Mit einer Balkonaut-App* auf den Container zeigen
+lassen oder dessen Messdaten mit der Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen* übernehmen.
 Details im [Handbuch](https://balkonaut.github.io/balkonaut/installation/).
 
 ## Handbuch

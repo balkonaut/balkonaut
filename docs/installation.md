@@ -27,6 +27,34 @@ Aus dem Handbuch geht es über *Zurück zu Balkonaut* im Menü oder über das Lo
 
 ## Als Docker-Container
 
+Balkonaut läuft auch ganz ohne Home Assistant, etwa auf einer NAS oder einem Raspberry Pi, und liest die Geräte
+direkt im Heimnetz.
+
+### Mit dem fertigen Image
+
+1. Einen Ordner anlegen, darin eine Datei `docker-compose.yml`:
+
+    ```yaml
+    services:
+      balkonaut:
+        image: ghcr.io/balkonaut/balkonaut:latest
+        ports:
+          - "8000:8000"
+        volumes:
+          - ./data:/data
+        restart: unless-stopped
+    ```
+
+2. Starten: `docker compose up -d`
+3. `http://<adresse>:8000/` öffnen und unter *Einstellungen* die Geräte per IP-Adresse hinzufügen, Standort und
+   Flächen sowie Preise eintragen (siehe [Einstellungen](einstellungen.md)).
+4. Neue Versionen holen: `docker compose pull && docker compose up -d`. Die Messdaten im Ordner `data/` bleiben.
+
+Das Image gibt es für amd64 und arm64. Jede Version trägt zusätzlich einen Tag `sha-<commit>`, mit dem sich bei
+Problemen eine ältere Version festhalten lässt.
+
+### Selbst bauen
+
 1. Repository herunterladen und in das Verzeichnis wechseln.
 2. Container bauen und starten:
 
