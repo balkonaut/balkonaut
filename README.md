@@ -6,6 +6,7 @@
 [![Version](https://img.shields.io/github/v/release/balkonaut/balkonaut)](https://github.com/balkonaut/balkonaut/releases)
 [![Validate](https://github.com/balkonaut/balkonaut/actions/workflows/validate.yml/badge.svg)](https://github.com/balkonaut/balkonaut/actions/workflows/validate.yml)
 [![Lizenz](https://img.shields.io/github/license/balkonaut/balkonaut)](https://github.com/balkonaut/balkonaut/blob/main/LICENSE)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-balkonaut-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/balkonaut)
 
 **Antworten statt Rohdaten für dein Balkonkraftwerk mit Speicher.**
 
@@ -120,6 +121,12 @@ Details im [Handbuch](https://balkonaut.github.io/balkonaut/installation/).
 
 Das ausführliche [Handbuch](https://balkonaut.github.io/balkonaut/) auf Deutsch: Installation, Einstellungen, Auswertung, Messquellen und
 Schnittstelle.
+
+## Unterstützen
+
+Balkonaut ist kostenlos und quelloffen. Wer die Entwicklung unterstützen möchte, kann auf
+[buymeacoffee.com/balkonaut](https://buymeacoffee.com/balkonaut) einen Kaffee spendieren. Genauso hilfreich sind
+Rückmeldungen zu Geräten über [Gerät melden](https://balkonaut.github.io/balkonaut/installation/#gerat-melden).
 
 ## Lizenz
 
