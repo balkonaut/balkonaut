@@ -152,6 +152,7 @@ geprüft, *aus dem Quellcode* heißt aus dem Code der Integration abgeleitet; R�
 | Growatt MIN, MIC, MOD, SPH (nicht NOAH) | Growatt Server (Home Assistant) | PV, Ladestand und Akku-Zähler, Abgabe; Akkuleistung und Netz fehlen | aus dem Quellcode |
 | Victron GX (MultiPlus, Quattro, MPPT, Netzzähler) | Victron GX (Home Assistant), Victron MQTT oder Victron Modbus (HACS) | PV, Akku mit Zählern, Netz; über Modbus nur Akku | aus dem Quellcode |
 | Fox ESS H1, H3, KH, EVO | FoxESS Modbus oder FoxESS Cloud (HACS) | PV, Akku mit Zählern und Ladegrenzen, Netz, Abgabe; Cloud nur PV und Akku | aus dem Quellcode |
+| Marstek Venus C, D, E | Marstek Modbus oder Marstek Local API (HACS) | PV, Akku, über Modbus mit Zählern, Ladegrenzen und Abgabe (Vorzeichen prüfen) | aus dem Quellcode |
 
 Bei anderen Geräten schlägt Balkonaut eine Entität vor, wenn sie nach Art und Einheit eindeutig passt
 (z. B. der einzige Leistungssensor des Geräts in W). Ist das nicht eindeutig, bleibt das Feld leer und man wählt selbst.

@@ -249,3 +249,21 @@ def test_foxess():
         "pv1-power", "pv-power", "inv-Bat-Power", "inv-Bat-Power2", "bat-soc", "bat-soc1", "bat-soh"))]
     assert suggest(cloud, STORAGE_KEYS)[0] == {"pv_power": "sensor.fc_1", "battery_power": "sensor.fc_2",
                                                "battery_soc": "sensor.fc_4", "battery_soh": "sensor.fc_6"}
+
+
+def test_marstek():
+    """Marstek Venus über Modbus (ViperRNMC) und lokale API (jaapp), Muster aus deren Quellcode."""
+    modbus = [e(f"sensor.m_{k}", "marstek_modbus", f"01k8z3m5q7r9t1v3w5x7y9a2b4_{k}") for k in (
+        "solar_power_total", "battery_power", "battery_soc", "total_charging_energy", "total_discharging_energy",
+        "discharging_cutoff_capacity", "charging_cutoff_capacity", "ac_power", "stored_energy")]
+    assert suggest(modbus, STORAGE_KEYS)[0] == {k: f"sensor.m_{n}" for k, n in {
+        "pv_power": "solar_power_total", "battery_power": "battery_power", "battery_soc": "battery_soc",
+        "battery_charge_energy": "total_charging_energy", "battery_discharge_energy": "total_discharging_energy",
+        "battery_soc_min": "discharging_cutoff_capacity", "battery_soc_max": "charging_cutoff_capacity",
+        "output_power": "ac_power"}.items()}
+    local = [e(f"sensor.l_{k}", "marstek_local_api", f"aabbccddeeff_{k}") for k in (
+        "pv_power", "pv_power_es", "system_total_pv_energy", "total_pv_energy", "battery_power", "battery_power_in",
+        "battery_soc", "system_average_soc", "battery_rated_capacity", "system_total_rated_capacity")]
+    assert suggest(local, STORAGE_KEYS)[0] == {k: f"sensor.l_{n}" for k, n in {
+        "pv_power": "pv_power", "pv_energy": "total_pv_energy", "battery_power": "battery_power",
+        "battery_soc": "battery_soc", "battery_capacity": "battery_rated_capacity"}.items()}

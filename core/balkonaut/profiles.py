@@ -163,6 +163,23 @@ PROFILES = {
         (r"bat-soc$", "battery_soc", False),
         (r"bat-soh$", "battery_soh", False),
     ],
+    "marstek_modbus": [  # ViperRNMC/marstek_venus_modbus: <entry_id>_<Register>; Vorzeichen nicht dokumentiert
+        (r"_solar_power_total$", "pv_power", False),
+        (r"_battery_power$", "battery_power", False),
+        (r"_battery_soc$", "battery_soc", False),
+        (r"_total_charging_energy$", "battery_charge_energy", False),
+        (r"_total_discharging_energy$", "battery_discharge_energy", False),
+        (r"_discharging_cutoff_capacity$", "battery_soc_min", False),
+        (r"_charging_cutoff_capacity$", "battery_soc_max", False),
+        (r"_ac_power$", "output_power", False),
+    ],
+    "marstek_local_api": [  # jaapp/ha-marstek-local-api: <MAC>_<Schlüssel>; Akku positiv beim Laden (README)
+        (r"_pv_power$", "pv_power", False),
+        (r"(?<!system)_total_pv_energy$", "pv_energy", False),
+        (r"_battery_power$", "battery_power", False),
+        (r"_battery_soc$", "battery_soc", False),
+        (r"_battery_rated_capacity$", "battery_capacity", False),
+    ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
     ],
