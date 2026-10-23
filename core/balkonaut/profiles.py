@@ -118,6 +118,16 @@ PROFILES = {
         (r"-powGetSysGrid$", "grid_power", False),
         (r"-watts$", "output_power", False),  # Smart Plug am Einspeisepunkt
     ],
+    "growatt_server": [  # Growatt in Home Assistant: <Seriennummer>-<Schlüssel>; Akku und Netz nur getrennt je
+        # Richtung, daher ohne Akkuleistung und Netz. NOAH wird von der Integration nicht unterstützt.
+        (r"-(inverter|tlx)_internal_wattage$|-mix_wattage_pv_all$|-storage_solar_production$", "pv_power", False),
+        (r"-(inverter|tlx)_current_wattage$", "output_power", False),
+        (r"-tlx_solar_generation_total$|-(mix_solar_generation|storage_solar_output)_lifetime$|-inverter_energy_total$",
+         "pv_energy", False),
+        (r"-(tlx|mix)_statement_of_charge$|-storage_battery_percentage$", "battery_soc", False),
+        (r"-tlx_all_batteries_charge_total$|-mix_battery_charge_lifetime$", "battery_charge_energy", False),
+        (r"-tlx_all_batteries_discharge_total$|-mix_battery_discharge_lifetime$", "battery_discharge_energy", False),
+    ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
     ],

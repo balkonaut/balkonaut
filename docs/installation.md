@@ -149,6 +149,7 @@ geprüft, *aus dem Quellcode* heißt aus dem Code der Integration abgeleitet; R�
 | Anker Solix Solarbank | Anker Solix (HACS) | PV-Leistung, Akku, Abgabe ins Haus, Netz (Vorzeichen prüfen); keine Zähler | aus dem Quellcode |
 | Zendure SolarFlow, Hyper, AIO | Zendure (HACS) | PV, Akku mit Ladegrenzen, Abgabe ins Haus, Abgabelimit | aus dem Quellcode |
 | EcoFlow PowerStream, STREAM, Smart Plug | EcoFlow Cloud (HACS) | Akku mit Ladegrenzen, Abgabe ins Haus; STREAM auch PV und Netz (Vorzeichen prüfen) | aus dem Quellcode |
+| Growatt MIN, MIC, MOD, SPH (nicht NOAH) | Growatt Server (Home Assistant) | PV, Ladestand und Akku-Zähler, Abgabe; Akkuleistung und Netz fehlen | aus dem Quellcode |
 
 Bei anderen Geräten schlägt Balkonaut eine Entität vor, wenn sie nach Art und Einheit eindeutig passt
 (z. B. der einzige Leistungssensor des Geräts in W). Ist das nicht eindeutig, bleibt das Feld leer und man wählt selbst.

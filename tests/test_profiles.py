@@ -199,3 +199,20 @@ def test_ecoflow():
         "battery_charge_energy": "accuChgEnergy", "battery_discharge_energy": "accuDsgEnergy",
         "battery_soc_min": "cmsMinDsgSoc", "battery_soc_max": "cmsMaxChgSoc", "output_power": "gridConnectionPower",
         "grid_power": "powGetSysGrid"}.items()}
+
+
+def test_growatt():
+    """Growatt MIN/MIC (tlx) und SPH (mix) über die Integration in Home Assistant, Muster aus deren Quellcode."""
+    tlx = [e(f"sensor.min_{k}", "growatt_server", f"BNE1234567-tlx_{k}") for k in (
+        "internal_wattage", "current_wattage", "wattage_input_1", "solar_generation_total", "energy_total",
+        "statement_of_charge", "all_batteries_charge_total", "all_batteries_discharge_total", "battery_1_charge_w")]
+    assert suggest(tlx, STORAGE_KEYS)[0] == {k: f"sensor.min_{n}" for k, n in {
+        "pv_power": "internal_wattage", "output_power": "current_wattage", "pv_energy": "solar_generation_total",
+        "battery_soc": "statement_of_charge", "battery_charge_energy": "all_batteries_charge_total",
+        "battery_discharge_energy": "all_batteries_discharge_total"}.items()}
+    mix = [e(f"sensor.sph_{k}", "growatt_server", f"JPC1234567-mix_{k}") for k in (
+        "wattage_pv_all", "solar_generation_lifetime", "statement_of_charge", "battery_charge_lifetime",
+        "battery_discharge_lifetime", "battery_charge", "export_to_grid")]
+    assert suggest(mix, STORAGE_KEYS)[0] == {k: f"sensor.sph_{n}" for k, n in {
+        "pv_power": "wattage_pv_all", "pv_energy": "solar_generation_lifetime", "battery_soc": "statement_of_charge",
+        "battery_charge_energy": "battery_charge_lifetime", "battery_discharge_energy": "battery_discharge_lifetime"}.items()}
