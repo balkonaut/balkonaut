@@ -69,6 +69,7 @@ Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen:
 | APsystems EZHI | APsystems EZHI Local API (HACS) |
 | APsystems EZ1-M | APsystems |
 | Shelly Pro 3EM, Shelly Plug | Shelly |
+| Shelly Pro EM, Tibber Pulse, aus dem Quellcode abgeleitet | Shelly, Tibber |
 | Forecast.Solar (Prognose) | Forecast.Solar |
 | Deye (Hybrid und Mikrowechselrichter), aus dem Quellcode abgeleitet | Solarman (HACS) |
 | Huawei SUN2000, LUNA2000, Power Meter, aus dem Quellcode abgeleitet | Huawei Solar (HACS) |

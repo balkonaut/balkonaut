@@ -43,6 +43,7 @@ PROFILES = {
     ],
     "shelly": [
         (r"-em:\d+-total_act_power$", "grid_power", False),  # Pro 3EM, über alle Phasen saldiert
+        (r"-em1:0-act_power$", "grid_power", False),  # Pro EM, EM Gen3: Kanal 0 (aus dem Quellcode)
         (r"-switch:\d+-power$", "output_power", False),  # Plug am Einspeisepunkt, Vorzeichen je nach Anschluss
         (r"-switch:\d+-energy$", "output_energy", False),
     ],
@@ -194,6 +195,9 @@ PROFILES = {
     "template": [  # Sungrow-Vorlage: Ladegrenzen als Template-Zahlen
         (r"^uid_battery_min_soc(_inv_\d)?$", "battery_soc_min", False),
         (r"^uid_battery_max_soc(_inv_\d)?$", "battery_soc_max", False),
+    ],
+    "tibber": [  # Tibber Pulse in Home Assistant: <home_id>_rt_<Schlüssel>; nur Bezug, Einspeisung getrennt
+        (r"_rt_power$", "grid_power", False),
     ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst

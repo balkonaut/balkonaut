@@ -142,6 +142,8 @@ geprüft, *aus dem Quellcode* heißt aus dem Code der Integration abgeleitet; R�
 | APsystems EZ1-M | APsystems (Home Assistant) | PV-Leistung, PV-Zähler, Abgabelimit | bestätigt |
 | Shelly Pro 3EM | Shelly | Netzleistung über alle Phasen saldiert | bestätigt |
 | Shelly Plug | Shelly | Abgabe ins Haus, Zähler am Einspeisepunkt | bestätigt |
+| Shelly Pro EM, EM Gen3 | Shelly | Netzleistung an Kanal 0 | aus dem Quellcode |
+| Tibber Pulse | Tibber (Home Assistant) | Netzbezug; Einspeisung liefert Tibber getrennt, sie fehlt daher | aus dem Quellcode |
 | Forecast.Solar | Forecast.Solar | Tagesprognose | bestätigt |
 | Deye (Hybrid und Mikrowechselrichter) | Solarman (HACS, davidrapan oder StephanJoubert) | PV, Akku, Netz, Abgabe | aus dem Quellcode |
 | Huawei SUN2000 mit LUNA2000 und Power Meter | Huawei Solar (HACS) | PV-Leistung, Akku mit Ladegrenzen, Netz, Abgabe | aus dem Quellcode |
@@ -158,6 +160,8 @@ geprüft, *aus dem Quellcode* heißt aus dem Code der Integration abgeleitet; R�
 Bei anderen Geräten schlägt Balkonaut eine Entität vor, wenn sie nach Art und Einheit eindeutig passt
 (z. B. der einzige Leistungssensor des Geräts in W). Ist das nicht eindeutig, bleibt das Feld leer und man wählt selbst.
 Entitäten ohne Gerät, etwa aus einer Modbus-Vorlage in YAML, schlägt Balkonaut nur vor, wenn ein Profil sie genau kennt.
+Der alte Shelly 3EM (Gen1) liefert in Home Assistant keine Summe über die Phasen; dafür einen Helfer der Integration
+*Min/Max* mit Typ *Summe* über die drei Phasenleistungen anlegen und diesen zuordnen.
 
 #### Gerät melden
 

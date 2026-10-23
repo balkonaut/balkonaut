@@ -286,3 +286,13 @@ def test_sungrow():
                      "grid_power": "sensor.sg_meter_active_power", "output_power": "sensor.sg_total_active_power",
                      "battery_soc_min": "number.min_soc", "battery_soc_max": "number.max_soc"}
     assert invert == ["battery_power"]
+
+
+def test_grid_meters():
+    """Shelly Pro EM (Kanal 0) und Tibber Pulse, Muster aus den Integrationen in Home Assistant."""
+    pro_em = [e("sensor.em_0", "shelly", "AABBCCDDEEFF-em1:0-act_power"),
+              e("sensor.em_1", "shelly", "AABBCCDDEEFF-em1:1-act_power")]
+    assert suggest(pro_em, ["grid_power"]) == ({"grid_power": "sensor.em_0"}, [])
+    tibber = [e("sensor.t_avg", "tibber", "96a14971_rt_averagePower"), e("sensor.t", "tibber", "96a14971_rt_power"),
+              e("sensor.t_prod", "tibber", "96a14971_rt_powerProduction")]
+    assert suggest(tibber, ["grid_power"]) == ({"grid_power": "sensor.t"}, [])
