@@ -145,6 +145,24 @@ PROFILES = {
         (r"_system_battery_power$", "battery_power", False),
         (r"_system_battery_soc$", "battery_soc", False),
     ],
+    "foxess_modbus": [  # nathanmarlor/foxess_modbus: foxess_modbus_[Präfix_]<Schlüssel>; Akku nur getrennt je Richtung
+        (r"_pv_power_now$", "pv_power", False),
+        (r"_solar_energy_total$", "pv_energy", False),
+        (r"_rpower$", "output_power", False),
+        (r"_grid_ct$", "grid_power", True),  # positiv bei Einspeisung (Feed-in = Grid CT > 0)
+        (r"_battery_soc$", "battery_soc", False),
+        (r"_battery_soh$", "battery_soh", False),
+        (r"_battery_charge_total$", "battery_charge_energy", False),
+        (r"_battery_discharge_total$", "battery_discharge_energy", False),
+        (r"_min_soc$", "battery_soc_min", False),
+        (r"_max_soc$", "battery_soc_max", False),
+    ],
+    "foxess": [  # macxq/foxess-ha (Cloud): <Geräte-ID><Kennung> ohne Trennzeichen; Energie nur als Berichtswerte
+        (r"pv-power$", "pv_power", False),
+        (r"inv-Bat-Power$", "battery_power", False),  # Vorzeichen nicht dokumentiert
+        (r"bat-soc$", "battery_soc", False),
+        (r"bat-soh$", "battery_soh", False),
+    ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
     ],

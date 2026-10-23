@@ -230,3 +230,22 @@ def test_victron():
         "battery_charge_energy": "sensor.v_4", "battery_discharge_energy": "sensor.v_5", "grid_power": "sensor.v_7"}, [])
     modbus = [e("sensor.vb", "victron", "100_system_battery_power"), e("sensor.vs", "victron", "100_system_battery_soc")]
     assert suggest(modbus, STORAGE_KEYS)[0] == {"battery_power": "sensor.vb", "battery_soc": "sensor.vs"}
+
+
+def test_foxess():
+    """Fox ESS über foxess_modbus und die Cloud-Integration foxess, Muster aus deren Quellcode."""
+    modbus = [e(f"sensor.fox_{k}", "foxess_modbus", f"foxess_modbus_h1_{k}") for k in (
+        "pv_power_now", "pv1_power", "solar_energy_total", "rpower", "eps_rpower", "grid_ct", "feed_in",
+        "battery_soc", "battery_soc_1", "battery_soh", "battery_charge", "battery_charge_total",
+        "battery_discharge_total", "min_soc", "min_soc_on_grid", "max_soc")]
+    found, invert = suggest(modbus, ["grid_power"] + STORAGE_KEYS)
+    assert found == {k: f"sensor.fox_{n}" for k, n in {
+        "pv_power": "pv_power_now", "pv_energy": "solar_energy_total", "output_power": "rpower",
+        "grid_power": "grid_ct", "battery_soc": "battery_soc", "battery_soh": "battery_soh",
+        "battery_charge_energy": "battery_charge_total", "battery_discharge_energy": "battery_discharge_total",
+        "battery_soc_min": "min_soc", "battery_soc_max": "max_soc"}.items()}
+    assert invert == ["grid_power"]
+    cloud = [e(f"sensor.fc_{i}", "foxess", f"60BH1234567890{k}") for i, k in enumerate((
+        "pv1-power", "pv-power", "inv-Bat-Power", "inv-Bat-Power2", "bat-soc", "bat-soc1", "bat-soh"))]
+    assert suggest(cloud, STORAGE_KEYS)[0] == {"pv_power": "sensor.fc_1", "battery_power": "sensor.fc_2",
+                                               "battery_soc": "sensor.fc_4", "battery_soh": "sensor.fc_6"}
