@@ -71,10 +71,12 @@ Problemen eine ältere Version festhalten lässt.
 Alle Daten liegen im Ordner `data/`: Konfiguration (`config.yaml`) und Messdaten (`balkonaut.db`).
 Für ein Backup genügt es, diesen Ordner zu sichern.
 
-## Image automatisch bauen (Gitea Actions)
+## Tests bei jedem Push (Gitea Actions)
 
 Liegt das Repository in einer eigenen Gitea-Instanz, kann ein Gitea Runner auf der NAS bei jedem Push auf `main`
-die Tests ausführen und das Image `balkonaut:latest` bauen (`.gitea/workflows/deploy.yml`):
+Tests, Integrationstests, hassfest und das Handbuch prüfen (`.gitea/workflows/deploy.yml`). Das Image selbst baut
+GitHub als `ghcr.io/balkonaut/balkonaut:latest`; aktualisiert wird mit `docker compose pull && docker compose up -d`
+oder in Dockhand über *Nach Updates suchen*.
 
 1. In Gitea im Repository unter *Einstellungen → Actions → Runner* einen Runner anlegen und das Registrierungs-Token kopieren.
 2. Den Runner auf der NAS starten:
@@ -88,17 +90,6 @@ die Tests ausführen und das Image `balkonaut:latest` bauen (`.gitea/workflows/d
       -v /var/run/docker.sock:/var/run/docker.sock \
       docker.io/gitea/runner:3
     ```
-
-3. Nach einem erfolgreichen Lauf den Container mit dem neuen Image neu erstellen, im Verzeichnis von Balkonaut:
-
-    ```bash
-    docker compose up -d
-    ```
-
-    oder in Dockhand den Stack neu starten. `git pull` und `--build` sind dafür nicht nötig.
-
-Den Container selbst startet der Workflow bewusst nicht: Der Runner entfernt am Ende eines Jobs alle Container,
-die der Job gestartet hat.
 
 !!! warning "Zugriff auf Docker"
     Der Runner hat über `/var/run/docker.sock` vollen Zugriff auf Docker und damit auf die NAS. Nur für eigene,
