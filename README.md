@@ -91,7 +91,7 @@ type: custom:balkonaut-card
 - Amortisation: bisher gespart, Rest, Ersparnis pro Jahr, amortisiert am
 - Akku: Vollzyklen, Gesundheit, Wirkungsgrad
 - Problem-Sensor *Warnungen* und Ereignis *Warnung* für Benachrichtigungen, Beispiel-Automation im
-  [Handbuch](https://github.com/balkonaut/balkonaut/blob/main/docs/installation.md#benachrichtigung-bei-warnungen)
+  [Handbuch](https://balkonaut.github.io/balkonaut/installation/#benachrichtigung-bei-warnungen)
 - Hinweis unter *Reparaturen*, wenn eine zugeordnete Entität verschwindet, z. B. nach einer Umbenennung
 
 ## Ohne Home Assistant oder mit der Docker-App
@@ -99,12 +99,12 @@ type: custom:balkonaut-card
 Balkonaut gibt es auch als Docker-Container, etwa für eine NAS, mit eigener Web-Oberfläche. Die Integration kann
 dann im Modus *Mit einer Balkonaut-App* deren Werte anzeigen oder die Messdaten mit der Aktion
 *Balkonaut: Historie aus Balkonaut-App übernehmen* in den eigenständigen Betrieb übernehmen.
-Details im [Handbuch](https://github.com/balkonaut/balkonaut/blob/main/docs/installation.md).
+Details im [Handbuch](https://balkonaut.github.io/balkonaut/installation/).
 
 ## Handbuch
 
-Das ausführliche Handbuch auf Deutsch liegt in [`docs/`](https://github.com/balkonaut/balkonaut/tree/main/docs): Installation, Einstellungen,
-Auswertung, Messquellen und Schnittstelle.
+Das ausführliche [Handbuch](https://balkonaut.github.io/balkonaut/) auf Deutsch: Installation, Einstellungen, Auswertung, Messquellen und
+Schnittstelle.
 
 ## Lizenz
 

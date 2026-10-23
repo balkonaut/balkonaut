@@ -1,0 +1,13 @@
+# Handbuch als Website auf GitHub Pages: wie im Container, aber ohne den Rückweg in die App
+INHERIT: mkdocs.yml
+site_url: https://balkonaut.github.io/balkonaut/
+nav:
+  - index.md
+  - installation.md
+  - einstellungen.md
+  - auswertung.md
+  - messquellen.md
+  - schnittstelle.md
+  - GitHub: https://github.com/balkonaut/balkonaut
+extra:
+  homepage: https://balkonaut.github.io/balkonaut/

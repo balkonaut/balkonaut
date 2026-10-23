@@ -5,7 +5,7 @@
 const TABS = [["start", "Übersicht"], ["verlauf", "Verlauf"], ["nulleinspeisung", "Nulleinspeisung"], ["bericht", "Bericht"]];
 const PERIODS = [["tag", "Heute"], ["monat", "Monat"], ["jahr", "Jahr"], ["gesamt", "Gesamt"]];
 const VIEWS = [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["jahr", "Jahr"]];
-const HANDBUCH = "https://github.com/balkonaut/balkonaut/tree/main/docs";
+const HANDBUCH = "https://balkonaut.github.io/balkonaut/";
 
 const PANEL_STYLE = `
   :host { display: block; min-height: 100%; background: var(--primary-background-color);

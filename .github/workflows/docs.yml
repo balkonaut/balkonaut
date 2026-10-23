@@ -1,0 +1,36 @@
+# Handbuch aus docs/ als Website auf GitHub Pages: https://balkonaut.github.io/balkonaut/
+name: Handbuch
+
+on:
+  push:
+    branches: [main]
+    paths: [docs/**, mkdocs.yml, mkdocs-pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install ".[docs]"
+      - run: mkdocs build --strict -f mkdocs-pages.yml -d site
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v5
