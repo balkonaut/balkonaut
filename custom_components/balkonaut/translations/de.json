@@ -218,6 +218,10 @@
     "unreachable": {
       "title": "Balkonaut nicht erreichbar",
       "description": "Home Assistant erreicht die Balkonaut-App unter {url} seit mehreren Abfragen nicht. Läuft der Container? Ist die Adresse noch richtig? Der Hinweis verschwindet, sobald die App wieder antwortet."
+    },
+    "missing_entities": {
+      "title": "Balkonaut: Entität fehlt",
+      "description": "Diese zugeordneten Entitäten gibt es nicht mehr oder sie sind deaktiviert: {entities}. Oft hat die Integration des Geräts sie umbenannt. Balkonaut misst die betroffenen Größen so lange nicht. Unter [Balkonaut](/config/integrations/integration/balkonaut) → ⋮ → *Neu konfigurieren* neu zuordnen. Der Hinweis verschwindet, sobald alle Entitäten wieder da sind."
     }
   },
   "selector": {

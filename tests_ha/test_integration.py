@@ -231,6 +231,23 @@ async def test_reconfigure(hass, aioclient_mock):
     assert result["reason"] == "reconfigure_successful" and app.data == {CONF_URL: "http://neu:8000"}
 
 
+async def test_missing_entity_issue(hass):
+    """Fehlt eine zugeordnete Entität, erscheint ein Reparaturhinweis; nicht verfügbar reicht dafür nicht."""
+    from homeassistant.helpers import issue_registry as ir
+    hass.states.async_set("sensor.soc", "unavailable")
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", data={
+        "entities": {"battery_soc": "sensor.soc", "grid_power": "sensor.weg"}, "invert": [], "backfilled": True})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, f"missing_entities_{entry.entry_id}")
+    assert issue.translation_placeholders == {"entities": "sensor.weg"}
+    hass.states.async_set("sensor.weg", "300", {"unit_of_measurement": "W"})
+    await entry.runtime_data.async_refresh()
+    assert ir.async_get(hass).async_get_issue(DOMAIN, f"missing_entities_{entry.entry_id}") is None
+    assert await hass.config_entries.async_unload(entry.entry_id)
+
+
 async def test_standalone_backfill(hass, freezer):
     from datetime import timedelta
     from homeassistant.util import dt as dt_util

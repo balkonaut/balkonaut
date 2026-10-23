@@ -218,6 +218,10 @@
     "unreachable": {
       "title": "Balkonaut unreachable",
       "description": "Home Assistant has not reached the Balkonaut app at {url} for several polls. Is the container running and is the address still correct? This notice disappears once the app responds again."
+    },
+    "missing_entities": {
+      "title": "Balkonaut: entity missing",
+      "description": "These assigned entities no longer exist or are disabled: {entities}. Often the device integration has renamed them. Until then Balkonaut does not measure these values. Reassign them under [Balkonaut](/config/integrations/integration/balkonaut) → ⋮ → *Reconfigure*. This notice disappears once all entities are back."
     }
   },
   "selector": {

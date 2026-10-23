@@ -19,7 +19,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL, Platform
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse, callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import config_validation as cv, issue_registry as ir
+from homeassistant.helpers import config_validation as cv, entity_registry as er, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
@@ -88,6 +88,7 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
 
     async def _async_update_data(self) -> dict:
         if self.storage:
+            self._check_entities()
             return await self._local_status()
         issue_id = f"unreachable_{self.config_entry.entry_id}"
         try:
@@ -102,6 +103,22 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
             ir.async_delete_issue(self.hass, DOMAIN, issue_id)
         self.failures = 0
         return data
+
+    def _check_entities(self) -> None:
+        """Reparaturhinweis für zugeordnete Entitäten, die es nicht mehr gibt, z. B. weil die Hersteller-Integration
+        sie umbenannt hat. Nicht verfügbare Entitäten zählen nicht, sie kommen meist von selbst wieder."""
+        if not self.hass.is_running:  # beim Start fehlen Zustände, bis alle Integrationen geladen sind
+            return
+        registry = er.async_get(self.hass)
+        missing = [eid for eid in self.config_entry.data[CONF_ENTITIES].values() if self.hass.states.get(eid) is None
+                   and (not (reg := registry.async_get(eid)) or reg.disabled_by)]
+        issue_id = f"missing_entities_{self.config_entry.entry_id}"
+        if missing:
+            ir.async_create_issue(self.hass, DOMAIN, issue_id, is_fixable=False, severity=ir.IssueSeverity.WARNING,
+                                  translation_key="missing_entities",
+                                  translation_placeholders={"entities": ", ".join(missing)})
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
 
     @property
     def prices(self) -> dict:

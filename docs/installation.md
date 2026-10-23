@@ -200,6 +200,10 @@ mehrere Balkonaut-Einträge eingerichtet sind (ohne Angabe nimmt die Karte den e
 - Unter *⋮ → Neu konfigurieren*: im eigenständigen Betrieb die Zuordnung der Entitäten ändern (Schritte 2 und 3 der
   [geführten Einrichtung](#gefuhrte-einrichtung)), mit einer App deren Adresse. Eintrag und Messdaten bleiben erhalten.
   Für neu zugeordnete Entitäten übernimmt Balkonaut keinen Verlauf aus dem Recorder, sie zählen ab der Änderung.
+- Gibt es eine zugeordnete Entität nicht mehr oder ist sie deaktiviert, etwa weil die Integration des Geräts sie
+  umbenannt hat, erscheint unter *Einstellungen → Reparaturen* ein Hinweis mit den betroffenen Entitäten und einem
+  Link zu Balkonaut, dort über *Neu konfigurieren* neu zuordnen. Kurz nicht verfügbare Entitäten (Neustart, WLAN)
+  lösen keinen Hinweis aus. Der Hinweis verschwindet, sobald alle Entitäten wieder da sind.
 - Antwortet die App dreimal hintereinander nicht, erscheint unter *Einstellungen → Reparaturen* ein Hinweis. Er
   verschwindet, sobald die App wieder antwortet.
 - Über *⋮ → Diagnose herunterladen* gibt es eine Datei mit Einstellungen und letzter Antwort der App, die Adresse
