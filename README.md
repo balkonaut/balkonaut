@@ -77,6 +77,7 @@ Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen:
 | Zendure SolarFlow, Hyper, AIO, aus dem Quellcode abgeleitet | Zendure (HACS) |
 | EcoFlow PowerStream, STREAM, aus dem Quellcode abgeleitet | EcoFlow Cloud (HACS) |
 | Growatt MIN, MIC, MOD, SPH, aus dem Quellcode abgeleitet | Growatt Server |
+| Victron GX, aus dem Quellcode abgeleitet | Victron GX, Victron MQTT, Victron Modbus |
 
 Andere Geräte gehen auch: Balkonaut schlägt Entitäten nach Art und Einheit vor, wenn das eindeutig ist, sonst
 wählt man selbst. Damit ein Gerät fest dazukommt, die Diagnose-Datei (*⋮ → Diagnose herunterladen*) mit Hersteller,

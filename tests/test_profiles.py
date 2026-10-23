@@ -216,3 +216,17 @@ def test_growatt():
     assert suggest(mix, STORAGE_KEYS)[0] == {k: f"sensor.sph_{n}" for k, n in {
         "pv_power": "wattage_pv_all", "pv_energy": "solar_generation_lifetime", "battery_soc": "statement_of_charge",
         "battery_charge_energy": "battery_charge_lifetime", "battery_discharge_energy": "battery_discharge_lifetime"}.items()}
+
+
+def test_victron():
+    """Victron GX über victron_gx bzw. victron_mqtt (Bibliothek victron-mqtt) und über Modbus (sfstar)."""
+    mqtt = [e(f"sensor.v_{i}", "victron_gx", f"c0619ab12345_{d}_{s}") for i, (d, s) in enumerate((
+        ("system_0", "system_dc_pv_power"), ("system_0", "system_dc_pv_energy"), ("system_0", "system_dc_battery_power"),
+        ("system_0", "system_dc_battery_soc"), ("system_0", "system_dc_battery_charge_energy"),
+        ("system_0", "system_dc_battery_discharge_energy"), ("system_0", "system_grid_power_l1"),
+        ("grid_30", "grid_power")))]
+    assert suggest(mqtt, ["grid_power"] + STORAGE_KEYS) == ({
+        "pv_power": "sensor.v_0", "pv_energy": "sensor.v_1", "battery_power": "sensor.v_2", "battery_soc": "sensor.v_3",
+        "battery_charge_energy": "sensor.v_4", "battery_discharge_energy": "sensor.v_5", "grid_power": "sensor.v_7"}, [])
+    modbus = [e("sensor.vb", "victron", "100_system_battery_power"), e("sensor.vs", "victron", "100_system_battery_soc")]
+    assert suggest(modbus, STORAGE_KEYS)[0] == {"battery_power": "sensor.vb", "battery_soc": "sensor.vs"}

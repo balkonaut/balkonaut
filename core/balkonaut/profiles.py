@@ -6,6 +6,17 @@ danach Gerätedaten wie device_class und Einheit, aber nur, wenn die Zuordnung e
 """
 import re
 
+# Victron GX über MQTT, Bibliothek victron-mqtt: <Anlage>_<Gerät>_<Messwert>; Akku positiv beim Laden (dokumentiert)
+VICTRON_MQTT = [
+    (r"_system_dc_pv_power$", "pv_power", False),
+    (r"_system_dc_pv_energy$", "pv_energy", False),
+    (r"_system_dc_battery_power$", "battery_power", False),
+    (r"_system_dc_battery_soc$", "battery_soc", False),
+    (r"_system_dc_battery_charge_energy$", "battery_charge_energy", False),
+    (r"_system_dc_battery_discharge_energy$", "battery_discharge_energy", False),
+    (r"_grid_power$", "grid_power", False),  # Netzzähler, Summe aller Phasen
+]
+
 # Integration -> [(Muster für die unique_id, Messgröße, Vorzeichen drehen)], nur an echten Geräten geprüft
 PROFILES = {
     "apsystems_ezhi_local": [  # APsystems EZHI, HACS-Integration „APsystems EZHI Local API“
@@ -127,6 +138,12 @@ PROFILES = {
         (r"-(tlx|mix)_statement_of_charge$|-storage_battery_percentage$", "battery_soc", False),
         (r"-tlx_all_batteries_charge_total$|-mix_battery_charge_lifetime$", "battery_charge_energy", False),
         (r"-tlx_all_batteries_discharge_total$|-mix_battery_discharge_lifetime$", "battery_discharge_energy", False),
+    ],
+    "victron_gx": VICTRON_MQTT,  # in Home Assistant
+    "victron_mqtt": VICTRON_MQTT,  # tomer-w/ha-victron-mqtt
+    "victron": [  # sfstar/hass-victron (Modbus): <Slave-ID>_<Register>; Netz nur je Phase
+        (r"_system_battery_power$", "battery_power", False),
+        (r"_system_battery_soc$", "battery_soc", False),
     ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
