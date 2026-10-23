@@ -13,8 +13,16 @@ Kommazahlen gehen mit Komma oder Punkt.
 
 ## Geräte direkt, ohne Home Assistant
 
-Der Container kann die Geräte auch direkt im Heimnetz lesen, ganz ohne Home Assistant. Dafür in `data/config.yaml`
-statt `home_assistant` den Abschnitt `devices` eintragen, je Gerät `type` und `host` (IP-Adresse):
+Der Container kann die Geräte auch direkt im Heimnetz lesen, ganz ohne Home Assistant und ohne Anmeldung.
+
+**Im Browser:** *Einstellungen → Geräte*, die IP-Adresse eintragen und *Hinzufügen*. Balkonaut erkennt den Typ
+selbst und zeigt danach die aktuellen Werte mit Richtung, z. B. „Netz 312 W (Bezug)“ oder „Abgabe 21 W (Bezug,
+Vorzeichen prüfen)“. Passt eine Richtung nicht, *Vorzeichen drehen*. Unter *Standort und Flächen* Breiten- und
+Längengrad sowie die Flächen eintragen. Änderungen gelten sofort, ohne Neustart; die Messdaten bleiben erhalten.
+Im Home-Assistant-Add-on erscheinen diese Abschnitte nicht, dort kommen die Werte aus Home Assistant.
+
+**Oder in `data/config.yaml`:** statt `home_assistant` den Abschnitt `devices` eintragen, je Gerät `type` und
+`host` (IP-Adresse):
 
 ```yaml
 devices:
@@ -38,7 +46,8 @@ z. B. `invert: [output_power]`. Ladegrenzen, Entladeschutz und Abgabelimit des E
 APsystems-Cloud; ohne sie rechnet Balkonaut mit Standardwerten. Der Import des Verlaufs (`app.backfill`) geht nur
 über Home Assistant.
 
-Für Prognose (Ertragswächter) und Jahresverlauf ohne Home Assistant Standort und Flächen eintragen:
+Für Prognose (Ertragswächter) und Jahresverlauf ohne Home Assistant Standort und Flächen eintragen (im Browser
+unter *Standort und Flächen* oder in der Datei):
 
 ```yaml
 location: {lat: 50.0, lon: 10.0}

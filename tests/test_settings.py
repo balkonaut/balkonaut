@@ -36,3 +36,32 @@ def test_addon(client, tmp_path, monkeypatch):
                                      "entities": {"grid_power": ["sensor.netz", -1]}}
     config.save(tmp_path / "config.yaml", cfg)
     assert "home_assistant" not in yaml.safe_load((tmp_path / "config.yaml").read_text())
+
+
+def test_devices_and_planes(client, tmp_path, monkeypatch):
+    """Gerät per IP hinzufügen (Typ erkannt), Richtung drehen, entfernen; Standort und Flächen speichern."""
+    from balkonaut import devices
+    monkeypatch.setattr(devices, "detect", lambda host: {"10.0.0.38": "shelly_plug"}.get(host) or (_ for _ in ()).throw(ValueError()))
+    monkeypatch.setitem(devices.TYPES, "shelly_plug", lambda host: {"output_power": -21.0, "output_energy": 1612.4})
+    assert "Jetzt einrichten" in client.get("/").text
+    assert "antwortet kein bekanntes Gerät" in client.post("/einstellungen", data={"bereich": "geraete", "aktion": "hinzufuegen", "host": "10.0.0.99"}).text
+    r = client.post("/einstellungen", data={"bereich": "geraete", "aktion": "hinzufuegen", "host": "10.0.0.38"})
+    assert str(r.url).endswith("/einstellungen?gespeichert=1#geraete") and "Gespeichert." in r.text  # gleiche Adresse
+    page = client.get("/einstellungen").text
+    assert "Shelly Plug" in page and "Abgabe 21 W (Bezug, Vorzeichen prüfen)" in page
+    client.post("/einstellungen", data={"bereich": "geraete", "aktion": "drehen", "host": "10.0.0.38"})
+    assert "Abgabe 21 W ·" in client.get("/einstellungen").text
+    cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
+    assert cfg["devices"] == [{"type": "shelly_plug", "host": "10.0.0.38", "invert": ["output_power"]}]
+    assert "Jetzt einrichten" not in client.get("/").text
+
+    form = {"lat": "50,1", "lon": "8,7", "declination": ["30", ""], "azimuth": ["150", ""], "kwp": ["0,87", ""],
+            "inverter": ["storage", "storage"]}
+    assert client.post("/einstellungen", data={"bereich": "flaechen"} | form, follow_redirects=False).status_code == 303
+    cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
+    assert cfg["location"] == {"lat": 50.1, "lon": 8.7}
+    assert cfg["planes"] == [{"declination": 30.0, "azimuth": 150.0, "kwp": 0.87, "inverter": "storage"}]
+    assert client.post("/einstellungen", data={"bereich": "flaechen"} | form | {"azimuth": ["400", ""]}).status_code == 400
+
+    client.post("/einstellungen", data={"bereich": "geraete", "aktion": "entfernen", "host": "10.0.0.38"})
+    assert "devices" not in yaml.safe_load((tmp_path / "config.yaml").read_text())

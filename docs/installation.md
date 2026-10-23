@@ -28,14 +28,16 @@ Aus dem Handbuch geht es über *Zurück zu Balkonaut* im Menü oder über das Lo
 ## Als Docker-Container
 
 1. Repository herunterladen und in das Verzeichnis wechseln.
-2. Konfiguration anlegen: `config.example.yaml` nach `data/config.yaml` kopieren und anpassen
-   (siehe [Einstellungen](einstellungen.md)).
-3. Container bauen und starten:
+2. Container bauen und starten:
 
     ```bash
     docker compose up -d --build
     ```
 
+3. `http://<adresse>:8000/` öffnen. Solange keine Geräte eingerichtet sind, zeigt die Übersicht einen Hinweis;
+   unter *Einstellungen* die Geräte per IP-Adresse hinzufügen, Standort und Flächen eintragen, dann Preise und
+   Kosten (siehe [Einstellungen](einstellungen.md)). Wer lieber eine Datei pflegt, kopiert `config.example.yaml`
+   nach `data/config.yaml` und passt sie an.
 4. Prüfen, ob der Dienst läuft: `http://<adresse>:8000/api/health` muss `{"status": "ok"}` liefern.
 
 Alle Daten liegen im Ordner `data/`: Konfiguration (`config.yaml`) und Messdaten (`balkonaut.db`).

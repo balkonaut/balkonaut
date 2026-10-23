@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app import config
-from balkonaut import analytics, collector, pvgis, views
+from balkonaut import analytics, collector, devices, pvgis, views
 from balkonaut.storage import Storage
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -33,6 +33,7 @@ templates.env.filters.update(
     de=de,
     abs_de=lambda v, d=1: de(abs(v) if isinstance(v, (int, float)) else None, d),
     pct=lambda v: "–" if v is None else de(v * 100, 0) + " %",
+    komma=lambda v: f"{v:g}".replace(".", ","),  # Eingabefelder: 50,1 statt 50.1, ohne überflüssige Nullen
     ago=lambda s: f"{s} s" if s < 120 else f"{s // 60} min" if s < 7200 else f"{s // 3600} h",
 )
 # Adresse, unter der die Integration das Add-on erreicht (Hostname des Add-on-Containers im HA-Netz)
@@ -109,14 +110,22 @@ async def lifespan(app):
     cfg = config.load(app.state.config_path)
     app.state.storage = Storage(data / "balkonaut.db")
     app.state.profile = None
-    tasks = []
-    if adapter := config.adapter(cfg):
-        tasks = [asyncio.create_task(collector.run(adapter, app.state.storage)),
-                 asyncio.create_task(load_profile(app, adapter, data / "ertragsprofil.json")),
-                 asyncio.create_task(regulation_job(app))]
+    app.state.tasks = []
+    start_measuring(app, cfg)
     yield
-    for task in tasks:
+    for task in app.state.tasks:
         task.cancel()
+
+
+def start_measuring(app, cfg):
+    """Messung, Ertragsprofil und Regelgüte mit dem Adapter aus der Konfiguration (neu) starten."""
+    for task in app.state.tasks:
+        task.cancel()
+    app.state.tasks = []
+    if adapter := config.adapter(cfg):
+        app.state.tasks = [asyncio.create_task(collector.run(adapter, app.state.storage)),
+                           asyncio.create_task(load_profile(app, adapter, app.state.config_path.parent / "ertragsprofil.json")),
+                           asyncio.create_task(regulation_job(app))]
 
 
 app = FastAPI(title="Balkonaut", lifespan=lifespan)
@@ -204,6 +213,7 @@ def dashboard(request: Request, zeitraum: str = "tag"):
         "chart": chart(bars), "a": a, "warnings": st["warnungen"],
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
         "prices_set": cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0,
+        "configured": bool(cfg.get("devices") or cfg.get("home_assistant")),
     })
 
 
@@ -241,23 +251,130 @@ def zero_feed_in(request: Request):
     return templates.TemplateResponse(request, "regulation.html", {"r": regulation_data(request)})
 
 
+DEVICE_NAMES = {"apsystems_ezhi": "APsystems EZHI", "shelly_em": "Shelly Pro 3EM", "shelly_plug": "Shelly Plug"}
+INVERTIBLE = {"shelly_plug": "output_power", "shelly_em": "grid_power"}  # Messgröße, deren Richtung vom Anschluss abhängt
+# Anzeige der aktuellen Werte: Messgröße, Name, Einheit, Richtung bei + und -
+LIVE = [("grid_power", "Netz", "W", ("Bezug", "Einspeisung")), ("pv_power", "PV", "W", None),
+        ("pv_ac_power", "Off-Grid-Port", "W", None), ("battery_power", "Akku", "W", ("lädt", "entlädt")),
+        ("battery_soc", "Ladestand", "%", None), ("output_power", "Abgabe", "W", ("", "Bezug, Vorzeichen prüfen")),
+        ("output_energy", "Zähler", "kWh", None)]
+
+
+def device_values(dev):
+    """Aktuelle Werte eines Geräts als Text mit Richtung, z. B. „Netz 312 W (Bezug)“; None, wenn es nicht antwortet."""
+    try:
+        values = devices.TYPES[dev["type"]](dev["host"])
+    except (OSError, ValueError):
+        return None
+    for key in dev.get("invert", []):
+        if values.get(key) is not None:
+            values[key] = -values[key]
+    out = []
+    for key, label, unit, words in LIVE:
+        if (value := values.get(key)) is not None:
+            text = f"{label} {de(abs(value) if words else value, 1 if unit == 'kWh' else 0)} {unit}"
+            if words and round(value) and (word := words[value < 0]):
+                text += f" ({word})"
+            out.append(text)
+    return out
+
+
+async def settings_page(request, cfg, status_code=200, **errors):
+    live = await asyncio.to_thread(lambda: [device_values(d) for d in cfg.get("devices") or []])
+    return templates.TemplateResponse(request, "settings.html", {
+        "cfg": cfg, "live": live, "names": DEVICE_NAMES, "invertible": INVERTIBLE, "addon": config.addon(), **errors},
+        status_code=status_code)
+
+
 @app.get("/einstellungen", include_in_schema=False)
-def settings(request: Request):
-    cfg = config.load(request.app.state.config_path)
-    return templates.TemplateResponse(request, "settings.html", {"cfg": cfg})
+async def settings(request: Request):
+    return await settings_page(request, config.load(request.app.state.config_path))
+
+
+async def form_data(request):
+    return {k: v for k, v in parse_qs((await request.body()).decode(), keep_blank_values=True).items()}
+
+
+def save_and_restart(request, cfg, anchor):
+    config.save(request.app.state.config_path, cfg)
+    start_measuring(request.app, cfg)
+    return RedirectResponse(f"einstellungen?gespeichert=1#{anchor}", status_code=303)  # relativ wegen Ingress
+
+
+async def save_devices(request, cfg, form):
+    """Gerät hinzufügen (Typ wird erkannt), entfernen oder seine Richtung drehen."""
+    form = {k: v[0].strip() for k, v in form.items()}
+    devs, host = cfg.setdefault("devices", []), form.get("host", "")
+    if form.get("aktion") == "hinzufuegen":
+        if not host:
+            return await settings_page(request, cfg, 400, device_error="Bitte die IP-Adresse des Geräts eingeben.")
+        if any(d["host"] == host for d in devs):
+            return await settings_page(request, cfg, 400, device_error=f"{host} ist schon eingetragen.")
+        try:
+            devs.append({"type": await asyncio.to_thread(devices.detect, host), "host": host})
+        except ValueError:
+            return await settings_page(request, cfg, 400, device_error=(
+                f"Unter {host} antwortet kein bekanntes Gerät. Adresse prüfen; unterstützt sind APsystems EZHI "
+                "(lokaler Modus in der APsystems-App), Shelly Pro 3EM und Shelly Plug."))
+    elif form.get("aktion") == "entfernen":
+        cfg["devices"] = [d for d in devs if d["host"] != host]
+    elif form.get("aktion") == "drehen":
+        for d in devs:
+            if d["host"] == host and d["type"] in INVERTIBLE:
+                d["invert"] = [] if d.get("invert") else [INVERTIBLE[d["type"]]]
+    if not cfg["devices"]:
+        del cfg["devices"]
+    return save_and_restart(request, cfg, "geraete")
+
+
+async def save_planes(request, cfg, form):
+    """Standort und Flächen; leere Zeilen fallen weg, so lässt sich eine Fläche auch entfernen."""
+    num = lambda text: float(text.replace(",", "."))
+    try:
+        lat, lon = (form.get(k, [""])[0].strip() for k in ("lat", "lon"))
+        location = {"lat": num(lat), "lon": num(lon)} if lat or lon else None
+        if location and not (-90 <= location["lat"] <= 90 and -180 <= location["lon"] <= 180):
+            raise ValueError
+        planes = []
+        for dec, az, kwp, inv in zip(form.get("declination", []), form.get("azimuth", []), form.get("kwp", []),
+                                     form.get("inverter", [])):
+            if dec.strip() or az.strip() or kwp.strip():
+                plane = {"declination": num(dec), "azimuth": num(az), "kwp": num(kwp), "inverter": inv}
+                if not (0 <= plane["declination"] <= 90 and 0 <= plane["azimuth"] <= 360 and 0 < plane["kwp"] <= 100
+                        and inv in ("storage", "extra")):
+                    raise ValueError
+                planes.append(plane)
+        if planes and not location:
+            raise ValueError
+    except ValueError:
+        return await settings_page(request, cfg, 400, planes_error=(
+            "Bitte Breite (-90 bis 90) und Länge (-180 bis 180) angeben, je Fläche Neigung 0 bis 90, "
+            "Ausrichtung 0 bis 360 und kWp über 0."))
+    for key, value in (("location", location), ("planes", planes)):
+        if value:
+            cfg[key] = value
+        else:
+            cfg.pop(key, None)
+    return save_and_restart(request, cfg, "flaechen")
 
 
 @app.post("/einstellungen", include_in_schema=False)
 async def save_settings(request: Request):
-    form = {k: v[0] for k, v in parse_qs((await request.body()).decode()).items()}
+    multi = await form_data(request)
     cfg = config.load(request.app.state.config_path)
+    bereich = (multi.get("bereich") or [""])[0]
+    if bereich in ("geraete", "flaechen"):
+        if config.addon():  # das Add-on liest Geräte und Flächen über Home Assistant
+            return PlainTextResponse("Im Add-on nicht verfügbar", status_code=404)
+        return await (save_devices if bereich == "geraete" else save_planes)(request, cfg, multi)
+    form = {k: v[0] for k, v in multi.items()}
     try:
         values = {k: float(form[k].replace(",", ".")) for k in ("energy", "feed_in", "cost")}
         day = date.fromisoformat(form["commissioned"]) if form.get("commissioned") else None
         if min(values.values()) < 0 or (day and day > date.today()):
             raise ValueError
     except (KeyError, ValueError):
-        return templates.TemplateResponse(request, "settings.html", {"cfg": cfg, "error": True}, status_code=400)
+        return await settings_page(request, cfg, 400, error=True)
     cfg["prices"].update(energy=values["energy"], feed_in=values["feed_in"])
     cfg["system"].update(cost=values["cost"], commissioned=day)
     config.save(request.app.state.config_path, cfg)

@@ -60,6 +60,24 @@ def shelly_plug(host):
 TYPES = {"shelly_plug": shelly_plug, "apsystems_ezhi": apsystems_ezhi, "shelly_em": shelly_em}
 
 
+def detect(host):
+    """Gerätetyp unter host erkennen (Shelly über /shelly, EZHI über /getDeviceInfo); ValueError, wenn unbekannt."""
+    try:
+        app = _get(host, "shelly").get("app") or ""
+        if app.startswith("Pro3EM"):
+            return "shelly_em"
+        if "Plug" in app:  # z. B. PlusPlugS, PlugSG3, OutdoorPlugSG3
+            return "shelly_plug"
+    except (OSError, ValueError):
+        pass
+    try:
+        if (_get(host, "getDeviceInfo").get("data") or {}).get("type") == "EZHI":
+            return "apsystems_ezhi"
+    except (OSError, ValueError):
+        pass
+    raise ValueError(f"Unter {host} antwortet kein bekanntes Gerät")
+
+
 FORECAST_KEYS = {"storage": "pv_forecast_today", "extra": "pv_ac_forecast_today"}  # Fläche am Wechselrichter
 
 

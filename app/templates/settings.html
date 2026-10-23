@@ -2,16 +2,106 @@
 {% block title %}Einstellungen{% endblock %}
 {% block content %}
 <style>
-  form { max-width: 32rem; }
-  label { display: block; margin: 1rem 0 .25rem; }
-  input { width: 100%; padding: .5rem; font-size: 1rem; }
-  button { margin-top: 1.5rem; padding: .5rem 1.5rem; font-size: 1rem; }
+  .settings { max-width: 44rem; }
+  .settings form { margin: 0; }
+  label { display: block; margin: 1rem 0 .25rem; font-weight: 500; }
+  input, select { width: 100%; min-height: 44px; padding: .5rem; font-size: 1rem; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 6px; }
+  button { min-height: 44px; padding: .5rem 1.25rem; font-size: 1rem; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--act-bg); background: var(--act-bg); color: var(--act-ink); }
+  button.quiet { background: transparent; color: var(--ink); border-color: var(--line); }
+  .devices { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .device { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .device .what { flex: 1 1 16rem; min-width: 0; }
+  .device .what strong { font-family: var(--mono); }
+  .device .vals { font: 15px var(--mono); font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .device .vals.off { color: var(--warn); font-family: inherit; }
+  .device form { display: inline; }
+  .add { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 16px; }
+  .add div { flex: 1 1 14rem; }
+  .add label { margin-top: 0; }
+  .field-error { color: var(--warn); font-size: 15px; margin: .5rem 0 0; }
+  .planes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 12px; align-items: end;
+    border: 0; padding: 0; margin: 16px 0 0; }
+  .planes label { margin: 0 0 .25rem; font-size: 14px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .planes { grid-template-columns: 1fr 1fr; } }
+  .save { margin-top: 1.5rem; }
+  .intro { color: var(--muted); font-size: 14px; margin: 0; }
 </style>
+<div class="settings">
 <h1>Einstellungen</h1>
-{% if error %}<p class="note err">Bitte nur Zahlen ab 0 und kein Datum in der Zukunft eingeben.</p>
-{% elif request.query_params.get("gespeichert") %}<p class="note ok">Gespeichert.</p>{% endif %}
-<form method="post">
-  <label for="energy">Arbeitspreis Netzstrom (€/kWh)</label>
+{% if request.query_params.get("gespeichert") %}<p class="note ok" role="status">Gespeichert.</p>{% endif %}
+
+{% if not addon %}
+<h2 id="geraete">Geräte</h2>
+<div class="card">
+  {% if cfg.devices %}
+  <ul class="devices">
+    {% for d in cfg.devices %}{% set vals = live[loop.index0] %}
+    <li class="device">
+      <div class="what">
+        <strong>{{ names[d.type] }}</strong> <span class="label">{{ d.host }}</span>
+        {% if vals is none %}<div class="vals off">Antwortet nicht. Ist das Gerät eingeschaltet und die Adresse richtig?</div>
+        {% else %}<div class="vals">{{ vals|join(" · ") or "keine Werte" }}</div>{% endif %}
+      </div>
+      {% if d.type in invertible %}
+      <form method="post" action="einstellungen"><input type="hidden" name="bereich" value="geraete"><input type="hidden" name="host" value="{{ d.host }}">
+        <button class="quiet" name="aktion" value="drehen" aria-pressed="{{ 'true' if d.invert else 'false' }}" aria-label="Vorzeichen bei {{ names[d.type] }} {{ d.host }} drehen">Vorzeichen {{ "zurückdrehen" if d.invert else "drehen" }}</button></form>
+      {% endif %}
+      <form method="post" action="einstellungen"><input type="hidden" name="bereich" value="geraete"><input type="hidden" name="host" value="{{ d.host }}">
+        <button class="quiet" name="aktion" value="entfernen" aria-label="{{ names[d.type] }} {{ d.host }} entfernen">Entfernen</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="label">Stimmt eine Richtung nicht, etwa Abgabe als Bezug, mit „Vorzeichen drehen“ korrigieren.
+  Hat die Anlage einen Speicher, gilt dessen Abgabe-Leistung, vom Plug zählt nur der Zähler.</p>
+  {% else %}
+  <p>Noch keine Geräte eingetragen. Balkonaut liest sie direkt im Heimnetz, ohne Home Assistant und ohne Anmeldung.
+  {% if cfg.home_assistant %}Bis dahin liest Balkonaut über Home Assistant.{% endif %}</p>
+  {% endif %}
+  <form method="post" action="einstellungen" class="add"><input type="hidden" name="bereich" value="geraete">
+    <div>
+      <label for="host">IP-Adresse des Geräts</label>
+      <input id="host" name="host" inputmode="url" autocomplete="off" placeholder="z. B. 192.168.1.20"
+        {% if device_error %}aria-invalid="true" aria-describedby="host-error"{% endif %}>
+    </div>
+    <button name="aktion" value="hinzufuegen">Hinzufügen</button>
+  </form>
+  {% if device_error %}<p id="host-error" class="field-error" role="alert">{{ device_error }}</p>{% endif %}
+  <p class="label">Erkannt werden APsystems EZHI (in der APsystems-App den lokalen Modus aktivieren), Shelly Pro 3EM
+  als Netzmessung und Shelly Plug am Einspeisepunkt. Am besten den Geräten im Router feste Adressen geben.</p>
+</div>
+
+<h2 id="flaechen">Standort und Flächen</h2>
+<form method="post" action="einstellungen" class="card"><input type="hidden" name="bereich" value="flaechen">
+  <p class="intro">Für die Tagesprognose (Forecast.Solar) und den erwarteten Jahresverlauf (PVGIS).</p>
+  {% if planes_error %}<p class="field-error" role="alert">{{ planes_error }}</p>{% endif %}
+  <div class="pair">
+    <div><label for="lat">Breitengrad</label><input id="lat" name="lat" inputmode="decimal" value="{{ cfg.location.lat|komma if cfg.location else '' }}" placeholder="z. B. 50,11"></div>
+    <div><label for="lon">Längengrad</label><input id="lon" name="lon" inputmode="decimal" value="{{ cfg.location.lon|komma if cfg.location else '' }}" placeholder="z. B. 8,68"></div>
+  </div>
+  {% for p in (cfg.planes or []) + [{}] %}
+  <fieldset class="planes">
+    <legend class="eyebrow">{{ "Neue Fläche (optional)" if not p else "Fläche " ~ loop.index }}</legend>
+    <div><label for="dec{{ loop.index }}">Neigung (°)</label><input id="dec{{ loop.index }}" name="declination" inputmode="decimal" value="{{ p.declination|komma if p else '' }}" placeholder="30"></div>
+    <div><label for="az{{ loop.index }}">Ausrichtung (°)</label><input id="az{{ loop.index }}" name="azimuth" inputmode="decimal" value="{{ p.azimuth|komma if p else '' }}" placeholder="180 = Süd"></div>
+    <div><label for="kwp{{ loop.index }}">Leistung (kWp)</label><input id="kwp{{ loop.index }}" name="kwp" inputmode="decimal" value="{{ p.kwp|komma if p else '' }}" placeholder="0,87"></div>
+    <div><label for="inv{{ loop.index }}">Wechselrichter</label><select id="inv{{ loop.index }}" name="inverter">
+      <option value="storage"{% if p.inverter != "extra" %} selected{% endif %}>Speicher</option>
+      <option value="extra"{% if p.inverter == "extra" %} selected{% endif %}>Zusätzlicher</option></select></div>
+  </fieldset>
+  {% endfor %}
+  <p class="label">Ausrichtung 0 = Nord, 90 = Ost, 180 = Süd, 270 = West. Neigung 0 = waagerecht, 90 = senkrecht
+  (am Balkongeländer meist 60 bis 90). Zum Entfernen einer Fläche ihre Felder leeren.</p>
+  <button class="save">Standort und Flächen speichern</button>
+</form>
+{% endif %}
+
+<h2 id="preise">Preise und Anlage</h2>
+<form method="post" action="einstellungen" class="card">
+  {% if error %}<p class="field-error" role="alert">Bitte nur Zahlen ab 0 und kein Datum in der Zukunft eingeben.</p>{% endif %}
+  <label for="energy" style="margin-top:0">Arbeitspreis Netzstrom (€/kWh)</label>
   <input id="energy" name="energy" inputmode="decimal" required value="{{ cfg.prices.energy }}">
   <label for="feed_in">Einspeisevergütung (€/kWh)</label>
   <input id="feed_in" name="feed_in" inputmode="decimal" required value="{{ cfg.prices.feed_in }}">
@@ -21,7 +111,8 @@
   <input id="commissioned" name="commissioned" type="date" value="{{ cfg.system.commissioned or '' }}">
   <p class="label">Datum, ab dem der Abgabezähler am Einspeisepunkt zählt, meist die Inbetriebnahme.
   Damit rechnet die Amortisation mit dem echten Durchschnitt statt einer Hochrechnung.</p>
-  <button type="submit">Speichern</button>
+  <button class="save">Speichern</button>
 </form>
 {% if integration_url() %}<p class="label">Adresse für die Home-Assistant-Integration: <code>{{ integration_url() }}</code></p>{% endif %}
+</div>
 {% endblock %}

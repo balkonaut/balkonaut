@@ -48,6 +48,7 @@
   .bar { height: 10px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 8px 0 16px; }
   .bar span { display: block; height: 100%; background: var(--leaf); }
 </style>
+{% if not configured %}<p class="note err">Noch keine Geräte eingerichtet, Balkonaut misst deshalb nichts. <a href="einstellungen#geraete">Jetzt einrichten</a></p>{% endif %}
 {% if not prices_set %}<p class="note err">Arbeitspreis und Anschaffungskosten fehlen, Euro-Beträge stehen deshalb auf 0. <a href="einstellungen">Jetzt eintragen</a></p>{% endif %}
 {% for w in warnings %}<p class="note err">{{ w.text }}</p>{% endfor %}
 
