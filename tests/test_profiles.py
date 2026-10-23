@@ -142,3 +142,17 @@ def test_huawei():
         "battery_capacity": "storage_rated_capacity", "battery_soc_min": "storage_discharging_cutoff_capacity",
         "battery_soc_max": "storage_charging_cutoff_capacity"}.items()}
     assert invert == ["grid_power"]
+
+
+def test_hoymiles():
+    """Hoymiles über OpenDTU, AhoyDTU und hoymiles_wifi, Muster aus deren Quellcode."""
+    opendtu = [e(f"sensor.hm_{f.lower()}", "mqtt", f"116180212345_ch{c}_{f}") for c, f in (
+        (0, "Power"), (0, "PowerDC"), (0, "YieldTotal"), (0, "YieldDay"), (1, "Power"), (1, "YieldTotal"))]
+    assert suggest(opendtu, ["pv_power", "pv_energy"]) == (
+        {"pv_power": "sensor.hm_power", "pv_energy": "sensor.hm_yieldtotal"}, [])
+    ahoy = [e(f"sensor.ahoy_{i}", "mqtt", f"116180212345_ch{c}_{f}") for i, (c, f) in enumerate((
+        (1, "P_DC"), (0, "P_AC"), (1, "YieldTotal"), (0, "YieldTotal")))]
+    assert suggest(ahoy, ["pv_power", "pv_energy"]) == ({"pv_power": "sensor.ahoy_1", "pv_energy": "sensor.ahoy_3"}, [])
+    wifi = [e("sensor.hms_power", "hoymiles_wifi", "hoymiles_01k8z3m5q7r9t1v3w5x7y9a2b4_dtu_power"),
+            e("sensor.hms_port", "hoymiles_wifi", "hoymiles_01k8z3m5q7r9t1v3w5x7y9a2b4_pv_data[0].power")]
+    assert suggest(wifi, ["pv_power"]) == ({"pv_power": "sensor.hms_power"}, [])

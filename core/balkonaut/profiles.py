@@ -69,6 +69,16 @@ PROFILES = {
         (r"_storage_discharging_cutoff_capacity$", "battery_soc_min", False),
         (r"_storage_charging_cutoff_capacity$", "battery_soc_max", False),
     ],
+    "mqtt": [  # Hoymiles über MQTT-Discovery, unique_id aus der Firmware
+        (r"^[0-9a-fA-F]{12}_ch0_Power$", "pv_power", False),  # OpenDTU: <Seriennummer>_ch0_<Feld>, AC-Leistung
+        (r"_ch0_P_AC$", "pv_power", False),  # AhoyDTU: je Wechselrichter <Seriennummer hex>_ch0_<Feld>
+        (r"_ch0_YieldTotal$", "pv_energy", False),  # beide
+        (r"_TOTAL_total_P_AC$", "pv_power", False),  # AhoyDTU: Summe aller Wechselrichter
+        (r"_TOTAL_total_YieldTotal$", "pv_energy", False),
+    ],
+    "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
+        (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
+    ],
 }
 
 POWER = ("power", frozenset({"W", "kW"}), None)
