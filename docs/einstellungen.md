@@ -35,8 +35,24 @@ devices:
 Hat das System einen Speicher, gilt dessen Abgabe-Leistung, vom Plug zählt nur der Zähler (siehe
 [Messquellen](messquellen.md)). Meldet ein Gerät eine Richtung umgekehrt, die Messgröße unter `invert` eintragen,
 z. B. `invert: [output_power]`. Ladegrenzen, Entladeschutz und Abgabelimit des EZHI gibt es nur über die
-APsystems-Cloud; ohne sie rechnet Balkonaut mit Standardwerten. Prognose und Jahresverlauf brauchen bisher Home
-Assistant. Der Import des Verlaufs (`app.backfill`) geht nur über Home Assistant.
+APsystems-Cloud; ohne sie rechnet Balkonaut mit Standardwerten. Der Import des Verlaufs (`app.backfill`) geht nur
+über Home Assistant.
+
+Für Prognose (Ertragswächter) und Jahresverlauf ohne Home Assistant Standort und Flächen eintragen:
+
+```yaml
+location: {lat: 50.0, lon: 10.0}
+planes:
+  - {declination: 30, azimuth: 150, kwp: 0.87, inverter: storage}
+  - {declination: 30, azimuth: 250, kwp: 0.87, inverter: extra}
+```
+
+- `declination`: Neigung der Module in Grad (0 = waagerecht, 90 = senkrecht, am Balkongeländer meist 60 bis 90)
+- `azimuth`: Ausrichtung in Grad, 0 = Nord, 90 = Ost, 180 = Süd, 270 = West (wie bei Forecast.Solar in Home Assistant)
+- `kwp`: Modulleistung der Fläche in kWp
+- `inverter`: `storage` für Flächen am Speicher, `extra` für Flächen an einem zusätzlichen Wechselrichter
+
+Die Tagesprognose kommt von Forecast.Solar, höchstens einmal je Stunde abgerufen, der Jahresverlauf von PVGIS.
 
 ## Verbindung zu Home Assistant
 

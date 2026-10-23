@@ -5,7 +5,10 @@ Geprüft an APsystems EZHI, Shelly Pro 3EM und Shelly Outdoor Plug S Gen3 (Oktob
 """
 import json
 import logging
+import time
 import urllib.request
+
+from . import forecast
 
 log = logging.getLogger(__name__)
 
@@ -57,11 +60,17 @@ def shelly_plug(host):
 TYPES = {"shelly_plug": shelly_plug, "apsystems_ezhi": apsystems_ezhi, "shelly_em": shelly_em}
 
 
+FORECAST_KEYS = {"storage": "pv_forecast_today", "extra": "pv_ac_forecast_today"}  # Fläche am Wechselrichter
+
+
 class Devices:
-    def __init__(self, devices):
-        """devices: [{"type": ..., "host": ..., "invert": [Messgrößen]}]"""
+    def __init__(self, devices, location=None, planes=()):
+        """devices: [{"type": ..., "host": ..., "invert": [Messgrößen]}], location: {"lat": ..., "lon": ...},
+        planes: [{"declination": ..., "azimuth": ..., "kwp": ..., "inverter": "storage" | "extra"}]"""
         self.devices = sorted(devices, key=lambda d: list(TYPES).index(d["type"]))
+        self.location, self.planes = location, planes
         self.high = {}  # höchster Zählerstand je Messgröße
+        self.forecast, self.forecast_at = {}, 0.0
 
     def read(self):
         """Aktuelle Werte aller Geräte; fehlt ein Gerät, fehlen nur seine Messgrößen."""
@@ -76,6 +85,7 @@ class Devices:
                 if new.get(key) is not None:
                     new[key] = -new[key]
             values.update(new)
+        values.update(self._forecast())
         for key, value in values.items():
             if key.endswith("_energy") and value is not None:
                 # Zähler fallen nie: der EZHI meldet etwa alle 10 h eine Minute lang alle Zähler als 0
@@ -85,6 +95,24 @@ class Devices:
                     self.high[key] = max(value, self.high.get(key, 0))
         return values
 
+    def _forecast(self):
+        """Tagesprognose je Wechselrichter, höchstens einmal je Stunde abgerufen; bei Fehlern die letzte."""
+        if self.planes and self.location and time.time() - self.forecast_at >= 3600:
+            self.forecast_at = time.time()
+            try:
+                sums = {}
+                for p in self.planes:
+                    key = FORECAST_KEYS[p.get("inverter", "storage")]
+                    sums[key] = sums.get(key, 0.0) + forecast.today(
+                        self.location["lat"], self.location["lon"], p["declination"], p["azimuth"], p["kwp"])
+                self.forecast = sums
+            except (OSError, ValueError, KeyError) as e:
+                log.warning("Prognose nicht abrufbar: %s", e)
+        return self.forecast
+
     def solar_planes(self):
-        # ponytail: ohne HA noch keine Flächen, Prognose und Jahresverlauf folgen mit #71
-        return 0.0, 0.0, []
+        """Standort und Flächen aus der Konfiguration, für den Jahresverlauf (PVGIS)."""
+        if not (self.location and self.planes):
+            return 0.0, 0.0, []
+        return (self.location["lat"], self.location["lon"],
+                [(p["declination"], p["azimuth"], p["kwp"]) for p in self.planes])

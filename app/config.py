@@ -55,7 +55,7 @@ def data_dir():
 def adapter(cfg):
     """Geräte direkt (Abschnitt devices) oder über Home Assistant (Abschnitt home_assistant), sonst None."""
     if devices := cfg.get("devices"):
-        return Devices(devices)
+        return Devices(devices, cfg.get("location"), cfg.get("planes") or ())
     if ha := cfg.get("home_assistant"):
         return HomeAssistant(ha["url"], ha["token"], {k: tuple(v) for k, v in ha["entities"].items()})
     return None

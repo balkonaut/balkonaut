@@ -60,3 +60,23 @@ def test_config_adapter():
     assert isinstance(adapter({"devices": CONFIG}), Devices)
     assert isinstance(adapter({"home_assistant": {"url": "http://ha", "token": "t", "entities": {}}}), HomeAssistant)
     assert adapter({}) is None
+
+
+def test_forecast_and_planes(monkeypatch):
+    """Prognose je Wechselrichter aus den Flächen, höchstens einmal je Stunde; Flächen für den Jahresverlauf."""
+    calls = []
+
+    def today(lat, lon, tilt, azimuth, kwp):
+        calls.append(azimuth)
+        return {150: 4.2, 251: 3.1}[azimuth]
+    monkeypatch.setattr(devices, "_get", lambda host, path: ANSWERS[host, path])
+    monkeypatch.setattr(devices.forecast, "today", today)
+    planes = [{"declination": 30, "azimuth": 150, "kwp": 0.87, "inverter": "storage"},
+              {"declination": 30, "azimuth": 251, "kwp": 0.87, "inverter": "extra"}]
+    adapter = Devices(CONFIG, {"lat": 50.0, "lon": 10.0}, planes)
+    values = adapter.read()
+    assert values["pv_forecast_today"] == 4.2 and values["pv_ac_forecast_today"] == 3.1
+    adapter.read()
+    assert calls == [150, 251]  # zweiter Abruf erst nach einer Stunde
+    assert adapter.solar_planes() == (50.0, 10.0, [(30, 150, 0.87), (30, 251, 0.87)])
+    assert Devices(CONFIG).solar_planes() == (0.0, 0.0, [])
