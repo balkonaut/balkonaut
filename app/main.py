@@ -110,8 +110,7 @@ async def lifespan(app):
     app.state.storage = Storage(data / "balkonaut.db")
     app.state.profile = None
     tasks = []
-    if ha := cfg.get("home_assistant"):
-        adapter = config.adapter(ha)
+    if adapter := config.adapter(cfg):
         tasks = [asyncio.create_task(collector.run(adapter, app.state.storage)),
                  asyncio.create_task(load_profile(app, adapter, data / "ertragsprofil.json")),
                  asyncio.create_task(regulation_job(app))]

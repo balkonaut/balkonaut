@@ -1,4 +1,13 @@
 # Kopieren nach data/config.yaml und anpassen.
+# Entweder Geräte direkt (devices, ohne Home Assistant) oder über Home Assistant (home_assistant), nicht beides.
+# devices:
+#   - type: apsystems_ezhi   # Speicher, lokale API im lokalen Modus der APsystems-App
+#     host: 192.168.1.20
+#   - type: shelly_em        # Netzmessung, z. B. Shelly Pro 3EM
+#     host: 192.168.1.21
+#   - type: shelly_plug      # Messung am Einspeisepunkt
+#     host: 192.168.1.22
+#     invert: [output_power] # nur falls der Plug die Abgabe negativ meldet
 home_assistant:
   url: http://homeassistant.local:8123
   token: LONG_LIVED_ACCESS_TOKEN

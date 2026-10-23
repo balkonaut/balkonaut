@@ -11,6 +11,33 @@ Unter `http://<adresse>:8000/einstellungen` trägst du ein:
 
 Kommazahlen gehen mit Komma oder Punkt.
 
+## Geräte direkt, ohne Home Assistant
+
+Der Container kann die Geräte auch direkt im Heimnetz lesen, ganz ohne Home Assistant. Dafür in `data/config.yaml`
+statt `home_assistant` den Abschnitt `devices` eintragen, je Gerät `type` und `host` (IP-Adresse):
+
+```yaml
+devices:
+  - type: apsystems_ezhi
+    host: 192.168.1.20
+  - type: shelly_em
+    host: 192.168.1.21
+  - type: shelly_plug
+    host: 192.168.1.22
+```
+
+| `type` | Gerät | Messgrößen |
+|---|---|---|
+| `apsystems_ezhi` | APsystems EZHI (in der APsystems-App den lokalen Modus aktivieren) | PV, Off-Grid-Port, Akku mit Zählern, Gesundheit, Abgabe ins Haus |
+| `shelly_em` | Shelly Pro 3EM | Netzleistung über alle Phasen saldiert |
+| `shelly_plug` | Shelly Plug Gen2 oder Gen3 am Einspeisepunkt | Abgabe ins Haus mit Zähler |
+
+Hat das System einen Speicher, gilt dessen Abgabe-Leistung, vom Plug zählt nur der Zähler (siehe
+[Messquellen](messquellen.md)). Meldet ein Gerät eine Richtung umgekehrt, die Messgröße unter `invert` eintragen,
+z. B. `invert: [output_power]`. Ladegrenzen, Entladeschutz und Abgabelimit des EZHI gibt es nur über die
+APsystems-Cloud; ohne sie rechnet Balkonaut mit Standardwerten. Prognose und Jahresverlauf brauchen bisher Home
+Assistant. Der Import des Verlaufs (`app.backfill`) geht nur über Home Assistant.
+
 ## Verbindung zu Home Assistant
 
 Die Verbindung steht in `data/config.yaml` im Abschnitt `home_assistant`:

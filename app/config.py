@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from balkonaut.devices import Devices
 from balkonaut.homeassistant import HomeAssistant
 
 DEFAULTS = {
@@ -51,6 +52,10 @@ def data_dir():
     return Path(os.environ.get("BALKONAUT_DATA", "data"))
 
 
-def adapter(ha):
-    """Home-Assistant-Adapter aus dem Abschnitt home_assistant der Konfiguration."""
-    return HomeAssistant(ha["url"], ha["token"], {k: tuple(v) for k, v in ha["entities"].items()})
+def adapter(cfg):
+    """Geräte direkt (Abschnitt devices) oder über Home Assistant (Abschnitt home_assistant), sonst None."""
+    if devices := cfg.get("devices"):
+        return Devices(devices)
+    if ha := cfg.get("home_assistant"):
+        return HomeAssistant(ha["url"], ha["token"], {k: tuple(v) for k, v in ha["entities"].items()})
+    return None
