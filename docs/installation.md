@@ -144,6 +144,7 @@ geprüft, *aus dem Quellcode* heißt aus dem Code der Integration abgeleitet; R�
 | Shelly Plug | Shelly | Abgabe ins Haus, Zähler am Einspeisepunkt | bestätigt |
 | Forecast.Solar | Forecast.Solar | Tagesprognose | bestätigt |
 | Deye (Hybrid und Mikrowechselrichter) | Solarman (HACS, davidrapan oder StephanJoubert) | PV, Akku, Netz, Abgabe | aus dem Quellcode |
+| Huawei SUN2000 mit LUNA2000 und Power Meter | Huawei Solar (HACS) | PV-Leistung, Akku mit Ladegrenzen, Netz, Abgabe | aus dem Quellcode |
 
 Bei anderen Geräten schlägt Balkonaut eine Entität vor, wenn sie nach Art und Einheit eindeutig passt
 (z. B. der einzige Leistungssensor des Geräts in W). Ist das nicht eindeutig, bleibt das Feld leer und man wählt selbst.

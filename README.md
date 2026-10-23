@@ -71,6 +71,7 @@ Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen:
 | Shelly Pro 3EM, Shelly Plug | Shelly |
 | Forecast.Solar (Prognose) | Forecast.Solar |
 | Deye (Hybrid und Mikrowechselrichter), aus dem Quellcode abgeleitet | Solarman (HACS) |
+| Huawei SUN2000, LUNA2000, Power Meter, aus dem Quellcode abgeleitet | Huawei Solar (HACS) |
 
 Andere Geräte gehen auch: Balkonaut schlägt Entitäten nach Art und Einheit vor, wenn das eindeutig ist, sonst
 wählt man selbst. Damit ein Gerät fest dazukommt, die Diagnose-Datei (*⋮ → Diagnose herunterladen*) mit Hersteller,

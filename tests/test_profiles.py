@@ -125,3 +125,20 @@ def test_solarman():
                      "grid_power": "sensor.deye_6", "output_power": "sensor.deye_8"}
     micro = [e("sensor.micro", "solarman", "Deye_4112345678_Total AC Output Power (Active)")]
     assert suggest(micro, ["pv_power"]) == ({"pv_power": "sensor.micro"}, [])
+
+
+def test_huawei():
+    """Huawei SUN2000 mit LUNA2000 und Power Meter, Muster aus wlcrs/huawei_solar und huawei-solar-lib."""
+    keys = ("input_power", "active_power", "accumulated_yield_energy", "power_meter_active_power",
+            "storage_charge_discharge_power", "storage_state_of_capacity", "storage_unit_1_state_of_capacity",
+            "storage_total_charge", "storage_total_discharge", "storage_rated_capacity",
+            "storage_discharging_cutoff_capacity", "storage_charging_cutoff_capacity")
+    entities = [e(f"sensor.huawei_{k}", "huawei_solar", f"HV2150012345_{k}") for k in keys]
+    found, invert = suggest(entities, ["grid_power"] + STORAGE_KEYS)
+    assert found == {k: f"sensor.huawei_{n}" for k, n in {
+        "pv_power": "input_power", "output_power": "active_power", "grid_power": "power_meter_active_power",
+        "battery_power": "storage_charge_discharge_power", "battery_soc": "storage_state_of_capacity",
+        "battery_charge_energy": "storage_total_charge", "battery_discharge_energy": "storage_total_discharge",
+        "battery_capacity": "storage_rated_capacity", "battery_soc_min": "storage_discharging_cutoff_capacity",
+        "battery_soc_max": "storage_charging_cutoff_capacity"}.items()}
+    assert invert == ["grid_power"]

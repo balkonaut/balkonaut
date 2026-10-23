@@ -57,6 +57,18 @@ PROFILES = {
         (r"_Total Grid Power$", "grid_power", False),
         (r"_Total Power$", "output_power", False),
     ],
+    "huawei_solar": [  # wlcrs/huawei_solar: <Seriennummer>_<Registername>, SUN2000 mit LUNA2000 und Power Meter
+        (r"_input_power$", "pv_power", False),  # Gesamtertrag zählt Akku-Entladung mit, daher kein pv_energy
+        (r"(?<!meter)_active_power$", "output_power", False),
+        (r"_power_meter_active_power$", "grid_power", True),  # Huawei: positiv bei Einspeisung (Wiki)
+        (r"_storage_charge_discharge_power$", "battery_power", False),
+        (r"_storage_state_of_capacity$", "battery_soc", False),
+        (r"_storage_total_charge$", "battery_charge_energy", False),
+        (r"_storage_total_discharge$", "battery_discharge_energy", False),
+        (r"_storage_rated_capacity$", "battery_capacity", False),
+        (r"_storage_discharging_cutoff_capacity$", "battery_soc_min", False),
+        (r"_storage_charging_cutoff_capacity$", "battery_soc_max", False),
+    ],
 }
 
 POWER = ("power", frozenset({"W", "kW"}), None)
