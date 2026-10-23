@@ -113,17 +113,60 @@ async def test_unreachable_issue_and_diagnostics(hass, aioclient_mock):
     assert diag["entry"]["data"][CONF_URL] == "**REDACTED**" and diag["status"]["bilanz"]["tag"]["ersparnis"] == 1.25
 
 
+def device(hass, platform, name, entities):
+    """Gerät mit Entitäten und Zuständen anlegen: entities = [(unique_id, entity_id, state, attributes)]."""
+    from homeassistant.helpers import device_registry as dr
+    owner = MockConfigEntry(domain=platform)
+    owner.add_to_hass(hass)
+    dev = dr.async_get(hass).async_get_or_create(config_entry_id=owner.entry_id, identifiers={(platform, name)}, name=name)
+    for unique_id, entity_id, state, attrs in entities:
+        domain, object_id = entity_id.split(".")
+        er.async_get(hass).async_get_or_create(domain, platform, unique_id, suggested_object_id=object_id,
+                                               device_id=dev.id, config_entry=owner)
+        hass.states.async_set(entity_id, state, attrs)
+    return dev.id
+
+
 async def test_standalone(hass):
-    hass.states.async_set("sensor.soc", "50", {"unit_of_measurement": "%"})
-    hass.states.async_set("sensor.abgabe", "-0.2", {"unit_of_measurement": "kW"})
-    hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
+    """Geführte Einrichtung: Geräte wählen, Vorschlag mit aktuellen Werten prüfen, Zusammenfassung, einrichten."""
+    power = {"device_class": "power", "unit_of_measurement": "W", "state_class": "measurement"}
+    ezhi = device(hass, "apsystems_ezhi_local", "EZHI", [
+        ("apsystems_EZHI_battery_soc", "sensor.soc", "50", {"device_class": "battery", "unit_of_measurement": "%"}),
+        ("apsystems_EZHI_ongrid_power", "sensor.abgabe", "-0.2", power | {"unit_of_measurement": "kW"})])
+    em = device(hass, "shelly", "3EM", [("AA-em:0-total_act_power", "sensor.netz", "300", power),
+                                        ("AA-em:0-total_aprt_power", "sensor.schein", "320", power | {"device_class": "apparent_power"})])
+    solar = MockConfigEntry(domain="forecast_solar", subentries_data=[
+        {"data": {"azimuth": 135}, "subentry_type": "plane", "title": "Ost", "unique_id": None}])
+    solar.add_to_hass(hass)
+    er.async_get(hass).async_get_or_create("sensor", "forecast_solar", f"{solar.entry_id}_energy_production_today",
+                                           suggested_object_id="prognose", config_entry=solar)
     result = await start_flow(hass, "standalone")
-    assert (await hass.config_entries.flow.async_configure(result["flow_id"], {}))["errors"] == {"base": "no_entities"}
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], {
-        "battery_soc": "sensor.soc", "output_power": "sensor.abgabe", "grid_power": "sensor.netz", "invert": ["output_power"]})
+    assert result["step_id"] == "standalone"
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {"storage_device": ezhi, "grid_device": em})
+    assert result["step_id"] == "entities"
+    values = result["description_placeholders"]["values"]
+    assert "300 W (Bezug)" in values and "200 W (Abgabe ins Haus)" in values and "50 %" in values
+    form = {"grid": {"grid_power": "sensor.netz"}, "generation": {}, "battery": {"battery_soc": "sensor.soc"},
+            "output": {"output_power": "sensor.abgabe"}, "forecast": {"pv_forecast_today": "sensor.prognose"},
+            "invert": ["output_power"]}
+    for sec, fields in form.items():  # Vorschlag aus den Geräteprofilen
+        if sec != "invert":
+            schema = result["data_schema"].schema[sec].schema.schema
+            assert {k.schema: k.description["suggested_value"] for k in schema if k.description} == fields
+    options = result["data_schema"].schema["forecast"].schema.schema
+    assert [o["label"] for o in next(iter(options.values())).config["options"]] == ["Südost 135°"]
+    empty = {sec: {} for sec in form if sec != "invert"}
+    assert (await hass.config_entries.flow.async_configure(result["flow_id"], empty))["errors"] == {"base": "no_entities"}
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], form)
+    assert result["type"] is FlowResultType.MENU and result["step_id"] == "summary"
+    assert "Akku-Auswertung" in result["description_placeholders"]["available"]
+    assert "Ertragswächter" in result["description_placeholders"]["available"]
+    assert "Erzeugung" in result["description_placeholders"]["missing"]
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "create"})
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"] == {"entities": {"grid_power": "sensor.netz", "battery_soc": "sensor.soc",
-                                           "output_power": "sensor.abgabe"}, "invert": ["output_power"]}
+                                           "output_power": "sensor.abgabe", "pv_forecast_today": "sensor.prognose"},
+                              "invert": ["output_power"]}
     await hass.async_block_till_done()
     assert (await start_flow(hass, "standalone"))["reason"] == "already_configured"  # nur eine eigene Datenbank
 
@@ -132,7 +175,7 @@ async def test_standalone(hass):
     latest = await hass.async_add_executor_job(coordinator.storage.latest)
     assert {k: v for k, (_, v) in latest.items()} == {"battery_soc": 50, "output_power": 200, "grid_power": 300}
     assert coordinator.data["live"]["output_power"] == 200 and "tag" in coordinator.data["bilanz"]
-    assert len(hass.states.async_entity_ids("sensor")) == 3 + 22
+    assert len(hass.states.async_entity_ids("sensor")) == 4 + 22
     assert await hass.config_entries.async_unload(entry.entry_id)
 
 

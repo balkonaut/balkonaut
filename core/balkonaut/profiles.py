@@ -35,9 +35,6 @@ PROFILES = {
         (r"-switch:\d+-power$", "output_power", False),  # Plug am Einspeisepunkt, Vorzeichen je nach Anschluss
         (r"-switch:\d+-energy$", "output_energy", False),
     ],
-    "forecast_solar": [
-        (r"_energy_production_today$", "pv_forecast_today", False),
-    ],
 }
 
 POWER = ("power", frozenset({"W", "kW"}), None)
@@ -77,3 +74,9 @@ def matches(entity, rule):
     device_class, units, state_classes = rule
     return (entity.get("device_class") == device_class and entity.get("unit_of_measurement") in units
             and (state_classes is None or entity.get("state_class") in state_classes))
+
+
+def direction(azimuth):
+    """Himmelsrichtung zum Azimut in Grad (0 = Nord, 180 = Süd, wie Forecast.Solar in HA), z. B. „Südost 135°“."""
+    names = ["Nord", "Nordost", "Ost", "Südost", "Süd", "Südwest", "West", "Nordwest"]
+    return f"{names[round(azimuth / 45) % 8]} {azimuth:g}°"

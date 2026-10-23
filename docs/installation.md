@@ -92,13 +92,13 @@ mehrfach laufen.
 Die Integration bringt Balkonaut nach Home Assistant: 22 Sensoren (Bilanz für heute, Monat und Jahr,
 Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Beim Einrichten gibt es zwei Betriebsarten:
 
-- **Eigenständig in Home Assistant**: Die Integration misst selbst. Man ordnet jeder Messgröße eine Entität zu
-  (Bedeutung siehe [Einstellungen](einstellungen.md)), Balkonaut liest die Werte alle 10 Sekunden und speichert sie
-  in `balkonaut/balkonaut.db` im Konfigurationsordner von Home Assistant. Eine App, ein Container oder ein Add-on ist
-  nicht nötig. Beim ersten Start übernimmt Balkonaut einmalig den Verlauf der zugeordneten Entitäten aus dem Recorder
-  von Home Assistant (standardmäßig die letzten 10 Tage), die Auswertung beginnt also nicht bei null. Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter *Vorzeichen drehen* wählen, beim
-  EZHI zum Beispiel *Abgabe ins Haus*. Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme stehen
-  danach unter *Konfigurieren*; ohne sie sind die Euro-Beträge 0.
+- **Eigenständig in Home Assistant**: Die Integration misst selbst. Balkonaut liest die Werte alle 10 Sekunden und
+  speichert sie in `balkonaut/balkonaut.db` im Konfigurationsordner von Home Assistant. Eine App, ein Container oder
+  ein Add-on ist nicht nötig. Beim ersten Start übernimmt Balkonaut einmalig den Verlauf der zugeordneten Entitäten
+  aus dem Recorder von Home Assistant (standardmäßig die letzten 10 Tage), die Auswertung beginnt also nicht bei null.
+  Die Einrichtung ist geführt, siehe [Geführte Einrichtung](#gefuhrte-einrichtung). Arbeitspreis,
+  Einspeisevergütung, Anschaffungskosten und Inbetriebnahme stehen danach unter *Konfigurieren*; ohne sie sind die
+  Euro-Beträge 0.
 - **Mit einer Balkonaut-App**: Die Integration holt die Werte von einer laufenden Docker-App oder dem Add-on ab. Die
   App muss laufen und von Home Assistant aus erreichbar sein.
 
@@ -108,9 +108,48 @@ Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Beim 
 2. Als Repository `https://github.com/balkonaut/balkonaut` eintragen, Typ *Integration*, *Hinzufügen*.
 3. In HACS nach *Balkonaut* suchen, *Herunterladen*, danach Home Assistant neu starten.
 4. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Balkonaut*, Betriebsart wählen und entweder die
-   Entitäten zuordnen oder die Adresse der App eingeben (z. B. `http://192.168.1.10:8000`).
+   [geführte Einrichtung](#gefuhrte-einrichtung) durchgehen oder die Adresse der App eingeben (z. B. `http://192.168.1.10:8000`).
 
 Neue Versionen bietet HACS danach als Update an.
+
+### Geführte Einrichtung
+
+Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die Einrichtung hat drei Schritte:
+
+1. **Geräte wählen**: Netzmessung (z. B. Shelly Pro 3EM), Speicher oder Wechselrichter (z. B. APsystems EZHI),
+   optional ein zusätzlicher Wechselrichter (z. B. ein EZ1-M am Off-Grid-Port) und eine Messung am Einspeisepunkt
+   (z. B. ein Shelly Plug). Was man nicht hat, bleibt leer.
+2. **Entitäten prüfen**: Balkonaut schlägt zu jeder Messgröße eine Entität vor, gruppiert nach Netz, Erzeugung, Akku,
+   Abgabe ins Haus und Prognose. Jede Zuordnung lässt sich ändern oder ergänzen, Abschnitte ohne Vorschlag sind
+   eingeklappt. Darüber stehen die aktuellen Werte mit Richtung, z. B. „Netzleistung: 312 W (Bezug)“ oder
+   „Akkuleistung: 80 W (lädt)“. Passt die Richtung nicht, etwa „Abgabe ins Haus“ als Bezug während der Akku entlädt,
+   die Messgröße unter *Vorzeichen drehen* wählen. Prognosen von Forecast.Solar heißen nach der Ausrichtung ihrer
+   Flächen, z. B. „Südost 135°“.
+3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht, weil Messgrößen fehlen.
+   *Einrichten* schließt ab, *Zuordnung ändern* führt zurück zu Schritt 2.
+
+Pflicht ist nur eine einzige Messgröße. Fehlt eine, entfällt nur die Funktion, die sie braucht.
+
+#### Unterstützte Geräte
+
+Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen:
+
+| Gerät | Integration | Messgrößen |
+|---|---|---|
+| APsystems EZHI | APsystems EZHI Local API (HACS) | PV, Akku, Abgabe ins Haus, Off-Grid-Port, Ladegrenzen, Abgabelimit |
+| APsystems EZ1-M | APsystems (Home Assistant) | PV-Leistung, PV-Zähler, Abgabelimit |
+| Shelly Pro 3EM | Shelly | Netzleistung über alle Phasen saldiert |
+| Shelly Plug | Shelly | Abgabe ins Haus, Zähler am Einspeisepunkt |
+| Forecast.Solar | Forecast.Solar | Tagesprognose |
+
+Bei anderen Geräten schlägt Balkonaut eine Entität vor, wenn sie nach Art und Einheit eindeutig passt
+(z. B. der einzige Leistungssensor des Geräts in W). Ist das nicht eindeutig, bleibt das Feld leer und man wählt selbst.
+
+#### Gerät melden
+
+Damit ein weiteres Gerät dazukommt: Balkonaut einrichten, die Entitäten von Hand zuordnen, dann unter
+*Einstellungen → Geräte & Dienste → Balkonaut → ⋮ → Diagnose herunterladen* und die Datei an ein
+[Issue auf GitHub](https://github.com/balkonaut/balkonaut/issues) mit Hersteller, Modell und Integration hängen.
 
 ### Manuelle Installation
 

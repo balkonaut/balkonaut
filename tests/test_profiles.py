@@ -1,4 +1,4 @@
-from balkonaut.profiles import suggest
+from balkonaut.profiles import direction, suggest
 
 
 def e(entity_id, platform, unique_id, device_class=None, unit=None, state_class=None):
@@ -49,10 +49,6 @@ PLUG = [
     e("sensor.solar_einspeisung_energy", "shelly", "112233445566-switch:0-energy", "energy", "kWh", "total_increasing"),
     e("sensor.solar_einspeisung_consumed_energy", "shelly", "112233445566-switch:0-consumed_energy_switch"),
 ]
-FORECAST = [
-    e("sensor.energy_production_today", "forecast_solar", "entry_a_energy_production_today", "energy", "kWh"),
-    e("sensor.energy_production_tomorrow", "forecast_solar", "entry_a_energy_production_tomorrow", "energy", "kWh"),
-]
 STORAGE_KEYS = ["pv_power", "pv_ac_power", "battery_power", "battery_soc", "output_power", "pv_energy",
                 "battery_charge_energy", "battery_discharge_energy", "battery_capacity", "battery_soh",
                 "battery_soc_min", "battery_soc_max", "battery_discharge_protection", "output_power_limit"]
@@ -80,7 +76,6 @@ def test_own_system():
     assert invert == ["output_power"]
     assert suggest(EM, ["grid_power"]) == ({"grid_power": "sensor.shellypro3em_aabbccddeeff_total_active_power"}, [])
     assert suggest(PLUG, ["output_energy"]) == ({"output_energy": "sensor.solar_einspeisung_energy"}, [])
-    assert suggest(FORECAST, ["pv_forecast_today"]) == ({"pv_forecast_today": "sensor.energy_production_today"}, [])
     ez1 = [e("sensor.solar_ez1_m_gesamtleistung", "apsystems", "E07000000000_total_power"),
            e("sensor.solar_ez1_m_leistung_von_p1", "apsystems", "E07000000000_total_power_p1"),
            e("sensor.solar_ez1_m_gesamterzeugung_uber_lebensdauer", "apsystems", "E07000000000_lifetime_production")]
@@ -99,3 +94,9 @@ def test_without_profile():
     assert suggest(meter, ["pv_power", "battery_power"]) == ({}, [])  # zwei Größen, eine Entität
     two = meter + [e("sensor.meter_power_2", "other", "x4", "power", "W", "measurement")]
     assert suggest(two, ["grid_power"]) == ({}, [])  # zwei Kandidaten
+
+
+def test_direction():
+    assert direction(135) == "Südost 135°"
+    assert direction(225) == "Südwest 225°"
+    assert direction(350) == "Nord 350°"

@@ -8,19 +8,54 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlowWithReload
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import section
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     DateSelector,
+    DeviceSelector,
+    DeviceSelectorConfig,
+    EntityFilterSelectorConfig,
     EntitySelector,
     EntitySelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
+    SelectSelectorMode,
 )
+from homeassistant.helpers.translation import async_get_translations
 
 from . import CONF_ENTITIES, CONF_INVERT, DEFAULT_SCAN_INTERVAL, DOMAIN, KEYS, SIGNED_KEYS, fetch_status
+from .core.homeassistant import normalize
+from .core.profiles import direction, suggest
+
+ROLES = ["grid_device", "storage_device", "extra_device", "output_device"]  # Geräte im ersten Schritt
+# Abschnitte der Zuordnung im zweiten Schritt, zusammen genau KEYS
+SECTIONS = {
+    "grid": ["grid_power"],
+    "generation": ["pv_power", "pv_energy", "pv_ac_power"],
+    "battery": ["battery_power", "battery_soc", "battery_charge_energy", "battery_discharge_energy",
+                "battery_capacity", "battery_soh", "battery_soc_min", "battery_soc_max", "battery_discharge_protection"],
+    "output": ["output_power", "output_energy", "output_power_limit"],
+    "forecast": ["pv_forecast_today", "pv_ac_forecast_today"],
+}
+STORAGE_KEYS = [k for k in KEYS if k not in SECTIONS["grid"] + SECTIONS["forecast"]]
+# ponytail: Texte nur deutsch wie das Handbuch; in die Übersetzungen, sobald es eine zweite Sprache gibt
+# Funktion -> benötigte Messgrößen, je Eintrag reicht eine der Alternativen
+FEATURES = {
+    "Bilanz mit Netzbezug, Einspeisung und Ersparnis": [("grid_power",)],
+    "Abgabe des Balkonkraftwerks ins Haus": [("output_energy", "output_power")],
+    "Erzeugung und Energiefluss": [("pv_energy", "pv_power", "pv_ac_power")],
+    "Akku-Auswertung und Akku-Ring": [("battery_soc",)],
+    "Regelgüte der Nulleinspeisung": [("grid_power",), ("output_power",)],
+    "Ertragswächter mit Prognose": [("pv_forecast_today", "pv_ac_forecast_today")],
+}
+SIGNS = {"grid_power": ("Bezug", "Einspeisung"), "battery_power": ("lädt", "entlädt"),
+         "output_power": ("Abgabe ins Haus", "Bezug, Vorzeichen prüfen"),
+         "pv_power": ("", "negativ, Vorzeichen prüfen"), "pv_ac_power": ("", "negativ, Vorzeichen prüfen")}
 
 
 class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -30,21 +65,111 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_menu(step_id="user", menu_options=["standalone", "app"])
 
     async def async_step_standalone(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Eigenständig: Entitäten je Messgröße wählen, Balkonaut misst und speichert in Home Assistant."""
+        """Eigenständig, Schritt 1: Geräte wählen, aus ihnen schlägt Balkonaut die Entitäten vor."""
         await self.async_set_unique_id("standalone")  # eine eigene Datenbank, also nur ein eigenständiger Eintrag
         self._abort_if_unique_id_configured()
+        if user_input is not None:
+            self._entities, self._invert = self._suggest(user_input)
+            return await self.async_step_entities()
+        device = DeviceSelector(DeviceSelectorConfig(entity=[EntityFilterSelectorConfig(domain="sensor")]))
+        return self.async_show_form(step_id="standalone", data_schema=vol.Schema({vol.Optional(r): device for r in ROLES}))
+
+    async def async_step_entities(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Schritt 2: Vorschläge prüfen und ergänzen, mit aktuellen Werten zur Kontrolle."""
         errors = {}
         if user_input is not None:
-            entities = {k: user_input[k] for k in KEYS if user_input.get(k)}
+            entities = {k: v for sec in SECTIONS for k, v in user_input.get(sec, {}).items() if v}
             if entities:
-                return self.async_create_entry(title="Balkonaut", data={
-                    CONF_ENTITIES: entities, CONF_INVERT: user_input.get(CONF_INVERT, [])})
+                self._entities = entities
+                self._invert = [k for k in user_input.get(CONF_INVERT, []) if k in entities]
+                return await self.async_step_summary()
             errors["base"] = "no_entities"
         entity = EntitySelector(EntitySelectorConfig(domain=["sensor", "number", "input_number"]))
-        schema = {vol.Optional(k): entity for k in KEYS}
+        forecast = SelectSelector(SelectSelectorConfig(
+            options=[SelectOptionDict(value=e, label=label) for e, label in forecasts.items()],
+            custom_value=True, mode=SelectSelectorMode.DROPDOWN)) if (forecasts := self._forecasts()) else entity
+        schema = {vol.Required(sec): section(
+            vol.Schema({vol.Optional(k): forecast if sec == "forecast" else entity for k in keys}),
+            {"collapsed": bool(self._entities) and not any(k in self._entities for k in keys)})
+            for sec, keys in SECTIONS.items()}
         schema[vol.Optional(CONF_INVERT, default=[])] = SelectSelector(SelectSelectorConfig(
             options=SIGNED_KEYS, multiple=True, translation_key=CONF_INVERT))
-        return self.async_show_form(step_id="standalone", data_schema=vol.Schema(schema), errors=errors)
+        suggested = {sec: {k: self._entities[k] for k in keys if k in self._entities} for sec, keys in SECTIONS.items()}
+        return self.async_show_form(
+            step_id="entities", errors=errors, description_placeholders={"values": await self._values()},
+            data_schema=self.add_suggested_values_to_schema(vol.Schema(schema), suggested | {CONF_INVERT: self._invert}))
+
+    async def async_step_summary(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Schritt 3: was mit dieser Zuordnung geht und was nicht, dann einrichten oder zurück."""
+        have = set(self._entities)
+        ok = [name for name, needs in FEATURES.items() if all(have & set(alt) for alt in needs)]
+        return self.async_show_menu(step_id="summary", menu_options=["create", "entities"], description_placeholders={
+            "available": "\n".join(f"- {n}" for n in ok) or "–",
+            "missing": "\n".join(f"- {n}" for n in FEATURES if n not in ok) or "–",
+            "values": await self._values()})
+
+    async def async_step_create(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self.async_create_entry(title="Balkonaut", data={CONF_ENTITIES: self._entities, CONF_INVERT: self._invert})
+
+    def _suggest(self, devices: dict[str, str]) -> tuple[dict[str, str], list[str]]:
+        """Vorschlag aus den gewählten Geräten; spezifische Rollen zuerst, damit sie Vorrang haben."""
+        registry = er.async_get(self.hass)
+        found, invert = {}, []
+
+        def add(role, keys, rename=None):
+            entities = []
+            for e in er.async_entries_for_device(registry, devices[role]) if devices.get(role) else []:
+                attrs = getattr(self.hass.states.get(e.entity_id), "attributes", {})
+                entities.append({"entity_id": e.entity_id, "platform": e.platform, "unique_id": e.unique_id,
+                                 "device_class": attrs.get("device_class"),
+                                 "unit_of_measurement": attrs.get("unit_of_measurement"),
+                                 "state_class": attrs.get("state_class")})
+            rename = rename or {}
+            keys = [k for k in keys if rename.get(k, k) not in found]
+            new, flip = suggest(entities, keys)
+            found.update({rename.get(k, k): v for k, v in new.items()})
+            invert.extend(rename.get(k, k) for k in flip)
+
+        add("grid_device", ["grid_power"])
+        add("output_device", ["output_energy"])  # Zähler am Einspeisepunkt ist maßgeblich (Handbuch, Messquellen)
+        add("extra_device", ["pv_power"], {"pv_power": "pv_ac_power"})
+        add("storage_device", STORAGE_KEYS)
+        add("output_device", ["output_power"])
+        if len(forecasts := self._forecasts()) == 1 and "pv_ac_power" not in found:  # bei zwei Erzeugern unklar, welcher
+            found["pv_forecast_today"] = next(iter(forecasts))
+        return found, invert
+
+    def _forecasts(self) -> dict[str, str]:
+        """Prognose-Entitäten von Forecast.Solar, benannt nach der Ausrichtung ihrer Flächen."""
+        out = {}
+        for e in er.async_get(self.hass).entities.values():
+            if e.platform == "forecast_solar" and e.unique_id.endswith("_energy_production_today") and not e.disabled_by:
+                entry = self.hass.config_entries.async_get_entry(e.config_entry_id)
+                planes = entry.get_subentries_of_type("plane") if entry else []
+                out[e.entity_id] = " + ".join(direction(p.data["azimuth"]) for p in planes) or e.entity_id
+        return out
+
+    async def _values(self) -> str:
+        """Aktuelle Werte der zugeordneten Entitäten, mit gedrehtem Vorzeichen, damit Fehler auffallen."""
+        labels = await async_get_translations(self.hass, self.hass.config.language, "config", [DOMAIN])
+        lines = []
+        for sec, keys in SECTIONS.items():
+            for key in (k for k in keys if k in self._entities):
+                label = labels.get(f"component.{DOMAIN}.config.step.entities.sections.{sec}.data.{key}", key)
+                lines.append(f"- {label}: {self._live(key)}")
+        return "\n".join(lines) or "–"
+
+    def _live(self, key: str) -> str:
+        state = self.hass.states.get(self._entities[key])
+        value = normalize(state and {"state": state.state, "attributes": state.attributes},
+                          -1 if key in self._invert else 1)
+        if value is None:
+            return "kein Wert"
+        unit = "W" if key.endswith(("_power", "_limit")) else "kWh" if key.endswith(("_energy", "_today", "_capacity")) else "%"
+        text = f"{abs(value) if key in SIGNS else value:.{1 if unit == 'kWh' else 0}f} {unit}"
+        if key in SIGNS and round(value) and (word := SIGNS[key][value < 0]):
+            text += f" ({word})"
+        return text
 
     async def async_step_app(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Mit einer laufenden Balkonaut-App (Docker oder Add-on) über deren Adresse."""

@@ -10,31 +10,19 @@
         }
       },
       "standalone": {
-        "title": "Entitäten zuordnen",
-        "description": "Welche Entität liefert welche Messgröße? Nicht vorhandene leer lassen. Balkonaut liest die Werte alle 10 Sekunden und speichert sie im Home-Assistant-Konfigurationsordner.",
+        "title": "Geräte wählen",
+        "description": "Welche Geräte gehören zu deiner Anlage? Balkonaut schlägt danach die passenden Entitäten vor, du prüfst sie im nächsten Schritt. Was du nicht hast, leer lassen.",
         "data": {
-          "grid_power": "Netzleistung",
-          "pv_power": "PV-Leistung am Speicher",
-          "pv_ac_power": "PV-Leistung Zusatz",
-          "battery_power": "Akkuleistung",
-          "battery_soc": "Ladestand",
-          "output_power": "Abgabe ins Haus",
-          "output_energy": "Zähler Abgabe",
-          "pv_energy": "Zähler PV",
-          "battery_charge_energy": "Zähler Akku laden",
-          "battery_discharge_energy": "Zähler Akku entladen",
-          "battery_capacity": "Akkukapazität",
-          "battery_soh": "Akku-Gesundheit",
-          "battery_soc_min": "Ladestand Minimum",
-          "battery_soc_max": "Ladestand Maximum",
-          "battery_discharge_protection": "Entladeschutz",
-          "output_power_limit": "Abgabelimit",
-          "pv_forecast_today": "Prognose Speicher",
-          "pv_ac_forecast_today": "Prognose Zusatz",
-          "invert": "Vorzeichen drehen"
+          "grid_device": "Netzmessung",
+          "storage_device": "Speicher oder Wechselrichter",
+          "extra_device": "Zusätzlicher Wechselrichter",
+          "output_device": "Messung am Einspeisepunkt"
         },
         "data_description": {
-          "invert": "Messgrößen, deren Entität das umgekehrte Vorzeichen liefert, z. B. Abgabe ins Haus beim APsystems EZHI"
+          "grid_device": "Misst Bezug und Einspeisung am Hausanschluss, z. B. Shelly Pro 3EM",
+          "storage_device": "Das Hauptgerät, z. B. APsystems EZHI mit Akku oder ein Wechselrichter ohne Akku",
+          "extra_device": "Ein zweiter Wechselrichter, z. B. ein EZ1-M am Off-Grid-Port des Speichers",
+          "output_device": "Zwischenstecker, der die Abgabe ins Haus misst, z. B. Shelly Plug"
         }
       },
       "app": {
@@ -42,6 +30,71 @@
         "description": "Adresse der Balkonaut-App, z. B. http://192.168.1.10:8000",
         "data": {
           "url": "Adresse"
+        }
+      },
+      "entities": {
+        "title": "Entitäten prüfen",
+        "description": "Vorgeschlagene Zuordnung, jede Entität lässt sich ändern oder ergänzen. Leere Abschnitte sind eingeklappt.\n\nAktuelle Werte:\n{values}",
+        "data": {
+          "invert": "Vorzeichen drehen"
+        },
+        "data_description": {
+          "invert": "Messgrößen, deren Entität das umgekehrte Vorzeichen liefert, z. B. Abgabe ins Haus beim APsystems EZHI"
+        },
+        "sections": {
+          "grid": {
+            "name": "Netz",
+            "data": {
+              "grid_power": "Netzleistung"
+            }
+          },
+          "generation": {
+            "name": "Erzeugung",
+            "data": {
+              "pv_power": "PV-Leistung am Speicher",
+              "pv_energy": "Zähler PV",
+              "pv_ac_power": "PV-Leistung Zusatz"
+            }
+          },
+          "battery": {
+            "name": "Akku",
+            "description": "Ohne Akku leer lassen.",
+            "data": {
+              "battery_power": "Akkuleistung",
+              "battery_soc": "Ladestand",
+              "battery_charge_energy": "Zähler Akku laden",
+              "battery_discharge_energy": "Zähler Akku entladen",
+              "battery_capacity": "Akkukapazität",
+              "battery_soh": "Akku-Gesundheit",
+              "battery_soc_min": "Ladestand Minimum",
+              "battery_soc_max": "Ladestand Maximum",
+              "battery_discharge_protection": "Entladeschutz"
+            }
+          },
+          "output": {
+            "name": "Abgabe ins Haus",
+            "data": {
+              "output_power": "Abgabe ins Haus",
+              "output_energy": "Zähler Abgabe",
+              "output_power_limit": "Abgabelimit"
+            }
+          },
+          "forecast": {
+            "name": "Prognose",
+            "description": "Tagesprognose je Wechselrichter, z. B. aus Forecast.Solar",
+            "data": {
+              "pv_forecast_today": "Prognose Speicher",
+              "pv_ac_forecast_today": "Prognose Zusatz"
+            }
+          }
+        }
+      },
+      "summary": {
+        "title": "Zusammenfassung",
+        "description": "Damit verfügbar:\n{available}\n\nNicht verfügbar, dafür fehlen Messgrößen:\n{missing}\n\nAktuelle Werte:\n{values}",
+        "menu_options": {
+          "create": "Einrichten",
+          "entities": "Zuordnung ändern"
         }
       }
     },
