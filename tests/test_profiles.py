@@ -100,3 +100,28 @@ def test_direction():
     assert direction(135) == "Südost 135°"
     assert direction(225) == "Südwest 225°"
     assert direction(350) == "Nord 350°"
+
+
+def test_solarman():
+    """Deye über beide Solarman-Integrationen, Muster aus deren Quellcode (unique_id-Bildung und Gerätedefinitionen)."""
+    entry = "01k8z3m5q7r9t1v3w5x7y9a2b4"  # davidrapan: entry_id klein geschrieben, dann Name und Plattform
+    hybrid = [e(f"sensor.deye_{n}", "solarman", f"{entry}_{n}_sensor") for n in (
+        "pv_power", "pv1_power", "total_production", "total_production_1", "battery", "battery_power",
+        "battery_state", "total_battery_charge", "total_battery_discharge", "battery_capacity", "grid_power",
+        "grid_l1_power", "external_power", "power", "load_power")]
+    found, invert = suggest(hybrid, ["grid_power"] + STORAGE_KEYS)
+    assert found == {k: f"sensor.deye_{n}" for k, n in {
+        "pv_power": "pv_power", "pv_energy": "total_production", "battery_soc": "battery",
+        "battery_power": "battery_power", "battery_charge_energy": "total_battery_charge",
+        "battery_discharge_energy": "total_battery_discharge", "battery_capacity": "battery_capacity",
+        "grid_power": "grid_power", "output_power": "power"}.items()}
+    assert invert == ["battery_power"]
+    stephan = [e(f"sensor.deye_{i}", "solarman", f"Deye_2712345678_{n}") for i, n in enumerate((
+        "PV1 Power", "Total Production", "Battery Power", "Battery SOC", "Total Battery Charge",
+        "Total Battery Discharge", "Total Grid Power", "Total Load Power", "Total Power"))]
+    found, invert = suggest(stephan, ["grid_power"] + STORAGE_KEYS)
+    assert found == {"pv_energy": "sensor.deye_1", "battery_power": "sensor.deye_2", "battery_soc": "sensor.deye_3",
+                     "battery_charge_energy": "sensor.deye_4", "battery_discharge_energy": "sensor.deye_5",
+                     "grid_power": "sensor.deye_6", "output_power": "sensor.deye_8"}
+    micro = [e("sensor.micro", "solarman", "Deye_4112345678_Total AC Output Power (Active)")]
+    assert suggest(micro, ["pv_power"]) == ({"pv_power": "sensor.micro"}, [])

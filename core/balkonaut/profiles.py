@@ -35,6 +35,28 @@ PROFILES = {
         (r"-switch:\d+-power$", "output_power", False),  # Plug am Einspeisepunkt, Vorzeichen je nach Anschluss
         (r"-switch:\d+-energy$", "output_energy", False),
     ],
+    # Ab hier aus dem Quellcode der Integrationen abgeleitet, nicht an Geräten bestätigt (Handbuch: Unterstützte Geräte)
+    "solarman": [  # Deye u. a. über Solarman-Logger; zwei Integrationen mit derselben Domain
+        # davidrapan/ha-solarman: <entry_id>_<Name>_<Plattform>, Deye-Hybrid und -Mikrowechselrichter
+        (r"_pv_power_sensor$", "pv_power", False),
+        (r"_total_production_sensor$", "pv_energy", False),
+        (r"_battery_power_sensor$", "battery_power", True),  # Deye: positiv beim Entladen
+        (r"_battery_sensor$", "battery_soc", False),
+        (r"_total_battery_charge_sensor$", "battery_charge_energy", False),
+        (r"_total_battery_discharge_sensor$", "battery_discharge_energy", False),
+        (r"_battery_capacity_sensor$", "battery_capacity", False),
+        (r"_grid_power_sensor$", "grid_power", False),
+        (r"^[0-9a-z]{26}_power_sensor$", "output_power", False),  # Leistung des Wechselrichters, nicht PV oder Akku
+        # StephanJoubert/home_assistant_solarman: <Name des Wechselrichters>_<Seriennummer>_<Feld>
+        (r"_Total AC Output Power \(Active\)$", "pv_power", False),  # Mikrowechselrichter
+        (r"_Total Production$", "pv_energy", False),
+        (r"_Battery Power$", "battery_power", True),
+        (r"_Battery SOC$", "battery_soc", False),
+        (r"_Total Battery Charge$", "battery_charge_energy", False),
+        (r"_Total Battery Discharge$", "battery_discharge_energy", False),
+        (r"_Total Grid Power$", "grid_power", False),
+        (r"_Total Power$", "output_power", False),
+    ],
 }
 
 POWER = ("power", frozenset({"W", "kW"}), None)

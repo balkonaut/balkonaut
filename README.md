@@ -70,6 +70,7 @@ Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen:
 | APsystems EZ1-M | APsystems |
 | Shelly Pro 3EM, Shelly Plug | Shelly |
 | Forecast.Solar (Prognose) | Forecast.Solar |
+| Deye (Hybrid und Mikrowechselrichter), aus dem Quellcode abgeleitet | Solarman (HACS) |
 
 Andere Geräte gehen auch: Balkonaut schlägt Entitäten nach Art und Einheit vor, wenn das eindeutig ist, sonst
 wählt man selbst. Damit ein Gerät fest dazukommt, die Diagnose-Datei (*⋮ → Diagnose herunterladen*) mit Hersteller,

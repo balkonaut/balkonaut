@@ -132,15 +132,18 @@ Pflicht ist nur eine einzige Messgröße. Fehlt eine, entfällt nur die Funktion
 
 #### Unterstützte Geräte
 
-Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen:
+Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen. *Bestätigt* heißt an einem echten Gerät
+geprüft, *aus dem Quellcode* heißt aus dem Code der Integration abgeleitet; Rückmeldungen dazu bitte über
+[Gerät melden](#gerat-melden).
 
-| Gerät | Integration | Messgrößen |
-|---|---|---|
-| APsystems EZHI | APsystems EZHI Local API (HACS) | PV, Akku, Abgabe ins Haus, Off-Grid-Port, Ladegrenzen, Abgabelimit |
-| APsystems EZ1-M | APsystems (Home Assistant) | PV-Leistung, PV-Zähler, Abgabelimit |
-| Shelly Pro 3EM | Shelly | Netzleistung über alle Phasen saldiert |
-| Shelly Plug | Shelly | Abgabe ins Haus, Zähler am Einspeisepunkt |
-| Forecast.Solar | Forecast.Solar | Tagesprognose |
+| Gerät | Integration | Messgrößen | Stand |
+|---|---|---|---|
+| APsystems EZHI | APsystems EZHI Local API (HACS) | PV, Akku, Abgabe ins Haus, Off-Grid-Port, Ladegrenzen, Abgabelimit | bestätigt |
+| APsystems EZ1-M | APsystems (Home Assistant) | PV-Leistung, PV-Zähler, Abgabelimit | bestätigt |
+| Shelly Pro 3EM | Shelly | Netzleistung über alle Phasen saldiert | bestätigt |
+| Shelly Plug | Shelly | Abgabe ins Haus, Zähler am Einspeisepunkt | bestätigt |
+| Forecast.Solar | Forecast.Solar | Tagesprognose | bestätigt |
+| Deye (Hybrid und Mikrowechselrichter) | Solarman (HACS, davidrapan oder StephanJoubert) | PV, Akku, Netz, Abgabe | aus dem Quellcode |
 
 Bei anderen Geräten schlägt Balkonaut eine Entität vor, wenn sie nach Art und Einheit eindeutig passt
 (z. B. der einzige Leistungssensor des Geräts in W). Ist das nicht eindeutig, bleibt das Feld leer und man wählt selbst.
