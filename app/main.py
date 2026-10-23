@@ -33,7 +33,7 @@ templates.env.filters.update(
     de=de,
     abs_de=lambda v, d=1: de(abs(v) if isinstance(v, (int, float)) else None, d),
     pct=lambda v: "–" if v is None else de(v * 100, 0) + " %",
-    komma=lambda v: f"{v:g}".replace(".", ","),  # Eingabefelder: 50,1 statt 50.1, ohne überflüssige Nullen
+    komma=lambda v: v if isinstance(v, str) else f"{v:g}".replace(".", ","),  # Eingabefelder: 50,1 statt 50.1
     ago=lambda s: f"{s} s" if s < 120 else f"{s // 60} min" if s < 7200 else f"{s // 3600} h",
 )
 # Adresse, unter der die Integration das Add-on erreicht (Hostname des Add-on-Containers im HA-Netz)
@@ -323,28 +323,39 @@ async def save_devices(request, cfg, form):
 
 
 async def save_planes(request, cfg, form):
-    """Standort und Flächen; leere Zeilen fallen weg, so lässt sich eine Fläche auch entfernen."""
-    num = lambda text: float(text.replace(",", "."))
-    try:
-        lat, lon = (form.get(k, [""])[0].strip() for k in ("lat", "lon"))
-        location = {"lat": num(lat), "lon": num(lon)} if lat or lon else None
-        if location and not (-90 <= location["lat"] <= 90 and -180 <= location["lon"] <= 180):
-            raise ValueError
-        planes = []
-        for dec, az, kwp, inv in zip(form.get("declination", []), form.get("azimuth", []), form.get("kwp", []),
-                                     form.get("inverter", [])):
-            if dec.strip() or az.strip() or kwp.strip():
-                plane = {"declination": num(dec), "azimuth": num(az), "kwp": num(kwp), "inverter": inv}
-                if not (0 <= plane["declination"] <= 90 and 0 <= plane["azimuth"] <= 360 and 0 < plane["kwp"] <= 100
-                        and inv in ("storage", "extra")):
-                    raise ValueError
-                planes.append(plane)
-        if planes and not location:
-            raise ValueError
-    except ValueError:
-        return await settings_page(request, cfg, 400, planes_error=(
-            "Bitte Breite (-90 bis 90) und Länge (-180 bis 180) angeben, je Fläche Neigung 0 bis 90, "
-            "Ausrichtung 0 bis 360 und kWp über 0."))
+    """Standort und Flächen; leere Zeilen fallen weg, so lässt sich eine Fläche auch entfernen. Bei Fehlern bleiben
+    die Eingaben stehen und die Meldung nennt das Feld."""
+    def num(text, low, high, what):
+        try:
+            value = float(text.replace("°", "").replace(",", ".").strip())
+        except ValueError:
+            raise ValueError(f"{what}: bitte eine Zahl eingeben") from None
+        if not low <= value <= high:
+            raise ValueError(f"{what}: {de(low, 0)} bis {de(high, 0)}")
+        return value
+    lat, lon = (form.get(k, [""])[0].strip() for k in ("lat", "lon"))
+    rows = [{"declination": d, "azimuth": a, "kwp": k, "inverter": i} for d, a, k, i in zip(
+        form.get("declination", []), form.get("azimuth", []), form.get("kwp", []), form.get("inverter", []))
+        if d.strip() or a.strip() or k.strip()]
+    errors, location, planes = [], None, []
+    if lat or lon:
+        try:
+            location = {"lat": num(lat, -90, 90, "Breitengrad"), "lon": num(lon, -180, 180, "Längengrad")}
+        except ValueError as e:
+            errors.append(str(e))
+    for n, row in enumerate(rows, 1):
+        try:
+            planes.append({"declination": num(row["declination"], 0, 90, f"Fläche {n}, Neigung"),
+                           "azimuth": num(row["azimuth"], 0, 360, f"Fläche {n}, Ausrichtung"),
+                           "kwp": num(row["kwp"], 0.01, 100, f"Fläche {n}, Leistung"),
+                           "inverter": "extra" if row["inverter"] == "extra" else "storage"})
+        except ValueError as e:
+            errors.append(str(e))
+    if rows and not (lat or lon):
+        errors.append("Für die Flächen fehlt der Standort: Breiten- und Längengrad eintragen")
+    if errors:
+        return await settings_page(request, cfg, 400, planes_error=errors,
+                                   entered={"location": {"lat": lat, "lon": lon}, "planes": rows})
     for key, value in (("location", location), ("planes", planes)):
         if value:
             cfg[key] = value

@@ -61,7 +61,9 @@ def test_devices_and_planes(client, tmp_path, monkeypatch):
     cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
     assert cfg["location"] == {"lat": 50.1, "lon": 8.7}
     assert cfg["planes"] == [{"declination": 30.0, "azimuth": 150.0, "kwp": 0.87, "inverter": "storage"}]
-    assert client.post("/einstellungen", data={"bereich": "flaechen"} | form | {"azimuth": ["400", ""]}).status_code == 400
+    r = client.post("/einstellungen", data={"bereich": "flaechen"} | form | {"lat": "", "lon": "", "azimuth": ["400", ""]})
+    assert r.status_code == 400 and "Fläche 1, Ausrichtung: 0 bis 360" in r.text and "fehlt der Standort" in r.text
+    assert 'value="400"' in r.text  # Eingaben bleiben stehen
 
     client.post("/einstellungen", data={"bereich": "geraete", "aktion": "entfernen", "host": "10.0.0.38"})
     assert "devices" not in yaml.safe_load((tmp_path / "config.yaml").read_text())

@@ -76,17 +76,19 @@
 <h2 id="flaechen">Standort und Flächen</h2>
 <form method="post" action="einstellungen" class="card"><input type="hidden" name="bereich" value="flaechen">
   <p class="intro">Für die Tagesprognose (Forecast.Solar) und den erwarteten Jahresverlauf (PVGIS).</p>
-  {% if planes_error %}<p class="field-error" role="alert">{{ planes_error }}</p>{% endif %}
+  {% set src = entered or cfg %}
+  {% if planes_error %}<div class="field-error" role="alert"><p style="margin:0">Nicht gespeichert, bitte korrigieren:</p>
+    <ul style="margin:.25rem 0 0">{% for e in planes_error %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
   <div class="pair">
-    <div><label for="lat">Breitengrad</label><input id="lat" name="lat" inputmode="decimal" value="{{ cfg.location.lat|komma if cfg.location else '' }}" placeholder="z. B. 50,11"></div>
-    <div><label for="lon">Längengrad</label><input id="lon" name="lon" inputmode="decimal" value="{{ cfg.location.lon|komma if cfg.location else '' }}" placeholder="z. B. 8,68"></div>
+    <div><label for="lat">Breitengrad</label><input id="lat" name="lat" inputmode="decimal" value="{{ src.location.lat|komma if src.location else '' }}" placeholder="z. B. 50,11"></div>
+    <div><label for="lon">Längengrad</label><input id="lon" name="lon" inputmode="decimal" value="{{ src.location.lon|komma if src.location else '' }}" placeholder="z. B. 8,68"></div>
   </div>
-  {% for p in (cfg.planes or []) + [{}] %}
+  {% for p in (src.planes or []) + [{}] * (1 if src.planes else 2) %}
   <fieldset class="planes">
-    <legend class="eyebrow">{{ "Neue Fläche (optional)" if not p else "Fläche " ~ loop.index }}</legend>
-    <div><label for="dec{{ loop.index }}">Neigung (°)</label><input id="dec{{ loop.index }}" name="declination" inputmode="decimal" value="{{ p.declination|komma if p else '' }}" placeholder="30"></div>
-    <div><label for="az{{ loop.index }}">Ausrichtung (°)</label><input id="az{{ loop.index }}" name="azimuth" inputmode="decimal" value="{{ p.azimuth|komma if p else '' }}" placeholder="180 = Süd"></div>
-    <div><label for="kwp{{ loop.index }}">Leistung (kWp)</label><input id="kwp{{ loop.index }}" name="kwp" inputmode="decimal" value="{{ p.kwp|komma if p else '' }}" placeholder="0,87"></div>
+    <legend class="eyebrow">{{ "Fläche " ~ loop.index ~ (" (neu)" if not p else "") }}</legend>
+    <div><label for="dec{{ loop.index }}">Neigung (°)</label><input id="dec{{ loop.index }}" name="declination" inputmode="decimal" value="{{ p.declination|komma if p else '' }}" placeholder="z. B. 30"></div>
+    <div><label for="az{{ loop.index }}">Ausrichtung (°)</label><input id="az{{ loop.index }}" name="azimuth" inputmode="decimal" value="{{ p.azimuth|komma if p else '' }}" placeholder="z. B. 180 (Süd)"></div>
+    <div><label for="kwp{{ loop.index }}">Leistung (kWp)</label><input id="kwp{{ loop.index }}" name="kwp" inputmode="decimal" value="{{ p.kwp|komma if p else '' }}" placeholder="z. B. 0,87"></div>
     <div><label for="inv{{ loop.index }}">Wechselrichter</label><select id="inv{{ loop.index }}" name="inverter">
       <option value="storage"{% if p.inverter != "extra" %} selected{% endif %}>Speicher</option>
       <option value="extra"{% if p.inverter == "extra" %} selected{% endif %}>Zusätzlicher</option></select></div>
