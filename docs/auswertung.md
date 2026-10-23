@@ -9,20 +9,23 @@ Die Startseite `http://<adresse>:8000/` zeigt oben die Ersparnis von heute, den 
 und die Autarkie von heute. Darunter folgen die Bilanz für den gewählten Zeitraum, die Akku-Kennzahlen,
 der heutige Hausverbrauch je Stunde (Anteil Balkonkraftwerk und Netz) und der Stand der Amortisation.
 Die Seite lädt sich jede Minute neu. Sind die letzten Messwerte älter als zwei Minuten, wird der Punkt
-neben „Energiefluss jetzt“ orange und oben erscheint ein Hinweis: Dann ist meist Home Assistant nicht erreichbar.
+neben „Energiefluss jetzt“ orange und oben erscheint ein Hinweis: Dann sind meist die Geräte oder Home Assistant nicht erreichbar.
 
 Hell oder dunkel richtet sich nach der Einstellung des Geräts.
 
 ### Energiefluss
 
-Das Bild zeigt, wohin die Leistung gerade fließt: von der **Sonne** in den Speicher-Wechselrichter, von dort in den **Akku** oder ins **Haus**, und zwischen **Netz** und Haus.
+Das Bild zeigt, wohin die Leistung gerade fließt: von den **Modulen** in den **Speicher**, von dort in den **Akku** oder
+ins **Haus**, und zwischen **Netz** und Haus.
 Je mehr Leistung, desto dicker die Leitung und desto schneller laufen die Striche. Die Laufrichtung zeigt,
 ob der Akku lädt oder entlädt und ob Strom aus dem Netz kommt oder eingespeist wird. Der Wert am Haus ist der
 Hausverbrauch, also Abgabe des Balkonkraftwerks plus Netzbezug.
 
 Ist ein zweiter Wechselrichter eingetragen (`pv_ac_power`, z. B. ein Mikrowechselrichter am Speicher), zeigt das
-Bild zwei Felder: **PV Speicher** für die Module am Speicher-Wechselrichter und **PV Zusatz** für den zweiten
-Wechselrichter, jeweils mit eigener Leitung.
+Bild oben zwei Modulfelder: links die Module am Speicher, rechts die Module am zweiten Wechselrichter, der als eigenes
+Feld **Zusatz-WR** dazwischen steht. Die Module eines Wechselrichters teilen sich eine Anzeige, weil die Geräte keine
+Werte je Modul liefern. In der Docker-App tragen die Modulfelder die Ausrichtung der Flächen aus den Einstellungen
+(z. B. **Südost**, **West**), sonst heißen sie **Module**.
 
 ### Akku
 

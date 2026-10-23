@@ -379,7 +379,7 @@ def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
     stand = max((ts for ts, _ in latest.values()), default=None)
     if stand is not None and now - stand > 120:
         warnings = [{"code": "keine_messwerte",
-                     "text": "Seit über 2 Minuten keine Messwerte, Verbindung zu Home Assistant prüfen"}] + warnings
+                     "text": "Seit über 2 Minuten keine Messwerte, Verbindung zu den Geräten bzw. Home Assistant prüfen"}] + warnings
     return {
         "warnungen": warnings,
         "ertrag": watch["wechselrichter"],

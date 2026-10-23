@@ -16,6 +16,7 @@ from fastapi.templating import Jinja2Templates
 
 from app import config
 from balkonaut import analytics, collector, devices, pvgis, views
+from balkonaut.profiles import direction
 from balkonaut.storage import Storage
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -214,6 +215,8 @@ def dashboard(request: Request, zeitraum: str = "tag"):
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
         "prices_set": cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0,
         "configured": bool(cfg.get("devices") or cfg.get("home_assistant")),
+        "modules": {inv: " + ".join(direction(p["azimuth"]).split()[0] for p in cfg.get("planes") or []
+                                     if p.get("inverter", "storage") == inv) for inv in ("storage", "extra")},
     })
 
 

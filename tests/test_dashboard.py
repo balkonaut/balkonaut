@@ -107,6 +107,17 @@ def test_soc_gauge():
 def test_flow_inverters(client):
     now = int(time.time())
     app.state.storage.add(now - 10, {"pv_power": 400, "battery_soc": 50})
-    assert "PV Zusatz" not in client.get("/").text  # nur ein Wechselrichter
+    page = client.get("/").text
+    assert "Zusatz-WR" not in page and ">Speicher</text>" in page  # nur ein Wechselrichter, Mitte neutral
     app.state.storage.add(now - 5, {"pv_power": 400, "pv_ac_power": 300, "battery_soc": 50})
-    assert "PV Speicher" in client.get("/").text and "PV Zusatz" in client.get("/").text
+    assert "Zusatz-WR" in client.get("/").text
+
+
+def test_flow_module_labels(client, tmp_path):
+    """Modulfelder tragen die Ausrichtung der Flächen am jeweiligen Wechselrichter."""
+    (tmp_path / "config.yaml").write_text(
+        "location: {lat: 50, lon: 10}\nplanes:\n  - {declination: 30, azimuth: 150, kwp: 0.87, inverter: storage}\n"
+        "  - {declination: 30, azimuth: 251, kwp: 0.87, inverter: extra}\n")
+    app.state.storage.add(int(time.time()) - 5, {"pv_power": 400, "pv_ac_power": 300, "battery_soc": 50})
+    page = client.get("/").text
+    assert ">Südost</text>" in page and ">West</text>" in page  # 251° liegt näher an West (270°) als an Südwest

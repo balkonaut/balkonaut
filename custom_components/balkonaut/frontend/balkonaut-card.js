@@ -3,6 +3,7 @@
 // (Bilanz von heute) über den WebSocket-Befehl balkonaut/status. Keine Abhängigkeiten, kein Build-Schritt.
 
 const ICONS = {
+  panel: '<rect x="2" y="4" width="20" height="12" rx="1"/><path d="M2 10h20M8.7 4v12M15.3 4v12M12 16v4M8 20h8"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
   batt: '<path d="M15 7h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><path d="M6 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1"/><path d="m11 7-3 5h4l-3 5"/><path d="M22 11v2"/>',
   home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
@@ -171,21 +172,24 @@ class BalkonautCard extends HTMLElement {
       <rect x="10" y="47" width="${Math.min(g.soc, 100)}" height="3" fill="hsl(${g.hue} 70% 48%)"/>
       ${g.marks.map(([k, p]) => `<rect x="${9 + p}" y="43" width="2" height="11" fill="${color(k)}"/>`).join("")}` : "";
     const battLabel = (batt || 0) > 5 ? "Akku lädt" : (batt || 0) < -5 ? "Akku entlädt" : "Akku";
+    // Module oben, je Wechselrichter ein Feld mit gemeinsamer Leistung (Werte je Modul liefern die Geräte nicht)
     const pvPart = pvAc === null
-      ? this._line("M200 66 V145", pv, "var(--bk-sun)") + this._node(140, 10, "var(--bk-sun)", "Sonne", pv, "sun")
-      : this._line("M100 66 V105 H190 V145", v.pv_power, "var(--bk-sun)") + this._line("M300 66 V105 H210 V145", pvAc, "var(--bk-sun)")
-        + this._node(40, 10, "var(--bk-sun)", "PV Speicher", v.pv_power, "sun") + this._node(240, 10, "var(--bk-sun)", "PV Zusatz", pvAc, "sun");
+      ? this._line("M200 66 V222", pv, "var(--bk-sun)") + this._node(140, 10, "var(--bk-sun)", "Module", pv, "panel")
+      : this._line("M100 66 V182 H190 V222", v.pv_power, "var(--bk-sun)") + this._line("M300 66 V88", pvAc, "var(--bk-sun)")
+        + this._line("M300 144 V182 H210 V222", pvAc, "var(--bk-sun)")
+        + this._node(40, 10, "var(--bk-sun)", "Module", v.pv_power, "panel") + this._node(240, 10, "var(--bk-sun)", "Module", pvAc, "panel")
+        + this._node(240, 88, "var(--bk-sun)", "Zusatz-WR", pvAc, "sun");
     return `<div class="head"><span>${this._config.title ?? "Energiefluss jetzt"}</span></div>
-      <svg class="flow" viewBox="0 0 400 330" role="img"
+      <svg class="flow" viewBox="0 0 400 407" role="img"
         aria-label="Sonne ${this._fmt(pv)} W, Akku ${this._fmt(batt)} W, Haus ${this._fmt(house)} W, Netz ${this._fmt(grid)} W">
-        ${this._line("M170 165 H124", batt, "var(--bk-batt)", (batt || 0) < 0)}
-        ${this._line("M230 165 H276", house, "var(--bk-leaf)")}
-        ${this._line("M200 185 V264", grid, "var(--bk-sky)", (grid || 0) > 0)}
+        ${this._line("M164 242 H124", batt, "var(--bk-batt)", (batt || 0) < 0)}
+        ${this._line("M236 242 H276", house, "var(--bk-leaf)")}
+        ${this._line("M200 262 V341", grid, "var(--bk-sky)", (grid || 0) > 0)}
         ${pvPart}
-        <g class="hub"><rect x="170" y="145" width="60" height="40" rx="4"/><text x="200" y="169">EZHI</text></g>
-        ${this._node(4, 137, "var(--bk-batt)", battLabel, batt, "batt", meter)}
-        ${this._node(276, 137, "var(--bk-leaf)", "Haus", house, "home")}
-        ${this._node(140, 264, "var(--bk-sky)", (grid || 0) < -5 ? "Einspeisung" : "Netzbezug", grid, "pole")}
+        <g class="hub"><rect x="164" y="222" width="72" height="40" rx="4"/><text x="200" y="246">Speicher</text></g>
+        ${this._node(4, 214, "var(--bk-batt)", battLabel, batt, "batt", meter)}
+        ${this._node(276, 214, "var(--bk-leaf)", "Haus", house, "home")}
+        ${this._node(140, 341, "var(--bk-sky)", (grid || 0) < -5 ? "Einspeisung" : "Netzbezug", grid, "pole")}
       </svg>`;
   }
 
