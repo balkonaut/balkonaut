@@ -1,4 +1,4 @@
-name: Testen und Image bauen
+name: Testen
 
 on:
   push:
@@ -17,6 +17,6 @@ jobs:
         run: docker build --target ha-test .
       - name: hassfest
         run: docker build --target hassfest .
-      # Der Runner entfernt Container, die ein Job startet; ausgerollt wird deshalb außerhalb des Jobs.
-      - name: Image bauen
-        run: docker build -t balkonaut:latest .
+      # Das Image für Docker und NAS baut GitHub (ghcr.io/balkonaut/balkonaut:latest), hier nur das Handbuch prüfen
+      - name: Handbuch
+        run: docker build --target docs .
