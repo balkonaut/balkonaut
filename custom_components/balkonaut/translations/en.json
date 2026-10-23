@@ -93,7 +93,7 @@
         "title": "Summary",
         "description": "Available:\n{available}\n\nNot available, measurements missing:\n{missing}\n\nCurrent values:\n{values}",
         "menu_options": {
-          "create": "Set up",
+          "create": "Save",
           "entities": "Change assignment"
         }
       }
@@ -103,7 +103,8 @@
       "no_entities": "Please select at least one entity."
     },
     "abort": {
-      "already_configured": "This Balkonaut app is already configured."
+      "already_configured": "This Balkonaut app is already configured.",
+      "reconfigure_successful": "The settings have been updated."
     }
   },
   "options": {

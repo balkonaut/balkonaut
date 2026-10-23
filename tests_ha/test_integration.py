@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from homeassistant import config_entries
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL
 from homeassistant.data_entry_flow import FlowResultType
@@ -195,6 +197,39 @@ async def test_standalone_options(hass):
     await hass.async_block_till_done()  # Neustart mit den neuen Optionen
     assert entry.runtime_data.data["amortisation"]["kosten"] == 1450
     assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_reconfigure(hass, aioclient_mock):
+    """Neu konfigurieren ändert Zuordnung oder Adresse, Eintrag und Messdaten bleiben."""
+    hass.states.async_set("sensor.soc", "50", {"unit_of_measurement": "%"})
+    hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", data={
+        "entities": {"battery_soc": "sensor.soc"}, "invert": [], "backfilled": True})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    db = hass.config.path(DOMAIN, "balkonaut.db")
+    result = await entry.start_reconfigure_flow(hass)
+    assert result["step_id"] == "entities" and "50 %" in result["description_placeholders"]["values"]
+    form = {"grid": {"grid_power": "sensor.netz"}, "generation": {}, "battery": {"battery_soc": "sensor.soc"},
+            "output": {}, "forecast": {}, "invert": []}
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], form)
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "create"})
+    assert result["reason"] == "reconfigure_successful"
+    await hass.async_block_till_done()
+    assert entry.data == {"entities": {"grid_power": "sensor.netz", "battery_soc": "sensor.soc"}, "invert": [],
+                          "backfilled": True}
+    assert hass.config_entries.async_entries(DOMAIN) == [entry] and Path(db).exists()
+    assert await hass.config_entries.async_unload(entry.entry_id)
+
+    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
+    aioclient_mock.get("http://neu:8000/api/v1/status", json=STATUS)
+    app = MockConfigEntry(domain=DOMAIN, data={CONF_URL: URL})
+    app.add_to_hass(hass)
+    result = await app.start_reconfigure_flow(hass)
+    assert result["step_id"] == "app"
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_URL: "http://neu:8000/"})
+    assert result["reason"] == "reconfigure_successful" and app.data == {CONF_URL: "http://neu:8000"}
 
 
 async def test_standalone_backfill(hass, freezer):

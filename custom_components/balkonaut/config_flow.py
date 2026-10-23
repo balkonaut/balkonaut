@@ -5,7 +5,13 @@ from typing import Any
 import aiohttp
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlowWithReload
+from homeassistant.config_entries import (
+    SOURCE_RECONFIGURE,
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlowWithReload,
+)
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
@@ -109,7 +115,18 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
             "values": await self._values()})
 
     async def async_step_create(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_create_entry(title="Balkonaut", data={CONF_ENTITIES: self._entities, CONF_INVERT: self._invert})
+        data = {CONF_ENTITIES: self._entities, CONF_INVERT: self._invert}
+        if self.source == SOURCE_RECONFIGURE:  # Datenbank bleibt, sie hängt nicht am Eintrag
+            return self.async_update_reload_and_abort(self._get_reconfigure_entry(), data_updates=data)
+        return self.async_create_entry(title="Balkonaut", data=data)
+
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Zuordnung oder Adresse ändern, ohne den Eintrag und seine Messdaten zu löschen."""
+        entry = self._get_reconfigure_entry()
+        if CONF_ENTITIES not in entry.data:
+            return await self.async_step_app()
+        self._entities, self._invert = dict(entry.data[CONF_ENTITIES]), list(entry.data.get(CONF_INVERT, []))
+        return await self.async_step_entities()
 
     def _suggest(self, devices: dict[str, str]) -> tuple[dict[str, str], list[str]]:
         """Vorschlag aus den gewählten Geräten; spezifische Rollen zuerst, damit sie Vorrang haben."""
@@ -176,16 +193,21 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             url = user_input[CONF_URL].strip().rstrip("/")
-            self._async_abort_entries_match({CONF_URL: url})
+            reconfigure = self.source == SOURCE_RECONFIGURE
+            if not reconfigure:
+                self._async_abort_entries_match({CONF_URL: url})
             try:
                 await fetch_status(async_get_clientsession(self.hass), url)
             except (aiohttp.ClientError, TimeoutError, ValueError):
                 errors["base"] = "cannot_connect"
             else:
+                if reconfigure:
+                    return self.async_update_reload_and_abort(self._get_reconfigure_entry(), data_updates={CONF_URL: url})
                 return self.async_create_entry(title="Balkonaut", data={CONF_URL: url})
+        url = self._get_reconfigure_entry().data[CONF_URL] if self.source == SOURCE_RECONFIGURE else "http://"
         return self.async_show_form(
             step_id="app",
-            data_schema=vol.Schema({vol.Required(CONF_URL, default="http://"): str}),
+            data_schema=vol.Schema({vol.Required(CONF_URL, default=url): str}),
             errors=errors,
         )
 

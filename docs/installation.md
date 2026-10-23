@@ -126,7 +126,7 @@ Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die E
    die Messgröße unter *Vorzeichen drehen* wählen. Prognosen von Forecast.Solar heißen nach der Ausrichtung ihrer
    Flächen, z. B. „Südost 135°“.
 3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht, weil Messgrößen fehlen.
-   *Einrichten* schließt ab, *Zuordnung ändern* führt zurück zu Schritt 2.
+   *Speichern* schließt ab, *Zuordnung ändern* führt zurück zu Schritt 2.
 
 Pflicht ist nur eine einzige Messgröße. Fehlt eine, entfällt nur die Funktion, die sie braucht.
 
@@ -197,6 +197,9 @@ mehrere Balkonaut-Einträge eingerichtet sind (ohne Angabe nimmt die Karte den e
 
 - Unter *Konfigurieren*: das Abfrageintervall (Standard 5 Minuten), im eigenständigen Betrieb außerdem Preise,
   Anschaffungskosten und Inbetriebnahme.
+- Unter *⋮ → Neu konfigurieren*: im eigenständigen Betrieb die Zuordnung der Entitäten ändern (Schritte 2 und 3 der
+  [geführten Einrichtung](#gefuhrte-einrichtung)), mit einer App deren Adresse. Eintrag und Messdaten bleiben erhalten.
+  Für neu zugeordnete Entitäten übernimmt Balkonaut keinen Verlauf aus dem Recorder, sie zählen ab der Änderung.
 - Antwortet die App dreimal hintereinander nicht, erscheint unter *Einstellungen → Reparaturen* ein Hinweis. Er
   verschwindet, sobald die App wieder antwortet.
 - Über *⋮ → Diagnose herunterladen* gibt es eine Datei mit Einstellungen und letzter Antwort der App, die Adresse

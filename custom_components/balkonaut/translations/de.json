@@ -93,7 +93,7 @@
         "title": "Zusammenfassung",
         "description": "Damit verfügbar:\n{available}\n\nNicht verfügbar, dafür fehlen Messgrößen:\n{missing}\n\nAktuelle Werte:\n{values}",
         "menu_options": {
-          "create": "Einrichten",
+          "create": "Speichern",
           "entities": "Zuordnung ändern"
         }
       }
@@ -103,7 +103,8 @@
       "no_entities": "Bitte mindestens eine Entität wählen."
     },
     "abort": {
-      "already_configured": "Diese Balkonaut-App ist bereits eingerichtet."
+      "already_configured": "Diese Balkonaut-App ist bereits eingerichtet.",
+      "reconfigure_successful": "Die Einstellungen wurden übernommen."
     }
   },
   "options": {
