@@ -62,27 +62,29 @@ Die Zuordnung lässt sich später über *⋮ → Neu konfigurieren* ändern, ohn
 
 ### Unterstützte Geräte
 
-Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen:
+Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen. Geräte mit *(nicht geprüft)* sind aus dem
+Quellcode der Integrationen abgeleitet und noch an keinem echten Gerät getestet, Details auf der
+[Geräteseite des Handbuchs](https://balkonaut.github.io/balkonaut/geraete/):
 
 | Gerät | Integration in Home Assistant |
 |---|---|
 | APsystems EZHI | APsystems EZHI Local API (HACS) |
 | APsystems EZ1-M | APsystems |
 | Shelly Pro 3EM, Shelly Plug | Shelly |
-| Shelly Pro EM, Tibber Pulse, aus dem Quellcode abgeleitet | Shelly, Tibber |
+| Shelly Pro EM, Tibber Pulse (nicht geprüft) | Shelly, Tibber |
 | Forecast.Solar (Prognose) | Forecast.Solar |
-| Deye (Hybrid und Mikrowechselrichter), aus dem Quellcode abgeleitet | Solarman (HACS) |
-| Huawei SUN2000, LUNA2000, Power Meter, aus dem Quellcode abgeleitet | Huawei Solar (HACS) |
-| Hoymiles HM/HMS, aus dem Quellcode abgeleitet | OpenDTU, AhoyDTU (MQTT), Hoymiles WiFi (HACS) |
-| Anker Solix Solarbank, aus dem Quellcode abgeleitet | Anker Solix (HACS) |
-| Zendure SolarFlow, Hyper, AIO, aus dem Quellcode abgeleitet | Zendure (HACS) |
-| EcoFlow PowerStream, STREAM, aus dem Quellcode abgeleitet | EcoFlow Cloud (HACS) |
-| Growatt MIN, MIC, MOD, SPH, aus dem Quellcode abgeleitet | Growatt Server |
-| Victron GX, aus dem Quellcode abgeleitet | Victron GX, Victron MQTT, Victron Modbus |
-| Fox ESS H1, H3, KH, EVO, aus dem Quellcode abgeleitet | FoxESS Modbus, FoxESS Cloud (HACS) |
-| Marstek Venus, aus dem Quellcode abgeleitet | Marstek Modbus, Marstek Local API (HACS) |
-| Sungrow SH*RT, SH*K, aus dem Quellcode abgeleitet | Modbus-Vorlage von mkaiser (YAML) |
-| SolaX X1, X3, aus dem Quellcode abgeleitet | SolaX Modbus (HACS) |
+| Deye (Hybrid und Mikrowechselrichter) (nicht geprüft) | Solarman (HACS) |
+| Huawei SUN2000, LUNA2000, Power Meter (nicht geprüft) | Huawei Solar (HACS) |
+| Hoymiles HM/HMS (nicht geprüft) | OpenDTU, AhoyDTU (MQTT), Hoymiles WiFi (HACS) |
+| Anker Solix Solarbank (nicht geprüft) | Anker Solix (HACS) |
+| Zendure SolarFlow, Hyper, AIO (nicht geprüft) | Zendure (HACS) |
+| EcoFlow PowerStream, STREAM (nicht geprüft) | EcoFlow Cloud (HACS) |
+| Growatt MIN, MIC, MOD, SPH (nicht geprüft) | Growatt Server |
+| Victron GX (nicht geprüft) | Victron GX, Victron MQTT, Victron Modbus |
+| Fox ESS H1, H3, KH, EVO (nicht geprüft) | FoxESS Modbus, FoxESS Cloud (HACS) |
+| Marstek Venus (nicht geprüft) | Marstek Modbus, Marstek Local API (HACS) |
+| Sungrow SH*RT, SH*K (nicht geprüft) | Modbus-Vorlage von mkaiser (YAML) |
+| SolaX X1, X3 (nicht geprüft) | SolaX Modbus (HACS) |
 
 Andere Geräte gehen auch: Balkonaut schlägt Entitäten nach Art und Einheit vor, wenn das eindeutig ist, sonst
 wählt man selbst. Damit ein Gerät fest dazukommt, die Diagnose-Datei (*⋮ → Diagnose herunterladen*) mit Hersteller,

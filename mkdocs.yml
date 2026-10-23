@@ -6,6 +6,7 @@ validation:
 nav:
   - index.md
   - installation.md
+  - geraete.md
   - einstellungen.md
   - auswertung.md
   - messquellen.md
@@ -29,3 +30,5 @@ theme:
         name: Helles Design
 extra:
   homepage: ../  # Logo führt zurück in die App (Handbuch liegt unter /handbuch/)
+markdown_extensions:
+  - admonition

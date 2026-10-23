@@ -4,6 +4,7 @@ site_url: https://balkonaut.github.io/balkonaut/
 nav:
   - index.md
   - installation.md
+  - geraete.md
   - einstellungen.md
   - auswertung.md
   - messquellen.md

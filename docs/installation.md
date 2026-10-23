@@ -132,37 +132,9 @@ Pflicht ist nur eine einzige Messgröße. Fehlt eine, entfällt nur die Funktion
 
 #### Unterstützte Geräte
 
-Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen. *Bestätigt* heißt an einem echten Gerät
-geprüft, *aus dem Quellcode* heißt aus dem Code der Integration abgeleitet; Rückmeldungen dazu bitte über
-[Gerät melden](#gerat-melden).
-
-| Gerät | Integration | Messgrößen | Stand |
-|---|---|---|---|
-| APsystems EZHI | APsystems EZHI Local API (HACS) | PV, Akku, Abgabe ins Haus, Off-Grid-Port, Ladegrenzen, Abgabelimit | bestätigt |
-| APsystems EZ1-M | APsystems (Home Assistant) | PV-Leistung, PV-Zähler, Abgabelimit | bestätigt |
-| Shelly Pro 3EM | Shelly | Netzleistung über alle Phasen saldiert | bestätigt |
-| Shelly Plug | Shelly | Abgabe ins Haus, Zähler am Einspeisepunkt | bestätigt |
-| Shelly Pro EM, EM Gen3 | Shelly | Netzleistung an Kanal 0 | aus dem Quellcode |
-| Tibber Pulse | Tibber (Home Assistant) | Netzbezug; Einspeisung liefert Tibber getrennt, sie fehlt daher | aus dem Quellcode |
-| Forecast.Solar | Forecast.Solar | Tagesprognose | bestätigt |
-| Deye (Hybrid und Mikrowechselrichter) | Solarman (HACS, davidrapan oder StephanJoubert) | PV, Akku, Netz, Abgabe | aus dem Quellcode |
-| Huawei SUN2000 mit LUNA2000 und Power Meter | Huawei Solar (HACS) | PV-Leistung, Akku mit Ladegrenzen, Netz, Abgabe | aus dem Quellcode |
-| Hoymiles HM/HMS | OpenDTU oder AhoyDTU (MQTT), Hoymiles WiFi (HACS) | PV-Leistung, PV-Zähler (nicht bei Hoymiles WiFi) | aus dem Quellcode |
-| Anker Solix Solarbank | Anker Solix (HACS) | PV-Leistung, Akku, Abgabe ins Haus, Netz (Vorzeichen prüfen); keine Zähler | aus dem Quellcode |
-| Zendure SolarFlow, Hyper, AIO | Zendure (HACS) | PV, Akku mit Ladegrenzen, Abgabe ins Haus, Abgabelimit | aus dem Quellcode |
-| EcoFlow PowerStream, STREAM, Smart Plug | EcoFlow Cloud (HACS) | Akku mit Ladegrenzen, Abgabe ins Haus; STREAM auch PV und Netz (Vorzeichen prüfen) | aus dem Quellcode |
-| Growatt MIN, MIC, MOD, SPH (nicht NOAH) | Growatt Server (Home Assistant) | PV, Ladestand und Akku-Zähler, Abgabe; Akkuleistung und Netz fehlen | aus dem Quellcode |
-| Victron GX (MultiPlus, Quattro, MPPT, Netzzähler) | Victron GX (Home Assistant), Victron MQTT oder Victron Modbus (HACS) | PV, Akku mit Zählern, Netz; über Modbus nur Akku | aus dem Quellcode |
-| Fox ESS H1, H3, KH, EVO | FoxESS Modbus oder FoxESS Cloud (HACS) | PV, Akku mit Zählern und Ladegrenzen, Netz, Abgabe; Cloud nur PV und Akku | aus dem Quellcode |
-| Marstek Venus C, D, E | Marstek Modbus oder Marstek Local API (HACS) | PV, Akku, über Modbus mit Zählern, Ladegrenzen und Abgabe (Vorzeichen prüfen) | aus dem Quellcode |
-| Sungrow SH*RT, SH*K | Modbus-Vorlage von mkaiser (YAML) | PV, Akku mit Zählern, Kapazität und Ladegrenzen, Netz, Abgabe | aus dem Quellcode |
-| SolaX X1, X3 | SolaX Modbus (HACS) | PV, Akku mit Zählern, Netz, Abgabe | aus dem Quellcode |
-
-Bei anderen Geräten schlägt Balkonaut eine Entität vor, wenn sie nach Art und Einheit eindeutig passt
-(z. B. der einzige Leistungssensor des Geräts in W). Ist das nicht eindeutig, bleibt das Feld leer und man wählt selbst.
-Entitäten ohne Gerät, etwa aus einer Modbus-Vorlage in YAML, schlägt Balkonaut nur vor, wenn ein Profil sie genau kennt.
-Der alte Shelly 3EM (Gen1) liefert in Home Assistant keine Summe über die Phasen; dafür einen Helfer der Integration
-*Min/Max* mit Typ *Summe* über die drei Phasenleistungen anlegen und diesen zuordnen.
+Welche Geräte Balkonaut kennt, welche davon geprüft sind und was bei den übrigen zu beachten ist, steht unter
+[Unterstützte Geräte](geraete.md). Bei anderen Geräten schlägt Balkonaut eine Entität vor, wenn sie nach Art und
+Einheit eindeutig passt, sonst wählt man selbst.
 
 #### Gerät melden
 
