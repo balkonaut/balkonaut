@@ -85,6 +85,20 @@ PROFILES = {
         (r"_grid_power_signed$", "grid_power", False),  # Vorzeichen nicht dokumentiert
         # Energie nur als Tageswerte aus der Cloud-Statistik, daher keine Zähler; Balkonaut summiert selbst
     ],
+    "zendure_ha": [  # Zendure/Zendure-HA: <Gerätename>_<Eigenschaft> in snake_case, SolarFlow, Hyper, AIO
+        (r"_solar_input_power$", "pv_power", False),
+        (r"_aggr_solar$", "pv_energy", False),
+        (r"_bat_in_out$", "battery_power", True),  # Entladen minus Laden
+        (r"_electric_level$", "battery_soc", False),
+        (r"_aggr_charge$", "battery_charge_energy", False),
+        (r"_aggr_discharge$", "battery_discharge_energy", False),
+        (r"_total_kwh$", "battery_capacity", False),
+        (r"_min_soc$", "battery_soc_min", False),
+        (r"_soc_set$", "battery_soc_max", False),
+        (r"_output_home_power$", "output_power", False),
+        (r"_aggr_output_home$", "output_energy", False),
+        (r"_output_limit$", "output_power_limit", False),
+    ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
     ],

@@ -74,6 +74,7 @@ Für diese Geräte kennt Balkonaut die Entitäten genau, samt Vorzeichen:
 | Huawei SUN2000, LUNA2000, Power Meter, aus dem Quellcode abgeleitet | Huawei Solar (HACS) |
 | Hoymiles HM/HMS, aus dem Quellcode abgeleitet | OpenDTU, AhoyDTU (MQTT), Hoymiles WiFi (HACS) |
 | Anker Solix Solarbank, aus dem Quellcode abgeleitet | Anker Solix (HACS) |
+| Zendure SolarFlow, Hyper, AIO, aus dem Quellcode abgeleitet | Zendure (HACS) |
 
 Andere Geräte gehen auch: Balkonaut schlägt Entitäten nach Art und Einheit vor, wenn das eindeutig ist, sonst
 wählt man selbst. Damit ein Gerät fest dazukommt, die Diagnose-Datei (*⋮ → Diagnose herunterladen*) mit Hersteller,

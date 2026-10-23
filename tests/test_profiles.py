@@ -166,3 +166,19 @@ def test_anker_solix():
     assert suggest(entities, STORAGE_KEYS) == ({
         "pv_power": "sensor.sb_input_power", "battery_power": "sensor.sb_battery_power_signed",
         "battery_soc": "sensor.sb_state_of_charge", "output_power": "sensor.sb_ac_to_home_load"}, [])
+
+
+def test_zendure():
+    """Zendure Hyper/SolarFlow über Zendure-HA, Muster aus dem Quellcode (snake_case aus Gerätename und Eigenschaft)."""
+    names = ("solar_input_power", "aggr_solar", "bat_in_out", "output_pack_power", "pack_input_power",
+             "electric_level", "aggr_charge", "aggr_discharge", "total_kwh", "available_kwh", "min_soc", "soc_set",
+             "output_home_power", "aggr_output_home", "grid_input_power", "output_limit", "input_limit")
+    entities = [e(f"sensor.hyper_{n}", "zendure_ha", f"hyper_2000_{n}") for n in names]
+    found, invert = suggest(entities, STORAGE_KEYS + ["output_energy"])
+    assert found == {k: f"sensor.hyper_{n}" for k, n in {
+        "pv_power": "solar_input_power", "pv_energy": "aggr_solar", "battery_power": "bat_in_out",
+        "battery_soc": "electric_level", "battery_charge_energy": "aggr_charge",
+        "battery_discharge_energy": "aggr_discharge", "battery_capacity": "total_kwh", "battery_soc_min": "min_soc",
+        "battery_soc_max": "soc_set", "output_power": "output_home_power", "output_energy": "aggr_output_home",
+        "output_power_limit": "output_limit"}.items()}
+    assert invert == ["battery_power"]
