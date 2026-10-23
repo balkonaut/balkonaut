@@ -182,3 +182,20 @@ def test_zendure():
         "battery_soc_max": "soc_set", "output_power": "output_home_power", "output_energy": "aggr_output_home",
         "output_power_limit": "output_limit"}.items()}
     assert invert == ["battery_power"]
+
+
+def test_ecoflow():
+    """EcoFlow PowerStream und STREAM über hassio-ecoflow-cloud, Muster aus dem Quellcode."""
+    ps = [e(f"sensor.ps_{i}", "ecoflow_cloud", f"ecoflow-HW51ZOH4SF123456-20-1-{k}") for i, k in enumerate((
+        "pv1InputWatts", "batSoc", "batInputWatts", "invOutputWatts", "lowerLimit", "upperLimit"))]
+    assert suggest(ps, STORAGE_KEYS)[0] == {"battery_soc": "sensor.ps_1", "battery_power": "sensor.ps_2",
+                                            "output_power": "sensor.ps_3", "battery_soc_min": "sensor.ps_4",
+                                            "battery_soc_max": "sensor.ps_5"}
+    stream = [e(f"sensor.st_{k}", "ecoflow_cloud", f"ecoflow-api-BK11ZEB4HG123456-{k}") for k in (
+        "powGetPv", "powGetPvSum", "f32ShowSoc", "powGetBpCms", "accuChgEnergy", "accuDsgEnergy",
+        "cmsMinDsgSoc", "cmsMaxChgSoc", "gridConnectionPower", "powGetSysGrid", "powGetSysLoad")]
+    assert suggest(stream, ["grid_power"] + STORAGE_KEYS)[0] == {k: f"sensor.st_{n}" for k, n in {
+        "pv_power": "powGetPvSum", "battery_soc": "f32ShowSoc", "battery_power": "powGetBpCms",
+        "battery_charge_energy": "accuChgEnergy", "battery_discharge_energy": "accuDsgEnergy",
+        "battery_soc_min": "cmsMinDsgSoc", "battery_soc_max": "cmsMaxChgSoc", "output_power": "gridConnectionPower",
+        "grid_power": "powGetSysGrid"}.items()}

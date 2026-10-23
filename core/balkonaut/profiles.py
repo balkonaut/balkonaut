@@ -99,6 +99,25 @@ PROFILES = {
         (r"_aggr_output_home$", "output_energy", False),
         (r"_output_limit$", "output_power_limit", False),
     ],
+    "ecoflow_cloud": [  # tolwi/hassio-ecoflow-cloud: ecoflow-[api-]<Seriennummer>-<Schlüssel mit - statt . und _>
+        # PowerStream; Vorzeichen der Akkuleistung nicht dokumentiert
+        (r"-20-1-batSoc$", "battery_soc", False),
+        (r"-20-1-batInputWatts$", "battery_power", False),
+        (r"-20-1-invOutputWatts$", "output_power", False),
+        (r"-20-1-lowerLimit$", "battery_soc_min", False),
+        (r"-20-1-upperLimit$", "battery_soc_max", False),
+        # STREAM; Vorzeichen von Akku und Netz nicht dokumentiert
+        (r"-powGetPvSum$", "pv_power", False),
+        (r"-f32ShowSoc$", "battery_soc", False),
+        (r"-powGetBpCms$", "battery_power", False),
+        (r"-accuChgEnergy$", "battery_charge_energy", False),
+        (r"-accuDsgEnergy$", "battery_discharge_energy", False),
+        (r"-cmsMinDsgSoc$", "battery_soc_min", False),
+        (r"-cmsMaxChgSoc$", "battery_soc_max", False),
+        (r"-gridConnectionPower$", "output_power", False),
+        (r"-powGetSysGrid$", "grid_power", False),
+        (r"-watts$", "output_power", False),  # Smart Plug am Einspeisepunkt
+    ],
     "hoymiles_wifi": [  # suaveolent/ha-hoymiles-wifi: hoymiles_<entry_id>_<Schlüssel>, HMS-xxxW-2T und DTUs
         (r"_dtu_power$", "pv_power", False),  # kein Gesamtzähler, Balkonaut summiert die Leistung selbst
     ],
