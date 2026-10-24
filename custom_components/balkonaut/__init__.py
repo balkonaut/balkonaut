@@ -90,6 +90,7 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
         self.failures = 0
         # Prognose aus eingetragenen Flächen, falls keine Prognose-Entität zugeordnet ist
         self.forecast = forecast.Planes({"lat": hass.config.latitude, "lon": hass.config.longitude}, planes(entry))
+        self.forecasting = False
 
     async def _async_update_data(self) -> dict:
         if self.storage:
@@ -178,6 +179,12 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
         self.hass.config_entries.async_update_entry(self.config_entry, data={**self.config_entry.data, BACKFILLED: True})
         await self.async_request_refresh()
 
+    async def _async_forecast(self) -> None:
+        try:
+            await self.hass.async_add_executor_job(self.forecast.read)
+        finally:
+            self.forecasting = False
+
     async def async_sample(self, _now=None) -> None:
         """Aktuelle Zustände der Entitäten normalisieren und speichern, abgeschlossene Stunden aggregieren."""
         values = {}
@@ -185,10 +192,11 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
             state = self.hass.states.get(entity_id)
             values[key] = normalize(state and {"state": state.state, "attributes": state.attributes},
                                     self._factor(key))
-        if self.forecast.planes:
-            own = await self.hass.async_add_executor_job(self.forecast.read)
-            values |= {k: v for k, v in own.items() if k not in values}
         ts = int(time.time())
+        if self.forecast.due() and not self.forecasting:  # Abruf im Hintergrund, die Messung wartet nicht darauf
+            self.forecasting = True
+            self.config_entry.async_create_background_task(self.hass, self._async_forecast(), "balkonaut_forecast")
+        values |= {k: v for k, v in self.forecast.current().items() if k not in values}
         async with self.lock:
             await self.hass.async_add_executor_job(_store, self.storage, ts, values)
 

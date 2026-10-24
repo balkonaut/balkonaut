@@ -15,6 +15,7 @@ Welche Quelle für welche Größe maßgeblich ist: docs/messquellen.md
 """
 import json
 import logging
+import time
 from datetime import datetime, timezone
 import urllib.error
 import urllib.request
@@ -58,8 +59,10 @@ class HomeAssistant:
             except OSError as e:  # HA nicht erreichbar oder Zeitüberschreitung
                 log.warning("%s nicht lesbar: %s", eid, e)
                 values[key] = None
-        if self.forecast.planes and self._locate():  # Prognose aus eingetragenen Flächen, zugeordnete Entitäten gehen vor
-            values.update({k: v for k, v in self.forecast.read().items() if k not in self.entities})
+        if self.forecast.due() and not self._locate():
+            self.forecast.next = time.time() + 3600  # ohne Standort erst in einer Stunde wieder fragen
+        # Prognose aus eingetragenen Flächen, zugeordnete Entitäten gehen vor
+        values.update({k: v for k, v in self.forecast.read().items() if k not in self.entities})
         return values
 
     def _locate(self):

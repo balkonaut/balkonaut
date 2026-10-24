@@ -148,7 +148,7 @@ class BalkonautPanel extends HTMLElement {
       return `<rect x="${x}" y="${150 - h.own * scale}" width="${bw}" height="${h.own * scale}" fill="var(--bk-leaf)"><title>${esc(h.label)}: ${this._fmt(h.own, 2)} kWh vom Balkonkraftwerk</title></rect>
         <rect x="${x}" y="${150 - (h.own + h.grid) * scale}" width="${bw}" height="${h.grid * scale}" fill="var(--bk-sky)"><title>${esc(h.label)}: ${this._fmt(h.grid, 2)} kWh aus dem Netz</title></rect>
         ${h.gen ? `<rect x="${x}" y="${149 - h.gen * scale}" width="${bw}" height="3" fill="var(--bk-sun)"><title>${esc(h.label)}: ${this._fmt(h.gen, 2)} kWh erzeugt</title></rect>` : ""}
-        ${i % every === 0 ? `<text x="${x + w * 0.4}" y="166" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${h.label}</text>` : ""}`;
+        ${i % every === 0 ? `<text x="${x + w * 0.4}" y="166" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${esc(h.label)}</text>` : ""}`;
     }).join("");
     return `<svg class="chart" viewBox="0 0 480 170" role="img" aria-label="Hausverbrauch je Zeitabschnitt, aufgeteilt in Balkonkraftwerk und Netzbezug, mit Erzeugung">
       <text x="0" y="8" font-size="9" fill="var(--bk-muted)">kWh</text>${grid}

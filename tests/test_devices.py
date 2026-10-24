@@ -80,3 +80,17 @@ def test_forecast_and_planes(monkeypatch):
     assert calls == [150, 251]  # zweiter Abruf erst nach einer Stunde
     assert adapter.solar_planes() == (50.0, 10.0, [(30, 150, 0.87), (30, 251, 0.87)])
     assert Devices(CONFIG).solar_planes() == (0.0, 0.0, [])
+
+
+def test_forecast_retry(monkeypatch):
+    """Fehlgeschlagener Abruf: keine Prognose, nächster Versuch erst nach 15 Minuten statt bei jeder Messung."""
+    import time
+    calls = []
+
+    def today(*args):
+        calls.append(args)
+        raise OSError("nicht erreichbar")
+    monkeypatch.setattr(devices.forecast, "today", today)
+    planes = devices.forecast.Planes({"lat": 50.0, "lon": 10.0}, [{"declination": 30, "azimuth": 150, "kwp": 0.87}])
+    assert planes.read() == {} and planes.read() == {} and len(calls) == 1
+    assert planes.next - time.time() <= 900

@@ -236,17 +236,19 @@ class BalkonautOptionsFlow(OptionsFlowWithReload):
         schema = {vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
             vol.Coerce(int), vol.Range(min=1, max=60)), vol.Optional("battery_name"): str, vol.Optional("extra_name"): str}
         if CONF_ENTITIES in self.config_entry.data:  # eigenständig: Preise und Kosten hier statt in der App
-            def number(unit, step):
-                return NumberSelector(NumberSelectorConfig(min=0, step=step, mode=NumberSelectorMode.BOX,
-                                                           unit_of_measurement=unit))
+            def number(unit, step, low=0, **high):
+                return NumberSelector(NumberSelectorConfig(min=low, step=step, mode=NumberSelectorMode.BOX,
+                                                           unit_of_measurement=unit, **high))
             schema |= {vol.Required("energy", default=0.0): number("€/kWh", "any"),
                        vol.Required("feed_in", default=0.0): number("€/kWh", "any"),
                        vol.Required("cost", default=0.0): number("€", 1),
                        vol.Optional("commissioned"): DateSelector()}
             # Flächen für die Prognose ohne Forecast.Solar-Integration, je Wechselrichter eine
-            # ponytail: eine Fläche je Wechselrichter, mehrere erst bei Bedarf
-            plane = vol.Schema({vol.Optional("declination"): number("°", 1), vol.Optional("azimuth"): number("°", 1),
-                                vol.Optional("kwp"): number("kWp", "any")})
+            # ponytail: eine Fläche je Wechselrichter, mehrere bei Nachfrage, spätestens 31.01.2027 prüfen
+            # Grenzen wie in den Einstellungen der App
+            plane = vol.Schema({vol.Optional("declination"): number("°", 1, 0, max=90),
+                                vol.Optional("azimuth"): number("°", 1, 0, max=360),
+                                vol.Optional("kwp"): number("kWp", "any", 0.01, max=100)})
             schema |= {vol.Optional(key): section(plane, {"collapsed": not self.config_entry.options.get(key)})
                        for key in PLANES}
         return self.async_show_form(step_id="init", errors=errors, data_schema=self.add_suggested_values_to_schema(

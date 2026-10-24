@@ -99,7 +99,10 @@ class BalkonautCard extends HTMLElement {
   // Messgröße in W bzw. %: im eigenständigen Betrieb live aus der Entität, sonst aus dem letzten Status
   _value(key) {
     const d = this._data;
-    if (!d.entities) return d.status?.live?.[key] ?? null;
+    if (!d.entities) { // App: nur echte Zahlen, die Werte landen auch in SVG-Attributen
+      const v = Number(d.status?.live?.[key] ?? NaN);
+      return Number.isFinite(v) ? v : null;
+    }
     const state = d.entities[key] && this._hass.states[d.entities[key]];
     const v = state ? parseFloat(state.state) : NaN;
     if (Number.isNaN(v)) return null;
