@@ -1,5 +1,5 @@
 # Image des Home-Assistant-Add-ons für amd64 und aarch64 bauen und nach ghcr.io schieben.
-# Tag = version aus addon/config.yaml; ein vorhandener Tag wird nie überschrieben.
+# Tag = version aus addon/config.yaml; ein vorhandener Tag wird nie überschrieben. Nur nach bestandenen Tests.
 name: Add-on
 
 on:
@@ -13,7 +13,10 @@ permissions:
   packages: write
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
   image:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
