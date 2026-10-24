@@ -1,4 +1,5 @@
 # Integration für HACS: bei einem Release custom_components/balkonaut als Zip anhängen.
+# Nur nach bestandenen Tests, sonst bekommt HACS kein Zip.
 # core/ liegt dort als Symlink und kommt als echte Dateien ins Zip (zip folgt Symlinks).
 name: Release
 
@@ -10,7 +11,10 @@ permissions:
   contents: write
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
   zip:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

@@ -1,5 +1,5 @@
 # Tests von App und Kern sowie der Home-Assistant-Integration, wie in den Teststufen des Dockerfile.
-# docker.yml ruft diesen Workflow auf und baut das Image nur, wenn er bestanden ist.
+# docker.yml und release.yml rufen diesen Workflow auf und bauen nur, wenn er bestanden ist.
 name: Tests
 
 on:
