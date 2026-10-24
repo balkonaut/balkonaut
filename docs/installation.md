@@ -222,6 +222,10 @@ mehrere Balkonaut-Einträge eingerichtet sind (ohne Angabe nimmt die Karte den e
 
 - Unter *Konfigurieren*: das Abfrageintervall (Standard 5 Minuten), die Bezeichnung des Akkus für den Energiefluss
   (optional, z. B. der Hersteller) und des zusätzlichen Wechselrichters (optional, z. B. EZ1-M), im eigenständigen Betrieb außerdem Preise, Anschaffungskosten und Inbetriebnahme.
+- Ebenfalls unter *Konfigurieren* (eigenständig): je eine Fläche am Speicher und am zweiten Wechselrichter mit Neigung,
+  Ausrichtung und Leistung. Wer keine Forecast.Solar-Integration hat, bekommt so trotzdem die Tagesprognose für den
+  Ertragswächter: Balkonaut ruft sie höchstens einmal je Stunde selbst bei Forecast.Solar ab, mit dem Standort aus
+  Home Assistant. Ist eine Prognose-Entität zugeordnet, geht sie vor. Bisher eine Fläche je Wechselrichter.
 - Unter *⋮ → Neu konfigurieren*: im eigenständigen Betrieb die Zuordnung der Entitäten ändern (Schritte 2 und 3 der
   [geführten Einrichtung](#gefuhrte-einrichtung)), mit einer App deren Adresse. Eintrag und Messdaten bleiben erhalten.
   Für neu zugeordnete Entitäten übernimmt Balkonaut keinen Verlauf aus dem Recorder, sie zählen ab der Änderung.

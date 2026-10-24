@@ -203,6 +203,30 @@ async def test_standalone_options(hass):
     assert await hass.config_entries.async_unload(entry.entry_id)
 
 
+async def test_planes_without_forecast_solar(hass, monkeypatch):
+    """Fläche unter Konfigurieren: Prognose selbst abgerufen (Standort von HA), unvollständige Fläche abgelehnt."""
+    from custom_components.balkonaut.core import forecast
+    monkeypatch.setattr(forecast, "today",
+                        lambda lat, lon, tilt, azimuth, kwp: 4.2 if (lat, azimuth) == (hass.config.latitude, 150) else 0)
+    hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", data={"entities": {"grid_power": "sensor.netz"}, "invert": []})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    form = {CONF_SCAN_INTERVAL: 5, "energy": 0.32, "feed_in": 0.0, "cost": 1450}
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], form | {"plane_storage": {"kwp": 0.87}})
+    assert result["errors"] == {"base": "incomplete_plane"}
+    plane = {"declination": 30, "azimuth": 150, "kwp": 0.87}
+    result = await hass.config_entries.options.async_configure(result["flow_id"], form | {"plane_storage": plane})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    await entry.runtime_data.async_sample()
+    latest = await hass.async_add_executor_job(entry.runtime_data.storage.latest)
+    assert latest["pv_forecast_today"][1] == 4.2
+    assert await hass.config_entries.async_unload(entry.entry_id)
+
+
 async def test_standalone_without_device(hass):
     """Entitäten ohne Gerät (z. B. Sungrow-Modbus-Vorlage) schlägt die Einrichtung vor, wenn ein Profil sie kennt."""
     for unique_id, entity_id in (("sg_battery_level", "sensor.battery_level"), ("my_power", "sensor.my_power")):

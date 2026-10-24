@@ -33,7 +33,7 @@ from homeassistant.helpers.selector import (
 )
 from homeassistant.helpers.translation import async_get_translations
 
-from . import CONF_ENTITIES, CONF_INVERT, DEFAULT_SCAN_INTERVAL, DOMAIN, KEYS, SIGNED_KEYS, fetch_status
+from . import CONF_ENTITIES, CONF_INVERT, DEFAULT_SCAN_INTERVAL, DOMAIN, KEYS, PLANES, SIGNED_KEYS, fetch_status
 from .core.homeassistant import normalize
 from .core.profiles import PROFILES, direction, suggest
 
@@ -229,6 +229,8 @@ class BalkonautOptionsFlow(OptionsFlowWithReload):
             day = user_input.get("commissioned")
             if day and date.fromisoformat(day) > date.today():
                 errors["commissioned"] = "future_date"
+            elif any(0 < len(user_input.get(key) or {}) < 3 for key in PLANES):
+                errors["base"] = "incomplete_plane"
             else:
                 return self.async_create_entry(data=user_input)
         schema = {vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
@@ -241,5 +243,11 @@ class BalkonautOptionsFlow(OptionsFlowWithReload):
                        vol.Required("feed_in", default=0.0): number("€/kWh", "any"),
                        vol.Required("cost", default=0.0): number("€", 1),
                        vol.Optional("commissioned"): DateSelector()}
+            # Flächen für die Prognose ohne Forecast.Solar-Integration, je Wechselrichter eine
+            # ponytail: eine Fläche je Wechselrichter, mehrere erst bei Bedarf
+            plane = vol.Schema({vol.Optional("declination"): number("°", 1), vol.Optional("azimuth"): number("°", 1),
+                                vol.Optional("kwp"): number("kWp", "any")})
+            schema |= {vol.Optional(key): section(plane, {"collapsed": not self.config_entry.options.get(key)})
+                       for key in PLANES}
         return self.async_show_form(step_id="init", errors=errors, data_schema=self.add_suggested_values_to_schema(
             vol.Schema(schema), user_input or self.config_entry.options))

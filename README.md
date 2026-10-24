@@ -58,7 +58,8 @@ Voraussetzung: Home Assistant 2026.10 oder neuer.
    *Vorzeichen drehen* wählen.
 3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht.
 
-Danach unter *Konfigurieren* Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme eintragen.
+Danach unter *Konfigurieren* Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme eintragen,
+ohne Forecast.Solar-Integration dort auch die Flächen für die Tagesprognose.
 Die Zuordnung lässt sich später über *⋮ → Neu konfigurieren* ändern, ohne Messdaten zu verlieren.
 
 ### Unterstützte Geräte

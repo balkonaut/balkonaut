@@ -124,11 +124,32 @@
           "commissioned": "From this day on the output meter counts, usually the commissioning date. Amortization then uses the real average instead of an extrapolation.",
           "battery_name": "Shown in the energy flow instead of “Battery”, e.g. the manufacturer. Devices do not report it reliably, so it is set by hand.",
           "extra_name": "Shown in the energy flow instead of “Zusatz-WR”, e.g. EZ1-M. If the inverter is its own device in Home Assistant, Balkonaut uses its model."
+        },
+        "sections": {
+          "plane_storage": {
+            "name": "Plane at the storage inverter",
+            "description": "For the daily forecast without the Forecast.Solar integration. Azimuth 0 = north, 90 = east, 180 = south, 270 = west; tilt 0 = flat, 90 = vertical.",
+            "data": {
+              "declination": "Tilt",
+              "azimuth": "Azimuth",
+              "kwp": "Power"
+            }
+          },
+          "plane_extra": {
+            "name": "Plane at the second inverter",
+            "description": "Only if there is a second inverter.",
+            "data": {
+              "declination": "Tilt",
+              "azimuth": "Azimuth",
+              "kwp": "Power"
+            }
+          }
         }
       }
     },
     "error": {
-      "future_date": "The date is in the future."
+      "future_date": "The date is in the future.",
+      "incomplete_plane": "Enter tilt, azimuth and power for a plane, or leave all three empty."
     }
   },
   "entity": {
