@@ -57,5 +57,6 @@ def adapter(cfg):
     if devices := cfg.get("devices"):
         return Devices(devices, cfg.get("location"), cfg.get("planes") or ())
     if ha := cfg.get("home_assistant"):
-        return HomeAssistant(ha["url"], ha["token"], {k: tuple(v) for k, v in ha["entities"].items()})
+        return HomeAssistant(ha["url"], ha["token"], {k: tuple(v) for k, v in ha["entities"].items()},
+                             cfg.get("location"), cfg.get("planes") or ())
     return None

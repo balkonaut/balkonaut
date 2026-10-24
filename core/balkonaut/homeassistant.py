@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 import urllib.error
 import urllib.request
 
+from . import forecast
+
 # Umrechnung auf W bzw. kWh
 UNITS = {"kW": 1000.0, "Wh": 0.001}
 
@@ -26,11 +28,13 @@ log = logging.getLogger(__name__)
 
 
 class HomeAssistant:
-    def __init__(self, url, token, entities):
-        """entities: {Messgröße: (entity_id, faktor)}; faktor -1 dreht das Vorzeichen."""
+    def __init__(self, url, token, entities, location=None, planes=()):
+        """entities: {Messgröße: (entity_id, faktor)}; faktor -1 dreht das Vorzeichen.
+        location, planes: eingetragene Flächen (siehe forecast.Planes); ohne Standort gilt der von Home Assistant."""
         self.url = url.rstrip("/")
         self.token = token
         self.entities = entities
+        self.forecast = forecast.Planes(location, planes)
 
     def _get(self, path, timeout=10):
         req = urllib.request.Request(self.url + path, headers={"Authorization": "Bearer " + self.token})
@@ -54,7 +58,20 @@ class HomeAssistant:
             except OSError as e:  # HA nicht erreichbar oder Zeitüberschreitung
                 log.warning("%s nicht lesbar: %s", eid, e)
                 values[key] = None
+        if self.forecast.planes and self._locate():  # Prognose aus eingetragenen Flächen, zugeordnete Entitäten gehen vor
+            values.update({k: v for k, v in self.forecast.read().items() if k not in self.entities})
         return values
+
+    def _locate(self):
+        """Standort für die eingetragenen Flächen, ohne eigene Angabe der von Home Assistant; False, wenn unbekannt."""
+        if not self.forecast.location:
+            try:
+                cfg = self._get("/api/config")
+                self.forecast.location = {"lat": cfg["latitude"], "lon": cfg["longitude"]}
+            except (OSError, ValueError, KeyError) as e:
+                log.warning("Standort aus Home Assistant nicht lesbar: %s", e)
+                return False
+        return True
 
     def history(self, start, end):
         """Verlauf aller Messgrößen aus dem HA-Recorder: {Messgröße: [(ts, wert), ...]}, tageweise abgefragt."""
@@ -73,7 +90,9 @@ class HomeAssistant:
         return {key: sorted(points) for key, points in out.items()}
 
     def solar_planes(self):
-        """Standort und Flächen aus der Forecast.Solar-Integration: (lat, lon, [(neigung, azimut, kwp)])."""
+        """Standort und Flächen für PVGIS: eingetragene Flächen, sonst die der Forecast.Solar-Integration."""
+        if self.forecast.planes and self._locate():
+            return self.forecast.solar_planes()
         planes = []
         for entry in self._get("/api/config/config_entries/entry?domain=forecast_solar"):
             diag = self._get(f"/api/diagnostics/config_entry/{entry['entry_id']}")

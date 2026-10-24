@@ -214,10 +214,10 @@ def dashboard(request: Request, zeitraum: str = "tag"):
     in_ha = "In Home Assistant: Add-on Balkonaut, Reiter Konfiguration" if config.addon() else None
     setup = [("Geräte eintragen", in_ha or "Per IP-Adresse im Heimnetz, ohne Anmeldung",
               bool(cfg.get("devices") or entities), None if in_ha else "einstellungen#geraete"),
-             ("Standort und Flächen", in_ha and "Entität der Tagesprognose zuordnen, " + in_ha
-              or "Für Tagesprognose und Jahresverlauf",
-              bool(cfg.get("location") and cfg.get("planes")) or "pv_forecast_today" in entities,
-              None if in_ha else "einstellungen#flaechen"),
+             ("Standort und Flächen", "Flächen eintragen oder im Reiter Konfiguration des Add-ons eine "
+              "Prognose-Entität zuordnen" if in_ha else "Für Tagesprognose und Jahresverlauf",
+              bool((cfg.get("location") or in_ha) and cfg.get("planes")) or "pv_forecast_today" in entities,
+              "einstellungen#flaechen"),
              ("Preise und Anlage", "Ohne Preise stehen Euro-Beträge auf 0",
               cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0, "einstellungen#preise")]
     return templates.TemplateResponse(request, "dashboard.html", {
@@ -370,7 +370,7 @@ async def save_planes(request, cfg, form):
                            "inverter": "extra" if row["inverter"] == "extra" else "storage"})
         except ValueError as e:
             errors.append(str(e))
-    if rows and not (lat or lon):
+    if rows and not (lat or lon) and not config.addon():  # im Add-on gilt dann der Standort von Home Assistant
         errors.append("Für die Flächen fehlt der Standort: Breiten- und Längengrad eintragen")
     if errors:
         return await settings_page(request, cfg, 400, planes_error=errors,
@@ -389,7 +389,7 @@ async def save_settings(request: Request):
     cfg = config.load(request.app.state.config_path)
     bereich = (multi.get("bereich") or [""])[0]
     if bereich in ("geraete", "flaechen"):
-        if config.addon():  # das Add-on liest Geräte und Flächen über Home Assistant
+        if bereich == "geraete" and config.addon():  # das Add-on liest die Geräte über Home Assistant
             return PlainTextResponse("Im Add-on nicht verfügbar", status_code=404)
         return await (save_devices if bereich == "geraete" else save_planes)(request, cfg, multi)
     form = {k: v[0] for k, v in multi.items()}

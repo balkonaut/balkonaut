@@ -5,7 +5,7 @@ Balkonaut rechnet aus den Messwerten für **heute**, **diesen Monat**, **dieses 
 
 ## Übersicht
 
-Solange Geräte, Standort und Flächen (im Add-on: die Entität der Tagesprognose) oder die Preise fehlen,
+Solange Geräte, Standort und Flächen (im Add-on: Flächen oder eine Prognose-Entität) oder die Preise fehlen,
 steht ganz oben die Kachel *Einrichtung* mit dem Stand der drei Schritte; sie verschwindet, sobald alle erledigt sind.
 Die Startseite `http://<adresse>:8000/` zeigt oben die Ersparnis von heute, den Energiefluss, den Akku
 und die Autarkie von heute. Darunter folgen die Bilanz für den gewählten Zeitraum, die Akku-Kennzahlen,

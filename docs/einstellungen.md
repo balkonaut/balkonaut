@@ -20,7 +20,8 @@ selbst und zeigt danach die aktuellen Werte mit Richtung, z. B. „Netz 312 W (B
 Vorzeichen prüfen)“. Passt eine Richtung nicht, *Vorzeichen drehen*. Unter *Standort und Flächen* die Adresse suchen
 (über OpenStreetMap, dabei geht die Adresse an diesen Dienst) oder, wenn die Seite über HTTPS geöffnet ist, *Meinen
 Standort verwenden*; Breiten- und Längengrad lassen sich auch von Hand eintragen. Dazu die Flächen eintragen. Änderungen gelten sofort, ohne Neustart; die Messdaten bleiben erhalten.
-Im Home-Assistant-Add-on erscheinen diese Abschnitte nicht, dort kommen die Werte aus Home Assistant.
+Im Home-Assistant-Add-on fehlt der Abschnitt *Geräte*, dort kommen die Werte aus Home Assistant; *Standort und Flächen*
+gibt es auch dort (siehe unten).
 
 **Oder in `data/config.yaml`:** statt `home_assistant` den Abschnitt `devices` eintragen, je Gerät `type` und
 `host` (IP-Adresse):
@@ -63,6 +64,10 @@ planes:
 - `inverter`: `storage` für Flächen am Speicher, `extra` für Flächen an einem zusätzlichen Wechselrichter
 
 Die Tagesprognose kommt von Forecast.Solar, höchstens einmal je Stunde abgerufen, der Jahresverlauf von PVGIS.
+
+Auch mit Home Assistant (Abschnitt `home_assistant`, ebenso im Add-on) braucht es dafür keine Forecast.Solar-Integration:
+Sind Flächen eingetragen, ruft Balkonaut die Prognose selbst ab. Fehlt `location`, gilt der Standort aus Home
+Assistant. Ist eine Prognose-Entität (`pv_forecast_today`, `pv_ac_forecast_today`) zugeordnet, geht sie vor.
 
 ## Verbindung zu Home Assistant
 

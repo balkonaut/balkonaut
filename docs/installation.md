@@ -15,7 +15,9 @@ Einen eigenen Server braucht es nicht, die Weboberfläche erscheint in der Seite
    *Vorzeichen drehen* auswählen, beim EZHI zum Beispiel *output_power*. *Speichern*.
 4. *Starten* und *In Seitenleiste anzeigen* einschalten. Preise und Anschaffungskosten unter *Einstellungen* in
    Balkonaut eintragen. Die Kachel *Einrichtung* auf der Übersicht zeigt, was noch fehlt; Entitäten und die
-   Entität der Tagesprognose kommen aus dem Reiter *Konfiguration* des Add-ons.
+   Entität der Tagesprognose kommen aus dem Reiter *Konfiguration* des Add-ons. Wer keine Forecast.Solar-Integration
+   hat, trägt stattdessen unter *Einstellungen → Standort und Flächen* die Flächen ein; Balkonaut ruft die Prognose
+   dann selbst ab, der Standort kommt aus Home Assistant.
 
 Das Add-on greift über Home Assistant auf die Entitäten zu, ein Token ist nicht nötig. Alle Daten liegen im
 Add-on und sind in den Backups von Home Assistant enthalten. Änderungen an den Entitäten wirken nach einem

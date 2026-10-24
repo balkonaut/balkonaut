@@ -38,6 +38,12 @@ def test_addon(client, tmp_path, monkeypatch):
     assert "home_assistant" not in yaml.safe_load((tmp_path / "config.yaml").read_text())
     page = client.get("/").text  # Einrichtung im Add-on: Geräte aus den Optionen, Prognose fehlt
     assert "1 von 3 erledigt" in page and "Reiter Konfiguration" in page and "einstellungen#geraete" not in page
+    from app import main
+    monkeypatch.setattr(main, "SUPERVISOR_IP", "testclient")  # wie über Ingress
+    form = {"bereich": "flaechen", "lat": "", "lon": "", "declination": "30", "azimuth": "150", "kwp": "0,87", "inverter": "storage"}
+    assert client.post("/einstellungen", data=form).status_code == 200  # ohne Standort gilt der von Home Assistant
+    assert yaml.safe_load((tmp_path / "config.yaml").read_text())["planes"][0]["azimuth"] == 150
+    assert "2 von 3 erledigt" in client.get("/").text
 
 
 def test_devices_and_planes(client, tmp_path, monkeypatch):
