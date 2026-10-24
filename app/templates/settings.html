@@ -69,8 +69,11 @@
     <button name="aktion" value="hinzufuegen">Hinzufügen</button>
   </form>
   {% if device_error %}<p id="host-error" class="field-error" role="alert">{{ device_error }}</p>{% endif %}
-  <p class="label">Erkannt werden APsystems EZHI (in der APsystems-App den lokalen Modus aktivieren), Shelly Pro 3EM
-  als Netzmessung und Shelly Plug am Einspeisepunkt. Am besten den Geräten im Router feste Adressen geben.</p>
+  <p class="label">Direkt im Heimnetz erkennt Balkonaut bisher drei Gerätetypen: APsystems EZHI (in der APsystems-App
+  den lokalen Modus aktivieren), Shelly Pro 3EM als Netzmessung und Shelly Plug am Einspeisepunkt. Andere Geräte gehen
+  über die Home-Assistant-Integration, siehe <a href="https://balkonaut.github.io/balkonaut/geraete/" target="_blank" rel="noopener">Geräteliste im Handbuch</a>.
+  Wünsche für weitere Geräte gern als <a href="https://github.com/balkonaut/balkonaut/issues" target="_blank" rel="noopener">GitHub-Issue</a>.
+  Am besten den Geräten im Router feste Adressen geben.</p>
 </div>
 
 <h2 id="flaechen">Standort und Flächen</h2>
@@ -79,6 +82,15 @@
   {% set src = entered or cfg %}
   {% if planes_error %}<div class="field-error" role="alert"><p style="margin:0">Nicht gespeichert, bitte korrigieren:</p>
     <ul style="margin:.25rem 0 0">{% for e in planes_error %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+  <div class="add">
+    <div><label for="adresse">Adresse suchen</label>
+      <input id="adresse" autocomplete="street-address" placeholder="z. B. Hauptstraße 1, Frankfurt"
+        onkeydown="if (event.key === 'Enter') { event.preventDefault(); sucheAdresse(); }"></div>
+    <button type="button" class="quiet" onclick="sucheAdresse()">Suchen</button>
+    <button type="button" class="quiet" id="geo" hidden onclick="eigenerStandort()">Meinen Standort verwenden</button>
+  </div>
+  <p class="label" id="ort" role="status">Die Suche fragt OpenStreetMap (Nominatim), dabei geht die Adresse an diesen Dienst.
+  Gespeichert werden nur Breiten- und Längengrad.</p>
   <div class="pair">
     <div><label for="lat">Breitengrad</label><input id="lat" name="lat" inputmode="decimal" value="{{ src.location.lat|komma if src.location else '' }}" placeholder="z. B. 50,11"></div>
     <div><label for="lon">Längengrad</label><input id="lon" name="lon" inputmode="decimal" value="{{ src.location.lon|komma if src.location else '' }}" placeholder="z. B. 8,68"></div>
@@ -98,6 +110,33 @@
   (am Balkongeländer meist 60 bis 90). Zum Entfernen einer Fläche ihre Felder leeren.</p>
   <button class="save">Standort und Flächen speichern</button>
 </form>
+<script>
+  // ponytail: nur der erste Treffer, Auswahlliste bei Bedarf; Nominatim erlaubt eine Anfrage pro Sekunde, daher nur auf Klick
+  const ort = document.getElementById("ort");
+  function setzeOrt(lat, lon, text) {
+    document.getElementById("lat").value = lat.toFixed(4).replace(".", ",");
+    document.getElementById("lon").value = lon.toFixed(4).replace(".", ",");
+    ort.textContent = text + " Zum Übernehmen „Standort und Flächen speichern“.";
+  }
+  async function sucheAdresse() {
+    const q = document.getElementById("adresse").value.trim();
+    if (!q) return;
+    ort.textContent = "Suche …";
+    try {
+      const r = await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=" + encodeURIComponent(q));
+      const [hit] = await r.json();
+      if (!hit) { ort.textContent = "Keine Adresse gefunden. Genauer eingeben, z. B. mit Ort."; return; }
+      setzeOrt(+hit.lat, +hit.lon, "Gefunden: " + hit.display_name + ".");
+    } catch (e) { ort.textContent = "Suche nicht erreichbar. Breiten- und Längengrad von Hand eintragen."; }
+  }
+  function eigenerStandort() {
+    ort.textContent = "Standort wird ermittelt …";
+    navigator.geolocation.getCurrentPosition(p => setzeOrt(p.coords.latitude, p.coords.longitude, "Standort des Browsers übernommen."),
+      () => { ort.textContent = "Standort nicht verfügbar oder nicht erlaubt."; });
+  }
+  // Browser geben den Standort nur über HTTPS oder localhost heraus, im Heimnetz per http://IP meist nicht
+  if (window.isSecureContext && navigator.geolocation) document.getElementById("geo").hidden = false;
+</script>
 {% endif %}
 
 <h2 id="preise">Preise und Anlage</h2>

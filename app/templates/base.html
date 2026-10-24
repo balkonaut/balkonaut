@@ -121,8 +121,8 @@
   <nav aria-label="Bereiche">
     {# Links relativ, damit sie auch unter dem Ingress-Pfad des Add-ons stimmen #}
     {% for slug, name, icon in [("", "Übersicht", "dash"), ("verlauf", "Verlauf", "hist"), ("nulleinspeisung", "Nulleinspeisung", "pulse"),
-                                ("bericht", "Bericht", "file"), ("einstellungen", "Einstellungen", "set"), ("handbuch/", "Handbuch", "book")] %}
-    <a href="{{ slug or './' }}" aria-label="{{ name }}"{% if request.url.path == '/' + slug %} aria-current="page"{% endif %}><svg class="ico" aria-hidden="true"><use href="#i-{{ icon }}"/></svg><span>{{ name }}</span></a>
+                                ("bericht", "Bericht", "file"), ("einstellungen", "Einstellungen", "set"), ("https://balkonaut.github.io/balkonaut/", "Handbuch", "book")] %}
+    <a href="{{ slug or './' }}" aria-label="{{ name }}"{% if slug.startswith("https:") %} target="_blank" rel="noopener"{% endif %}{% if request.url.path == '/' + slug %} aria-current="page"{% endif %}><svg class="ico" aria-hidden="true"><use href="#i-{{ icon }}"/></svg><span>{{ name }}</span></a>
     {% endfor %}
   </nav>
   <button type="button" id="darstellung" class="theme" onclick="wechsleDarstellung()" aria-label="Darstellung: Automatisch"><svg class="ico" aria-hidden="true"><use href="#i-auto"/></svg></button>

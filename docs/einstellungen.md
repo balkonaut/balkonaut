@@ -17,8 +17,9 @@ Der Container kann die Geräte auch direkt im Heimnetz lesen, ganz ohne Home Ass
 
 **Im Browser:** *Einstellungen → Geräte*, die IP-Adresse eintragen und *Hinzufügen*. Balkonaut erkennt den Typ
 selbst und zeigt danach die aktuellen Werte mit Richtung, z. B. „Netz 312 W (Bezug)“ oder „Abgabe 21 W (Bezug,
-Vorzeichen prüfen)“. Passt eine Richtung nicht, *Vorzeichen drehen*. Unter *Standort und Flächen* Breiten- und
-Längengrad sowie die Flächen eintragen. Änderungen gelten sofort, ohne Neustart; die Messdaten bleiben erhalten.
+Vorzeichen prüfen)“. Passt eine Richtung nicht, *Vorzeichen drehen*. Unter *Standort und Flächen* die Adresse suchen
+(über OpenStreetMap, dabei geht die Adresse an diesen Dienst) oder, wenn die Seite über HTTPS geöffnet ist, *Meinen
+Standort verwenden*; Breiten- und Längengrad lassen sich auch von Hand eintragen. Dazu die Flächen eintragen. Änderungen gelten sofort, ohne Neustart; die Messdaten bleiben erhalten.
 Im Home-Assistant-Add-on erscheinen diese Abschnitte nicht, dort kommen die Werte aus Home Assistant.
 
 **Oder in `data/config.yaml`:** statt `home_assistant` den Abschnitt `devices` eintragen, je Gerät `type` und
