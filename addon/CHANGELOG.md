@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.0.1
+
+- *Einstellungen → Standort und Flächen* gibt es jetzt auch im Add-on. Sind Flächen eingetragen, ruft Balkonaut die Tagesprognose selbst ab, ohne Forecast.Solar-Integration; ohne Breiten- und Längengrad gilt der Standort aus Home Assistant.
+- Die Einrichtungs-Kachel zählt den Schritt Standort mit Flächen oder einer Prognose-Entität.
+- Die Warnung „keine Messwerte“ erscheint auch, wenn nur noch die Prognose ankommt.
+- Akku-Auswertung: Die laufende Stunde gilt nicht mehr fälschlich als „leerer Akku“.
+- Weitere Korrekturen aus einem Code-Review (Regelgüte bei 0 % bzw. 0 W, Amortisation bei sehr kleiner Ersparnis, Datenbankzugriffe).
+
 ## 1.0.0
 
 - Kachel *Einrichtung* auf der Übersicht: zeigt, ob Entitäten, Tagesprognose und Preise eingetragen sind, und verschwindet, wenn alles erledigt ist.
