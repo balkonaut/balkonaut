@@ -45,11 +45,42 @@
   .lim-key { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 12px; color: var(--muted); }
   .lim-key i { display: inline-block; width: 3px; height: 12px; margin-right: 5px; vertical-align: -2px; }
 
+  .setup { margin-bottom: 24px; }
+  .setup .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-bottom: 12px; }
+  .setup h2 { margin: 0; font-size: 1.1rem; color: var(--ink); letter-spacing: .05em; }
+  .setup .bar { height: 6px; border-radius: 3px; margin: 0 0 16px; }
+  .setup .bar span { background: var(--sun); }
+  .setup ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+  .setup li { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px;
+    border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+  .setup li.next { border: 2px solid var(--sun); }
+  .setup .mark { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+    font: 600 14px var(--mono); border: 2px solid var(--line); color: var(--muted); }
+  .setup .done .mark { background: var(--leaf); border-color: var(--leaf); color: var(--bg); }
+  .setup .next .mark { border-color: var(--sun); color: var(--ink); }
+  .setup .txt b { display: block; }
+  .setup .done .txt b { color: var(--muted); }
+  .setup .txt span { color: var(--muted); font-size: 14px; }
+  .setup a.btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 6px; text-decoration: none;
+    font-weight: 600; border: 1px solid var(--line); color: var(--ink); margin-top: auto; }
+  .setup .next a.btn { background: var(--act-bg); color: var(--act-ink); border-color: var(--act-bg); }
   .bar { height: 10px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 8px 0 16px; }
   .bar span { display: block; height: 100%; background: var(--leaf); }
 </style>
-{% if not configured %}<p class="note err">Noch keine Geräte eingerichtet, Balkonaut misst deshalb nichts. <a href="einstellungen#geraete">Jetzt einrichten</a></p>{% endif %}
-{% if not prices_set %}<p class="note err">Arbeitspreis und Anschaffungskosten fehlen, Euro-Beträge stehen deshalb auf 0. <a href="einstellungen">Jetzt eintragen</a></p>{% endif %}
+{% set done = setup|selectattr(2)|list|length %}
+{% if done < setup|length %}{% set next = (setup|rejectattr(2)|first)[0] %}
+<section class="card setup" aria-labelledby="setup-h">
+  <div class="head"><h2 id="setup-h">Einrichtung</h2><span class="label">{{ done }} von {{ setup|length }} erledigt</span></div>
+  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="{{ setup|length }}" aria-valuenow="{{ done }}" aria-label="Einrichtung"><span style="width:{{ (done / setup|length * 100)|round }}%"></span></div>
+  <ol>
+    {% for title, hint, ok, href in setup %}
+    <li class="{{ 'done' if ok else 'next' if title == next }}"><span class="mark" aria-hidden="true">{{ "✓" if ok else loop.index }}</span>
+      <div class="txt"><b>{{ title }}</b><span>{{ "Erledigt." if ok else hint }}</span></div>
+      {% if href %}<a class="btn" href="{{ href }}">{{ "Ändern" if ok else "Jetzt eintragen" if title == next else "Eintragen" }}</a>{% endif %}</li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
 {% for w in warnings %}<p class="note err">{{ w.text }}</p>{% endfor %}
 
 {% macro line(d, watts, color, reverse=false) %}{% set a = (watts or 0)|abs %}{% set width = (2 + [8, a / 80]|min)|round(1) %}

@@ -209,14 +209,24 @@ def dashboard(request: Request, zeitraum: str = "tag"):
     bars = analytics.history(request.app.state.storage.hourly(int(time.time())),
                              analytics.buckets("tag", today)[1], cfg["prices"])
     a = st["amortisation"]
+    entities = (cfg.get("home_assistant") or {}).get("entities") or {}
+    # Einrichtung: (Schritt, Hinweis, erledigt, Link); im Add-on kommen Geräte und Prognose aus dessen Konfiguration
+    in_ha = "In Home Assistant: Add-on Balkonaut, Reiter Konfiguration" if config.addon() else None
+    setup = [("Geräte eintragen", in_ha or "Per IP-Adresse im Heimnetz, ohne Anmeldung",
+              bool(cfg.get("devices") or entities), None if in_ha else "einstellungen#geraete"),
+             ("Standort und Flächen", in_ha and "Entität der Tagesprognose zuordnen, " + in_ha
+              or "Für Tagesprognose und Jahresverlauf",
+              bool(cfg.get("location") and cfg.get("planes")) or "pv_forecast_today" in entities,
+              None if in_ha else "einstellungen#flaechen"),
+             ("Preise und Anlage", "Ohne Preise stehen Euro-Beträge auf 0",
+              cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0, "einstellungen#preise")]
     return templates.TemplateResponse(request, "dashboard.html", {
+        "setup": setup,
         "periods": PERIODS, "period": period, "b": st["bilanz"][period], "akku": st["akku"][period],
         "heute": st["bilanz"]["tag"], "live": live, "gauge": soc_gauge(live),
         "live_age": int(time.time() - st["stand"].timestamp()) if st["stand"] else None,
         "chart": chart(bars), "a": a, "warnings": st["warnungen"],
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
-        "prices_set": cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0,
-        "configured": bool(cfg.get("devices") or cfg.get("home_assistant")),
         "hub_name": next((HUB_NAMES[d["type"]] for d in cfg.get("devices") or [] if d["type"] in HUB_NAMES), "Wechselrichter"),
         "battery_name": (cfg["system"].get("battery_name") or "Akku")[:10],
         "extra_name": (cfg["system"].get("extra_name") or "Zusatz-WR")[:14],

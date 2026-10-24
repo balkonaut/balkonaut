@@ -36,6 +36,8 @@ def test_addon(client, tmp_path, monkeypatch):
                                      "entities": {"grid_power": ["sensor.netz", -1]}}
     config.save(tmp_path / "config.yaml", cfg)
     assert "home_assistant" not in yaml.safe_load((tmp_path / "config.yaml").read_text())
+    page = client.get("/").text  # Einrichtung im Add-on: Geräte aus den Optionen, Prognose fehlt
+    assert "1 von 3 erledigt" in page and "Reiter Konfiguration" in page and "einstellungen#geraete" not in page
 
 
 def test_devices_and_planes(client, tmp_path, monkeypatch):
@@ -43,7 +45,8 @@ def test_devices_and_planes(client, tmp_path, monkeypatch):
     from balkonaut import devices
     monkeypatch.setattr(devices, "detect", lambda host: {"10.0.0.38": "shelly_plug"}.get(host) or (_ for _ in ()).throw(ValueError()))
     monkeypatch.setitem(devices.TYPES, "shelly_plug", lambda host: {"output_power": -21.0, "output_energy": 1612.4})
-    assert "Jetzt einrichten" in client.get("/").text
+    page = client.get("/").text
+    assert "0 von 3 erledigt" in page and '<a class="btn" href="einstellungen#geraete">Jetzt eintragen' in page
     assert "antwortet kein bekanntes Gerät" in client.post("/einstellungen", data={"bereich": "geraete", "aktion": "hinzufuegen", "host": "10.0.0.99"}).text
     r = client.post("/einstellungen", data={"bereich": "geraete", "aktion": "hinzufuegen", "host": "10.0.0.38"})
     assert str(r.url).endswith("/einstellungen?gespeichert=1#geraete") and "Gespeichert." in r.text  # gleiche Adresse
@@ -53,7 +56,7 @@ def test_devices_and_planes(client, tmp_path, monkeypatch):
     assert "Abgabe 21 W ·" in client.get("/einstellungen").text
     cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
     assert cfg["devices"] == [{"type": "shelly_plug", "host": "10.0.0.38", "invert": ["output_power"]}]
-    assert "Jetzt einrichten" not in client.get("/").text
+    assert "1 von 3 erledigt" in client.get("/").text
 
     form = {"lat": "50,1", "lon": "8,7", "declination": ["30", ""], "azimuth": ["150", ""], "kwp": ["0,87", ""],
             "inverter": ["storage", "storage"]}
@@ -61,6 +64,7 @@ def test_devices_and_planes(client, tmp_path, monkeypatch):
     cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
     assert cfg["location"] == {"lat": 50.1, "lon": 8.7}
     assert cfg["planes"] == [{"declination": 30.0, "azimuth": 150.0, "kwp": 0.87, "inverter": "storage"}]
+    assert "2 von 3 erledigt" in client.get("/").text
     r = client.post("/einstellungen", data={"bereich": "flaechen"} | form | {"lat": "", "lon": "", "azimuth": ["400", ""]})
     assert r.status_code == 400 and "Fläche 1, Ausrichtung: 0 bis 360" in r.text and "fehlt der Standort" in r.text
     assert 'value="400"' in r.text  # Eingaben bleiben stehen

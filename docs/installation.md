@@ -14,7 +14,8 @@ Einen eigenen Server braucht es nicht, die Weboberfläche erscheint in der Seite
    [Einstellungen](einstellungen.md)). Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter
    *Vorzeichen drehen* auswählen, beim EZHI zum Beispiel *output_power*. *Speichern*.
 4. *Starten* und *In Seitenleiste anzeigen* einschalten. Preise und Anschaffungskosten unter *Einstellungen* in
-   Balkonaut eintragen.
+   Balkonaut eintragen. Die Kachel *Einrichtung* auf der Übersicht zeigt, was noch fehlt; Entitäten und die
+   Entität der Tagesprognose kommen aus dem Reiter *Konfiguration* des Add-ons.
 
 Das Add-on greift über Home Assistant auf die Entitäten zu, ein Token ist nicht nötig. Alle Daten liegen im
 Add-on und sind in den Backups von Home Assistant enthalten. Änderungen an den Entitäten wirken nach einem
@@ -71,8 +72,8 @@ Problemen eine ältere Version festhalten lässt.
     docker compose up -d --build
     ```
 
-3. `http://<adresse>:8000/` öffnen. Solange keine Geräte eingerichtet sind, zeigt die Übersicht einen Hinweis;
-   unter *Einstellungen* die Geräte per IP-Adresse hinzufügen, Standort und Flächen eintragen, dann Preise und
+3. `http://<adresse>:8000/` öffnen. Bis alles eingerichtet ist, zeigt die Übersicht oben die Kachel
+   *Einrichtung* mit drei Schritten, jeweils mit Link zum passenden Abschnitt: unter *Einstellungen* die Geräte per IP-Adresse hinzufügen, Standort und Flächen eintragen, dann Preise und
    Kosten (siehe [Einstellungen](einstellungen.md)). Wer lieber eine Datei pflegt, kopiert `config.example.yaml`
    nach `data/config.yaml` und passt sie an.
 4. Prüfen, ob der Dienst läuft: `http://<adresse>:8000/api/health` muss `{"status": "ok"}` liefern.
