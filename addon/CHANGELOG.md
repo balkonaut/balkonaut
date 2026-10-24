@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.0.0
+
+- Kachel *Einrichtung* auf der Übersicht: zeigt, ob Entitäten, Tagesprognose und Preise eingetragen sind, und verschwindet, wenn alles erledigt ist.
+- Der Link zum Datum der Inbetriebnahme springt direkt zum Feld.
+- *Handbuch* in der Navigation öffnet das Handbuch auf der Website.
+
 ## 0.9.3
 
 - Integration: Die Aktion *Historie aus Balkonaut-App übernehmen* dürfen nur noch Administratoren ausführen. Das Add-on selbst ist unverändert.
