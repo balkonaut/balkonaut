@@ -50,13 +50,17 @@ direkt im Heimnetz.
    Flächen sowie Preise eintragen (siehe [Einstellungen](einstellungen.md)).
 4. Neue Versionen holen: `docker compose pull && docker compose up -d`. Die Messdaten im Ordner `data/` bleiben.
 
+In Dockhand geht das als neuer Stack mit diesem Inhalt oder als Git-Stack direkt aus dem Repository
+`https://github.com/balkonaut/balkonaut`, dessen `docker-compose.yml` ebenfalls das fertige Image nutzt.
+Aktualisiert wird dort über *Nach Updates suchen*.
+
 Das Image gibt es für amd64 und arm64. Jede Version trägt zusätzlich einen Tag `sha-<commit>`, mit dem sich bei
 Problemen eine ältere Version festhalten lässt.
 
 ### Selbst bauen
 
 1. Repository herunterladen und in das Verzeichnis wechseln.
-2. Container bauen und starten:
+2. In `docker-compose.yml` die Zeile `# build: .` aktivieren (Raute entfernen), dann Container bauen und starten:
 
     ```bash
     docker compose up -d --build

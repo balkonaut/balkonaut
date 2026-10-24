@@ -1,7 +1,8 @@
 services:
   balkonaut:
-    build: .
-    image: balkonaut:latest
+    image: ghcr.io/balkonaut/balkonaut:latest
+    # Selbst bauen statt fertiges Image: nächste Zeile aktivieren, dann docker compose up -d --build
+    # build: .
     ports:
       - "8000:8000"
     volumes:
