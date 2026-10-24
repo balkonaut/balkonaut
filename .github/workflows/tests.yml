@@ -1,0 +1,22 @@
+# Tests von App und Kern sowie der Home-Assistant-Integration, wie in den Teststufen des Dockerfile
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build --target test .
+  ha-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build --target ha-test .

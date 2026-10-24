@@ -121,7 +121,7 @@ services:
   balkonaut:
     image: ghcr.io/balkonaut/balkonaut:latest
     ports:
-      - "8000:8000"
+      - "${BALKONAUT_PORT:-8000}:8000"
     volumes:
       - ./data:/data
     restart: unless-stopped

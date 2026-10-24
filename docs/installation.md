@@ -39,7 +39,7 @@ direkt im Heimnetz.
       balkonaut:
         image: ghcr.io/balkonaut/balkonaut:latest
         ports:
-          - "8000:8000"
+          - "${BALKONAUT_PORT:-8000}:8000"
         volumes:
           - ./data:/data
         restart: unless-stopped
@@ -53,6 +53,10 @@ direkt im Heimnetz.
 In Dockhand geht das als neuer Stack mit diesem Inhalt oder als Git-Stack direkt aus dem Repository
 `https://github.com/balkonaut/balkonaut`, dessen `docker-compose.yml` ebenfalls das fertige Image nutzt.
 Aktualisiert wird dort über *Nach Updates suchen*.
+
+Ist Port 8000 auf dem Rechner schon belegt, neben der `docker-compose.yml` eine Datei `.env` anlegen mit zum
+Beispiel `BALKONAUT_PORT=8080` (in Dockhand als Variable des Stacks). Balkonaut ist dann unter
+`http://<adresse>:8080/` erreichbar.
 
 Das Image gibt es für amd64 und arm64. Jede Version trägt zusätzlich einen Tag `sha-<commit>`, mit dem sich bei
 Problemen eine ältere Version festhalten lässt.
