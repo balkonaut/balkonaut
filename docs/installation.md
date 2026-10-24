@@ -54,9 +54,10 @@ In Dockhand geht das als neuer Stack mit diesem Inhalt oder als Git-Stack direkt
 `https://github.com/balkonaut/balkonaut`, dessen `docker-compose.yml` ebenfalls das fertige Image nutzt.
 Aktualisiert wird dort über *Nach Updates suchen*.
 
-Ist Port 8000 auf dem Rechner schon belegt, neben der `docker-compose.yml` eine Datei `.env` anlegen mit zum
-Beispiel `BALKONAUT_PORT=8080` (in Dockhand als Variable des Stacks). Balkonaut ist dann unter
-`http://<adresse>:8080/` erreichbar.
+Ist Port 8000 auf dem Rechner schon belegt, neben der `docker-compose.yml` eine Datei `.env` anlegen (Vorlage:
+[`.env.example`](https://github.com/balkonaut/balkonaut/blob/main/.env.example)) mit zum Beispiel
+`BALKONAUT_PORT=8080` (in Dockhand als Variable des Stacks). Balkonaut ist dann unter `http://<adresse>:8080/`
+erreichbar.
 
 Das Image gibt es für amd64 und arm64. Jede Version trägt zusätzlich einen Tag `sha-<commit>`, mit dem sich bei
 Problemen eine ältere Version festhalten lässt.
