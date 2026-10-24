@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.9.3
+
+- Integration: Die Aktion *Historie aus Balkonaut-App übernehmen* dürfen nur noch Administratoren ausführen. Das Add-on selbst ist unverändert.
+
 ## 0.9.2
 
 Die Version folgt jetzt der Version von Balkonaut (Release, Docker-Image, Integration).

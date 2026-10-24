@@ -23,6 +23,7 @@ from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.loader import async_get_integration
@@ -219,7 +220,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         await entry.runtime_data.async_request_refresh()
         return {"stunden": hours}
 
-    hass.services.async_register(DOMAIN, "import_from_app", import_from_app, schema=vol.Schema(
+    async_register_admin_service(hass, DOMAIN, "import_from_app", import_from_app, schema=vol.Schema(
         {vol.Required(CONF_URL): cv.url}), supports_response=SupportsResponse.OPTIONAL)
     if "http" in hass.config.components:
         from homeassistant.components.http import StaticPathConfig

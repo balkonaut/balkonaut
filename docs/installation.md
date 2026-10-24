@@ -185,8 +185,8 @@ Wer bisher die Docker-App oder das Add-on genutzt hat, kann deren Messdaten in d
 damit Monatsberichte, Jahr und Amortisation die ganze Historie kennen:
 
 1. Den eigenständigen Eintrag wie oben einrichten.
-2. *Entwicklerwerkzeuge → Aktionen*, die Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen* wählen und die
-   Adresse der laufenden App eintragen (z. B. `http://192.168.1.10:8000`), *Aktion ausführen*.
+2. Als Administrator *Entwicklerwerkzeuge → Aktionen*, die Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen*
+   wählen und die Adresse der laufenden App eintragen (z. B. `http://192.168.1.10:8000`), *Aktion ausführen*.
 
 Stunden vor der ersten eigenen Messung des eigenständigen Eintrags werden durch die Werte der App ersetzt, die genauer
 sind als der Verlauf aus dem Recorder. Was der eigenständige Eintrag selbst gemessen hat, bleibt. Die Antwort nennt die

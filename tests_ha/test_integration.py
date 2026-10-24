@@ -1,8 +1,12 @@
 from pathlib import Path
 
+import pytest
+
 from homeassistant import config_entries
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL
+from homeassistant.core import Context
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.exceptions import Unauthorized
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -335,7 +339,7 @@ async def test_views_from_app(hass, hass_ws_client, aioclient_mock):
     assert (await ws.receive_json())["error"]["code"] == "unreachable"
 
 
-async def test_import_from_app(hass, aioclient_mock):
+async def test_import_from_app(hass, aioclient_mock, hass_read_only_user):
     hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
     entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", data={"entities": {"grid_power": "sensor.netz"}, "invert": []})
     entry.add_to_hass(hass)
@@ -347,4 +351,7 @@ async def test_import_from_app(hass, aioclient_mock):
     assert result == {"stunden": 1}
     hourly = await hass.async_add_executor_job(entry.runtime_data.storage.hourly)
     assert ("grid_power", 3600, 500.0, 500.0, 0.0, None) in hourly
+    with pytest.raises(Unauthorized):
+        await hass.services.async_call(DOMAIN, "import_from_app", {CONF_URL: URL}, blocking=True,
+                                       context=Context(user_id=hass_read_only_user.id))
     assert await hass.config_entries.async_unload(entry.entry_id)
