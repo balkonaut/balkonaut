@@ -108,7 +108,7 @@ class BalkonautCard extends HTMLElement {
 
   _fmt(v, digits = 0) {
     if (v === null || v === undefined || Number.isNaN(v)) return "–";
-    return v.toLocaleString(this._hass.locale?.language || "de", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    return esc(v.toLocaleString(this._hass.locale?.language || "de", { minimumFractionDigits: digits, maximumFractionDigits: digits }));
   }
 
   _render() {
@@ -116,7 +116,7 @@ class BalkonautCard extends HTMLElement {
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
     if (!this._data) {
       this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card><div class="sub">${
-        this._error ? `Balkonaut nicht verfügbar: ${this._error}` : "Balkonaut lädt …"}</div></ha-card>`;
+        this._error ? `Balkonaut nicht verfügbar: ${esc(this._error)}` : "Balkonaut lädt …"}</div></ha-card>`;
       return;
     }
     const keys = ["pv_power", "pv_ac_power", "battery_power", "battery_soc", "output_power", "grid_power",
@@ -185,7 +185,7 @@ class BalkonautCard extends HTMLElement {
         + this._line("M300 144 V182 H210 V222", pvAc, "var(--bk-sun)")
         + this._node(40, 10, "var(--bk-sun)", modules("storage"), v.pv_power, "panel") + this._node(240, 10, "var(--bk-sun)", modules("extra"), pvAc, "panel")
         + this._node(240, 88, "var(--bk-sun)", extraName, pvAc, "sun");
-    return `<div class="head"><span>${this._config.title ?? "Energiefluss jetzt"}</span></div>
+    return `<div class="head"><span>${esc(this._config.title ?? "Energiefluss jetzt")}</span></div>
       <svg class="flow" viewBox="0 0 400 407" role="img"
         aria-label="Sonne ${this._fmt(pv)} W, Akku ${this._fmt(batt)} W, Haus ${this._fmt(house)} W, Netz ${this._fmt(grid)} W">
         ${this._line("M150 242 H124", batt, "var(--bk-batt)", (batt || 0) < 0)}

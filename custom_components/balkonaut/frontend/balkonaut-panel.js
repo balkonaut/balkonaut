@@ -6,6 +6,8 @@ const TABS = [["start", "Übersicht"], ["verlauf", "Verlauf"], ["nulleinspeisung
 const PERIODS = [["tag", "Heute"], ["monat", "Monat"], ["jahr", "Jahr"], ["gesamt", "Gesamt"]];
 const VIEWS = [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["jahr", "Jahr"]];
 const HANDBUCH = "https://balkonaut.github.io/balkonaut/";
+// Texte aus Antworten (auch der konfigurierten App) nie als HTML einsetzen
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 const PANEL_STYLE = `
   :host { display: block; min-height: 100%; background: var(--primary-background-color);
@@ -82,7 +84,7 @@ class BalkonautPanel extends HTMLElement {
   }
 
   _box(label, value, sub = "") {
-    return `<div class="card"><div class="label">${label}</div><div class="value">${value}</div>${sub ? `<div class="label">${sub}</div>` : ""}</div>`;
+    return `<div class="card"><div class="label">${esc(label)}</div><div class="value">${esc(value)}</div>${sub ? `<div class="label">${esc(sub)}</div>` : ""}</div>`;
   }
 
   async _ws(type, extra = {}) {
@@ -98,7 +100,7 @@ class BalkonautPanel extends HTMLElement {
       else if (tab === "nulleinspeisung") body = this._regulation(await this._ws("nulleinspeisung"));
       else body = this._report(await this._ws("bericht", { monat: this._monat }));
     } catch (err) {
-      body = `<p class="note">Balkonaut ist nicht verfügbar: ${err.message || err}</p>`;
+      body = `<p class="note">Balkonaut ist nicht verfügbar: ${esc(err.message || err)}</p>`;
     }
     this._render(body);
   }
@@ -143,9 +145,9 @@ class BalkonautPanel extends HTMLElement {
       <text x="${left - 4}" y="${153 - v * scale}" font-size="9" text-anchor="end" fill="var(--bk-muted)">${l}</text>`).join("");
     const cols = bars.map((h, i) => {
       const x = left + i * w + w * 0.1, bw = w * 0.8;
-      return `<rect x="${x}" y="${150 - h.own * scale}" width="${bw}" height="${h.own * scale}" fill="var(--bk-leaf)"><title>${h.label}: ${this._fmt(h.own, 2)} kWh vom Balkonkraftwerk</title></rect>
-        <rect x="${x}" y="${150 - (h.own + h.grid) * scale}" width="${bw}" height="${h.grid * scale}" fill="var(--bk-sky)"><title>${h.label}: ${this._fmt(h.grid, 2)} kWh aus dem Netz</title></rect>
-        ${h.gen ? `<rect x="${x}" y="${149 - h.gen * scale}" width="${bw}" height="3" fill="var(--bk-sun)"><title>${h.label}: ${this._fmt(h.gen, 2)} kWh erzeugt</title></rect>` : ""}
+      return `<rect x="${x}" y="${150 - h.own * scale}" width="${bw}" height="${h.own * scale}" fill="var(--bk-leaf)"><title>${esc(h.label)}: ${this._fmt(h.own, 2)} kWh vom Balkonkraftwerk</title></rect>
+        <rect x="${x}" y="${150 - (h.own + h.grid) * scale}" width="${bw}" height="${h.grid * scale}" fill="var(--bk-sky)"><title>${esc(h.label)}: ${this._fmt(h.grid, 2)} kWh aus dem Netz</title></rect>
+        ${h.gen ? `<rect x="${x}" y="${149 - h.gen * scale}" width="${bw}" height="3" fill="var(--bk-sun)"><title>${esc(h.label)}: ${this._fmt(h.gen, 2)} kWh erzeugt</title></rect>` : ""}
         ${i % every === 0 ? `<text x="${x + w * 0.4}" y="166" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${h.label}</text>` : ""}`;
     }).join("");
     return `<svg class="chart" viewBox="0 0 480 170" role="img" aria-label="Hausverbrauch je Zeitabschnitt, aufgeteilt in Balkonkraftwerk und Netzbezug, mit Erzeugung">
@@ -167,7 +169,7 @@ class BalkonautPanel extends HTMLElement {
     const tabs = PERIODS.map(([key, name]) => `<button data-set="_period=${key}" class="${key === this._period ? "on" : ""}">${name}</button>`).join("");
     const progress = a.kosten ? Math.min((a.bisher_gespart / a.kosten) * 100, 100) : 0;
     const date = (iso) => iso ? new Date(iso).toLocaleDateString(this._hass.locale?.language || "de", { month: "2-digit", year: "numeric" }) : "–";
-    return `${st.warnungen.map((w) => `<p class="note">${w.text}</p>`).join("")}
+    return `${st.warnungen.map((w) => `<p class="note">${esc(w.text)}</p>`).join("")}
       <balkonaut-card></balkonaut-card>
       <h2>Bilanz</h2><div class="tabs">${tabs}</div>${this._balance(b)}
       <h2>Akku</h2><div class="grid">
@@ -192,8 +194,8 @@ class BalkonautPanel extends HTMLElement {
   _history(d) {
     const tabs = VIEWS.map(([key, name]) => `<button data-set="_view=${key}" class="${key === d.ansicht ? "on" : ""}">${name}</button>`).join("");
     return `<div class="tabs">${tabs}</div>
-      <div class="pager"><button data-set="_datum=${d.zurueck}">← zurück</button><b>${d.titel}</b>
-        <button ${d.weiter ? `data-set="_datum=${d.weiter}"` : "disabled"}>weiter →</button></div>
+      <div class="pager"><button data-set="_datum=${esc(d.zurueck)}">← zurück</button><b>${esc(d.titel)}</b>
+        <button ${d.weiter ? `data-set="_datum=${esc(d.weiter)}"` : "disabled"}>weiter →</button></div>
       <div class="card">${this._chart(d.balken)}</div><h2>Bilanz</h2>${this._balance(d.bilanz)}`;
   }
 
@@ -224,10 +226,10 @@ class BalkonautPanel extends HTMLElement {
       + `<tr><td>Autarkiegrad</td>${cols.map((b) => `<td>${this._pct(b.autarkiegrad)}</td>`).join("")}</tr>`
       + `<tr><td>Eigenverbrauchsquote</td>${cols.map((b) => `<td>${this._pct(b.eigenverbrauchsquote)}</td>`).join("")}</tr>`;
     const n = r.nulleinspeisung;
-    return `<div class="pager noprint"><button data-set="_monat=${month(r.zurueck)}">← zurück</button><b>Monatsbericht ${r.monat}</b>
-        <button ${r.weiter ? `data-set="_monat=${month(r.weiter)}"` : "disabled"}>weiter →</button>
+    return `<div class="pager noprint"><button data-set="_monat=${esc(month(r.zurueck))}">← zurück</button><b>Monatsbericht ${esc(r.monat)}</b>
+        <button ${r.weiter ? `data-set="_monat=${esc(month(r.weiter))}"` : "disabled"}>weiter →</button>
         <button onclick="window.print()">Drucken</button></div>
-      <h2>Bilanz</h2><div class="card"><table><tr><th></th><th>${r.monat}</th><th>Vormonat</th><th>Vorjahresmonat</th></tr>${table}</table>
+      <h2>Bilanz</h2><div class="card"><table><tr><th></th><th>${esc(r.monat)}</th><th>Vormonat</th><th>Vorjahresmonat</th></tr>${table}</table>
         ${r.erwartet ? `<p class="label">Erwartete Erzeugung laut PVGIS: ${this._fmt(r.erwartet)} kWh, erreicht: ${this._pct(r.bilanz.erzeugung / r.erwartet)}.</p>` : ""}</div>
       <h2>Tageswerte</h2><div class="card">${this._chart(r.tage)}</div>
       <h2>Akku</h2><div class="grid">
