@@ -91,6 +91,7 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
         # Prognose aus eingetragenen Flächen, falls keine Prognose-Entität zugeordnet ist
         self.forecast = forecast.Planes({"lat": hass.config.latitude, "lon": hass.config.longitude}, planes(entry))
         self.forecasting = False
+        self.closed = False  # Datenbank beim Entladen geschlossen
 
     async def _async_update_data(self) -> dict:
         if self.storage:
@@ -138,6 +139,8 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
     async def async_compute(self, func, *args):
         """func(storage, *args) im Executor, nacheinander mit den Schreibzugriffen; Ergebnis in JSON-Form wie die App."""
         async with self.lock:
+            if self.closed:  # Eintrag wird gerade entladen, Datenbank zu
+                raise HomeAssistantError("Balkonaut wird neu geladen")
             data = await self.hass.async_add_executor_job(func, self.storage, *args)
         return json.loads(json.dumps(data, default=str))
 
@@ -179,6 +182,12 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
         self.hass.config_entries.async_update_entry(self.config_entry, data={**self.config_entry.data, BACKFILLED: True})
         await self.async_request_refresh()
 
+    async def async_close(self) -> None:
+        """Datenbank schließen; wartende Messungen und Abfragen tun danach nichts mehr."""
+        async with self.lock:
+            self.closed = True
+            await self.hass.async_add_executor_job(self.storage.db.close)
+
     async def _async_forecast(self) -> None:
         try:
             await self.hass.async_add_executor_job(self.forecast.read)
@@ -198,6 +207,8 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
             self.config_entry.async_create_background_task(self.hass, self._async_forecast(), "balkonaut_forecast")
         values |= {k: v for k, v in self.forecast.current().items() if k not in values}
         async with self.lock:
+            if self.closed:  # Messung wartete auf die Sperre, während der Eintrag entladen wurde
+                return
             await self.hass.async_add_executor_job(_store, self.storage, ts, values)
 
 
@@ -350,7 +361,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) ->
         await coordinator.async_sample()
         entry.async_on_unload(async_track_time_interval(hass, coordinator.async_sample, SAMPLE_INTERVAL))
         entry.async_on_unload(async_track_time_interval(hass, coordinator.async_store_regulation, timedelta(hours=1)))
-    await coordinator.async_config_entry_first_refresh()
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception:
+        if storage:  # bei erneutem Versuch öffnet HA eine neue Verbindung, diese nicht offen lassen
+            await coordinator.async_close()
+        raise
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     if storage and not entry.data.get(BACKFILLED) and "recorder" in hass.config.components:
@@ -373,7 +389,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) -
         from homeassistant.components.frontend import async_remove_panel
 
         async_remove_panel(hass, PANEL)  # letzter Eintrag weg: Panel aus der Seitenleiste nehmen
-    if unloaded and (storage := entry.runtime_data.storage):
-        async with entry.runtime_data.lock:
-            await hass.async_add_executor_job(storage.db.close)
+    if unloaded and entry.runtime_data.storage:
+        await entry.runtime_data.async_close()
     return unloaded

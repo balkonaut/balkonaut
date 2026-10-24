@@ -122,7 +122,7 @@ def amortization(rows, prices, cost, commissioned=None, profile=None):
         "rest": remaining,
         "jahre_bis_amortisation": years_left,
         "amortisiert_am": (datetime.fromtimestamp(max(hours) + 3600, TZ) + timedelta(days=years_left * 365.25)).date()
-        if years_left is not None and hours else None,
+        if years_left is not None and years_left <= 100 and hours else None,  # sonst kein sinnvolles Datum
         "zaehler_plausibel": not (years and meter) or meter[-1] / (years * 365.25) <= MAX_KWH_PER_DAY,
         "messtage": days,
     }
@@ -376,7 +376,8 @@ def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
     starts = periods(now)
     watch = yield_watch(rows, now)
     warnings = watch["warnungen"]
-    stand = max((ts for ts, _ in latest.values()), default=None)
+    # Prognosen kommen auch, wenn alle Geräte ausfallen, und zählen deshalb nicht als Messwert
+    stand = max((ts for key, (ts, _) in latest.items() if not key.endswith("_forecast_today")), default=None)
     if stand is not None and now - stand > 120:
         warnings = [{"code": "keine_messwerte",
                      "text": "Seit über 2 Minuten keine Messwerte, Verbindung zu den Geräten bzw. Home Assistant prüfen"}] + warnings

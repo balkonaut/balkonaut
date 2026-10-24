@@ -46,10 +46,9 @@ def report(storage, monat, prices, now, profile=None, commissioned=None):
 
 def regulation(storage, prices, start, end):
     """Regelgüte der Nulleinspeisung aus den Rohwerten in [start, end), None ohne Messwerte."""
-    latest = {k: v for k, (_, v) in storage.latest().items()}
+    latest = {k: v for k, (_, v) in storage.latest().items() if v is not None}
     return analytics.regulation(storage.series(start, REGULATION_KEYS, end), prices,
-                                soc_min=latest.get("battery_soc_min") or 10,
-                                limit=latest.get("output_power_limit") or 800)
+                                soc_min=latest.get("battery_soc_min", 10), limit=latest.get("output_power_limit", 800))
 
 
 def regulation_week(storage, prices, now):

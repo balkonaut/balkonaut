@@ -21,11 +21,22 @@ def test_aggregate():
 
 def test_hourly_includes_running_hour():
     s = Storage(":memory:")
-    s.add(H, {"grid_power": 400, "output_energy": 10.0})
-    s.add(H + 900, {"grid_power": -200, "output_energy": 10.2})
+    s.add(H, {"grid_power": 400, "battery_soc": 90})
+    s.add(H + 900, {"grid_power": -200, "battery_soc": 100})
     assert s.hourly() == []
-    rows = s.hourly(H + 1800)  # halbe Stunde vorbei
-    assert rows == [("grid_power", H, 50.0, 100.0, -50.0, -200.0), ("output_energy", H, 5.05, 5.05, 0.0, 10.2)]
+    rows = s.hourly(H + 1800)  # halbe Stunde vorbei: Leistung anteilig in Wh, Ladestand bleibt Mittelwert
+    assert rows == [("battery_soc", H, 95.0, 95.0, 0.0, 100.0), ("grid_power", H, 50.0, 100.0, -50.0, -200.0)]
+
+
+def test_merge_keeps_own_hours_after_raw_cleanup():
+    """Eigene Stunden bleiben bei der Übernahme, auch wenn ihre Rohwerte nach RAW_DAYS gelöscht sind."""
+    s = Storage(":memory:")
+    s.add(H, {"grid_power": 100})
+    s.aggregate(H + 30 * 86400)  # Stunde H aggregiert, Rohwerte gelöscht
+    row = ("grid_power", H, 999.0, 999.0, 0.0, None, 1)
+    old = ("grid_power", H - 3600, 50.0, 50.0, 0.0, None, 1)
+    assert s.merge({"hourly": [row, old], "regulation": {}}) == 1  # nur die Stunde vor der ersten Messung
+    assert ("grid_power", H, 100.0, 100.0, 0.0, 100.0) in s.hourly()
 
 
 def test_regulation_days():

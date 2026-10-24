@@ -224,7 +224,9 @@ async def test_planes_without_forecast_solar(hass, monkeypatch):
     await entry.runtime_data.async_sample()
     latest = await hass.async_add_executor_job(entry.runtime_data.storage.latest)
     assert latest["pv_forecast_today"][1] == 4.2
+    coordinator = entry.runtime_data
     assert await hass.config_entries.async_unload(entry.entry_id)
+    await coordinator.async_sample()  # wartete eine Messung auf die Sperre: kein Fehler mit geschlossener Datenbank
 
 
 async def test_standalone_without_device(hass):

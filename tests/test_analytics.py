@@ -157,3 +157,29 @@ def test_combine_regulation():
     assert c["tage"] == 2 and c["regelbereit_stunden"] == 8 and c["lastspruenge"] == 6
     assert c["anteil_nahe_null"] == (0.5 * 6 + 1.0 * 2) / 8 and c["max_abgabe"] == 900 and c["reaktionszeit_median"] == 30
     assert combine_regulation([]) is None
+
+
+def test_tiny_savings_and_stale_forecast():
+    """Fast keine Ersparnis: kein Datum statt Überlauf. Frische Prognose verdeckt ausgefallene Geräte nicht."""
+    from balkonaut.analytics import status
+    rows = [("grid_power", h * 3600, 0, 0, 0, None) for h in range(2)]
+    rows += [("output_power", 0, 0.001, 0.001, 0, 0.001)]  # 1 mW: über 600 000 Jahre bis zur Amortisation
+    assert amortization(rows, PRICES, cost=800)["amortisiert_am"] is None
+    s = status(rows, {"grid_power": (7200, 1.0), "pv_forecast_today": (9000, 3.0)}, 9000, PRICES, 800)
+    assert s["warnungen"][0]["code"] == "keine_messwerte"
+
+
+def test_regulation_zero_limit(tmp_path):
+    """0 % Entlademinimum und 0 W Limit gelten, statt durch Standardwerte ersetzt zu werden."""
+    from balkonaut import analytics, views
+    from balkonaut.storage import Storage
+    s = Storage(":memory:")
+    s.add(100, {"battery_soc_min": 0, "output_power_limit": 0, "grid_power": 10, "output_power": 0, "battery_soc": 5})
+    seen = {}
+    real = analytics.regulation
+    analytics.regulation = lambda series, prices, soc_min, limit: seen.update(soc_min=soc_min, limit=limit)
+    try:
+        views.regulation(s, PRICES, 0, 200)
+    finally:
+        analytics.regulation = real
+    assert seen == {"soc_min": 0, "limit": 0}
