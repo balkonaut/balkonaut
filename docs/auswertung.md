@@ -11,7 +11,9 @@ der heutige Hausverbrauch je Stunde (Anteil Balkonkraftwerk und Netz) und der St
 Die Seite lädt sich jede Minute neu. Sind die letzten Messwerte älter als zwei Minuten, wird der Punkt
 neben „Energiefluss jetzt“ orange und oben erscheint ein Hinweis: Dann sind meist die Geräte oder Home Assistant nicht erreichbar.
 
-Hell oder dunkel richtet sich nach der Einstellung des Geräts.
+Hell oder dunkel richtet sich zunächst nach der Einstellung des Geräts. Der Knopf rechts in der Kopfzeile wechselt
+reihum zwischen *Automatisch*, *Hell* und *Dunkel*, die Wahl merkt sich der Browser. Unten auf jeder Seite stehen
+die Version und ein Link zum Quellcode auf GitHub.
 
 ### Energiefluss
 

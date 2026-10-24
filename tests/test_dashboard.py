@@ -13,6 +13,7 @@ def test_de():
 
 def test_dashboard(client):
     assert "Noch keine Messwerte" in client.get("/").text  # leere Datenbank
+    assert "Balkonaut 0." in client.get("/").text  # Fußzeile mit Version
     now = int(time.time()) // 3600 * 3600
     storage = app.state.storage
     for t in range(now - 7200, now, 600):

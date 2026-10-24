@@ -8,7 +8,7 @@
 <title>{% block title %}{% endblock %} · Balkonaut</title>
 <style>
   /* Farben aus dem Logo: Himmel #2f6690, Sonne #f2b733. Hell wie Papier, dunkel als Blaupause. */
-  :root { color-scheme: light dark;
+  :root { color-scheme: light;
     --bg: #f7f8fa; --card: #fff; --ink: #0f1d30; --muted: #4f5e73; --line: #c4cfdd; --pat: rgba(27,63,92,.07);
     --sun: #f2b733; --sun-ink: #7f5a00; --sun-soft: #fdf1cf;
     --leaf: #23804b; --leaf-soft: #e0f1e6; --sky: #2f6690;
@@ -16,15 +16,18 @@
     --act-bg: #1b3f5c; --act-ink: #fff; --soc-l: 40%;
     --lim-lo: #d93a3a; --lim-prot: #d97706;
     --shadow: 0 1px 2px rgba(15,29,48,.05), 0 8px 24px rgba(15,29,48,.06);
+    --shadow-hover: 0 0 4px rgba(15,29,48,.12), 0 0 20px rgba(15,29,48,.30); --card-hover: #fff;
     --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; }
-  @media (prefers-color-scheme: dark) { :root {
+  /* data-theme setzt das Skript unten: Systemeinstellung oder die Wahl über den Schalter */
+  :root[data-theme="dark"] { color-scheme: dark;
     --bg: #0d2442; --card: #10294b; --ink: #eaf1fb; --muted: #a6b8d1; --line: #2e4c78; --pat: rgba(255,255,255,.06);
     --sun: #ffc845; --sun-ink: #ffc845; --sun-soft: #3a3115;
     --leaf: #5fcf8a; --leaf-soft: #14302a; --sky: #6aa6df;
     --batt: #3cc3e6; --batt-soft: #0f3043; --batt-flow: #2dd4bf; --warn: #ef8f63; --warn-soft: #3b231a;
     --act-bg: #ffc845; --act-ink: #0b1626; --soc-l: 55%;
     --lim-lo: #ff6b6b; --lim-prot: #ffa94d;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); } }
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    --shadow-hover: 0 0 4px rgba(0,0,0,.40), 0 0 20px rgba(0,0,0,.65); --card-hover: #153256; }
   * { box-sizing: border-box; }
   body { margin: 0; background-color: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     background-image: linear-gradient(var(--pat) 1px, transparent 1px), linear-gradient(90deg, var(--pat) 1px, transparent 1px);
@@ -40,11 +43,15 @@
   .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; font: 700 18px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
   header nav { display: flex; flex-wrap: wrap; gap: 6px; }
   header nav a { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 500; }
-  header nav a:hover { color: var(--ink); background: var(--card); }
+  header nav a:hover, .theme:hover { color: var(--ink); background: var(--card); }
+  .theme { padding: 0 12px; border: 0; background: none; color: var(--muted); }
   header nav a[aria-current="page"] { background: var(--act-bg); color: var(--act-ink); }
   @media (max-width: 720px) { header nav a span { display: none; } header nav a { padding: 0 12px; } .brand { width: 100%; } }
 
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 20px; box-shadow: var(--shadow); min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 20px; box-shadow: var(--shadow); min-width: 0;
+    transition: transform .18s ease-out, box-shadow .18s ease-out, background-color .18s ease-out; }
+  @media (hover: hover) { .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); background: var(--card-hover); } }
+  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); font: 13px var(--mono); color: var(--muted); }
   .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
   .label { color: var(--muted); font-size: 14px; }
   .card > .label:first-child, .eyebrow { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
@@ -62,11 +69,34 @@
   input { font: inherit; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   @media print {
-    :root { --bg: #fff; --card: #fff; --ink: #000; --muted: #444; --line: #ccc; --pat: transparent; --shadow: none; }
+    :root, :root[data-theme="dark"] { color-scheme: light; --bg: #fff; --card: #fff; --ink: #000; --muted: #444; --line: #ccc; --pat: transparent; --shadow: none; }
     header, .noprint { display: none; }
     .card { break-inside: avoid; }
   }
 </style>
+<script>
+  // Darstellung: ohne gespeicherte Wahl nach Systemeinstellung, sonst "light" oder "dark"
+  const systemDunkel = matchMedia("(prefers-color-scheme: dark)");
+  let darstellung = null;
+  try { darstellung = localStorage.getItem("darstellung"); } catch (e) {}
+  function zeigeDarstellung() {
+    document.documentElement.dataset.theme = darstellung || (systemDunkel.matches ? "dark" : "light");
+    const knopf = document.getElementById("darstellung");
+    if (!knopf) return;
+    const [icon, name] = {light: ["sun", "Hell"], dark: ["moon", "Dunkel"]}[darstellung] || ["auto", "Automatisch"];
+    knopf.querySelector("use").setAttribute("href", "#i-" + icon);
+    knopf.setAttribute("aria-label", "Darstellung: " + name);
+    knopf.title = "Darstellung: " + name;
+  }
+  function wechsleDarstellung() {
+    darstellung = {null: "light", light: "dark", dark: null}[darstellung];  // Automatisch, Hell, Dunkel reihum
+    try { darstellung ? localStorage.setItem("darstellung", darstellung) : localStorage.removeItem("darstellung"); } catch (e) {}
+    zeigeDarstellung();
+  }
+  systemDunkel.addEventListener("change", zeigeDarstellung);
+  zeigeDarstellung();
+  addEventListener("DOMContentLoaded", zeigeDarstellung);
+</script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -81,6 +111,8 @@
   <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8M10 9H8"/></symbol>
   <symbol id="i-set" viewBox="0 0 24 24"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></symbol>
   <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
 </svg>
 <main>
@@ -93,8 +125,10 @@
     <a href="{{ slug or './' }}" aria-label="{{ name }}"{% if request.url.path == '/' + slug %} aria-current="page"{% endif %}><svg class="ico" aria-hidden="true"><use href="#i-{{ icon }}"/></svg><span>{{ name }}</span></a>
     {% endfor %}
   </nav>
+  <button type="button" id="darstellung" class="theme" onclick="wechsleDarstellung()" aria-label="Darstellung: Automatisch"><svg class="ico" aria-hidden="true"><use href="#i-auto"/></svg></button>
 </header>
 {% block content %}{% endblock %}
+<footer>Balkonaut {{ version }} · <a href="https://github.com/balkonaut/balkonaut">GitHub</a></footer>
 </main>
 </body>
 </html>

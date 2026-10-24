@@ -1,4 +1,5 @@
 import asyncio
+import importlib.metadata
 import json
 import logging
 import math
@@ -37,6 +38,7 @@ templates.env.filters.update(
     komma=lambda v: v if isinstance(v, str) else f"{v:g}".replace(".", ","),  # Eingabefelder: 50,1 statt 50.1
     ago=lambda s: f"{s} s" if s < 120 else f"{s // 60} min" if s < 7200 else f"{s // 3600} h",
 )
+templates.env.globals["version"] = importlib.metadata.version("balkonaut")
 # Adresse, unter der die Integration das Add-on erreicht (Hostname des Add-on-Containers im HA-Netz)
 templates.env.globals["integration_url"] = lambda: f"http://{socket.gethostname()}:8000" if config.addon() else None
 PERIODS = [("tag", "Heute"), ("monat", "Monat"), ("jahr", "Jahr"), ("gesamt", "Gesamt")]
