@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "balkonaut"
-version = "1.0.0"
+version = "1.0.1-beta.1"
 description = "Analyse- und Entscheidungstool für Balkonkraftwerke mit Speicher"
 requires-python = ">=3.12"
 license = "Apache-2.0"
