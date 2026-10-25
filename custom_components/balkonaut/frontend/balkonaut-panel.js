@@ -71,9 +71,10 @@ const PANEL_STYLE = `
   .setup a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 6px; text-decoration: none;
     font-weight: 600; border: 1px solid var(--bk-line); color: var(--bk-ink); margin-top: auto; }
   .setup .next a { background: var(--primary-color); color: var(--text-primary-color, #fff); border-color: var(--primary-color); }
-  .card:has(> .info) { position: relative; } .card:has(> .info) > .label:first-child { padding-right: 40px; }
+  .card:has(> .info) { position: relative; } .card:has(> .info) > .label:first-child { padding-right: 40px; overflow-wrap: anywhere; }
   .info { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--bk-line);
-    background: var(--bk-card); color: var(--bk-muted); font: 600 14px/1 var(--bk-mono); cursor: pointer; }
+    background: var(--bk-card); color: var(--bk-muted); font: 600 14px/1 var(--bk-mono); cursor: pointer;
+    display: grid; place-items: center; padding: 0; }
   .info[aria-expanded="true"] { background: var(--bk-ink); color: var(--bk-card); }
   .hilfe { font-size: 14px; color: var(--bk-muted); margin: 8px 0 0; line-height: 1.4; }
   .q-badge { display: inline-block; vertical-align: middle; font: 600 11px var(--bk-mono); letter-spacing: .06em; text-transform: uppercase;

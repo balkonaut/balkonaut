@@ -57,9 +57,10 @@
   .card > .label:first-child, .eyebrow { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   .value { font: 600 28px var(--mono); letter-spacing: -.04em; font-variant-numeric: tabular-nums; margin: 4px 0; }
   /* Kacheln mit Erklärung und Bewertung (_kachel.html) */
-  .card:has(> .info) { position: relative; } .card:has(> .info) > .label:first-child { padding-right: 40px; }
+  .card:has(> .info) { position: relative; } .card:has(> .info) > .label:first-child { padding-right: 40px; overflow-wrap: anywhere; }
   .info { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line);
-    background: var(--card); color: var(--muted); font: 600 14px/1 var(--mono); cursor: pointer; }
+    background: var(--card); color: var(--muted); font: 600 14px/1 var(--mono); cursor: pointer;
+    display: grid; place-items: center; padding: 0; min-height: 0; }  /* ohne die allgemeine Knopfgröße */
   .info[aria-expanded="true"] { background: var(--ink); color: var(--card); }
   .hilfe { font-size: 14px; color: var(--muted); margin: 8px 0 0; line-height: 1.4; }
   .q-badge { display: inline-block; vertical-align: middle; font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase;
