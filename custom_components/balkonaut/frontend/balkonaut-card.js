@@ -60,7 +60,7 @@ class BalkonautCard extends HTMLElement {
   }
 
   connectedCallback() {
-    this._timer = setInterval(() => this._load(), 60000); // Bilanz ändert sich langsam
+    this._timer = setInterval(() => this._load(), 10000); // wie die Messung
   }
 
   disconnectedCallback() {

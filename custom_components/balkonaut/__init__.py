@@ -17,7 +17,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL, Platform
-from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse, callback
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_registry as er, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -274,13 +274,14 @@ def _entry(hass: HomeAssistant, entry_id: str | None) -> ConfigEntry | None:
 
 
 @websocket_api.websocket_command({vol.Required("type"): "balkonaut/status", vol.Optional("entry_id"): str})
-@callback
-def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+@websocket_api.async_response
+async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
     """Status für Karte und Panel: berechnete Werte und, im eigenständigen Betrieb, die zugeordneten Entitäten
-    für Live-Werte."""
+    für Live-Werte. Frisch berechnet, höchstens alle 10 Sekunden (Sperre des Koordinators)."""
     if (entry := _entry(hass, msg.get("entry_id"))) is None:
         connection.send_error(msg["id"], "not_found", "Kein Balkonaut-Eintrag geladen")
         return
+    await entry.runtime_data.async_request_refresh()
     connection.send_result(msg["id"], {
         "entry_id": entry.entry_id, "entities": entry.data.get(CONF_ENTITIES), "invert": entry.data.get(CONF_INVERT, []),
         "status": entry.runtime_data.data,

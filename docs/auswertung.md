@@ -10,7 +10,7 @@ steht ganz oben die Kachel *Einrichtung* mit dem Stand der drei Schritte; sie ve
 Die Startseite `http://<adresse>:8000/` zeigt oben die Ersparnis von heute, den Energiefluss, den Akku
 und die Autarkie von heute. Darunter folgen die Bilanz für den gewählten Zeitraum, die Akku-Kennzahlen,
 der heutige Hausverbrauch je Stunde (Anteil Balkonkraftwerk und Netz) und der Stand der Amortisation.
-Die Seite lädt sich jede Minute neu. Sind die letzten Messwerte älter als zwei Minuten, wird der Punkt
+Die Werte aktualisieren sich alle 10 Sekunden, ohne dass die Seite neu lädt. Sind die letzten Messwerte älter als zwei Minuten, wird der Punkt
 neben „Energiefluss jetzt“ orange und oben erscheint ein Hinweis: Dann sind meist die Geräte oder Home Assistant nicht erreichbar.
 
 Hell oder dunkel richtet sich zunächst nach der Einstellung des Geräts. Der Knopf rechts in der Kopfzeile wechselt

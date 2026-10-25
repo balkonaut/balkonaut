@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block head %}<meta http-equiv="refresh" content="60">{% endblock %}
 {% block title %}Übersicht{% endblock %}
 {% block content %}
+<div id="uebersicht">
 <style>
   .bento { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); }
   .span2 { grid-column: span 2; } .row2 { grid-row: span 2; }
@@ -202,4 +202,16 @@
   {% if a.erwarteter_ertrag_jahr %}<p class="label">Erwarteter Jahresertrag laut PVGIS: {{ a.erwarteter_ertrag_jahr|de(0) }} kWh.</p>{% endif %}
   {% if not a.zaehler_plausibel %}<p class="note err">Der Abgabezähler ist für den Zeitraum seit der Inbetriebnahme zu hoch. Stimmt das Datum?</p>{% endif %}
 </div>
+</div>
+<script>
+  // Alle 10 Sekunden wie die Messung: Seite im Hintergrund holen und nur den Inhalt tauschen, ohne Neuladen
+  setInterval(async () => {
+    if (document.hidden) return;
+    try {
+      const r = await fetch(location.href);
+      const neu = r.ok && new DOMParser().parseFromString(await r.text(), "text/html").getElementById("uebersicht");
+      if (neu) document.getElementById("uebersicht").replaceWith(neu);
+    } catch (e) {}  // nächster Versuch in 10 Sekunden
+  }, 10000);
+</script>
 {% endblock %}
