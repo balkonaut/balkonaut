@@ -1,10 +1,12 @@
 """Direkte Geräte-Adapter: liest Geräte im Heimnetz ohne Home Assistant, lokal per HTTP ohne Anmeldung.
 
 Liefert dieselben Messgrößen wie der Home-Assistant-Adapter (W, kWh, Vorzeichen siehe dort).
-Geprüft an APsystems EZHI, Shelly Pro 3EM und Shelly Outdoor Plug S Gen3 (Oktober 2026).
+Geprüft an APsystems EZHI, Shelly Pro 3EM und Shelly Outdoor Plug S Gen3 (Oktober 2026). Shelly mit einer Phase
+(EM1), OpenDTU und AhoyDTU sind aus deren Dokumentation und Quellcode abgeleitet, nicht an Geräten geprüft.
 """
 import json
 import logging
+import urllib.error
 import urllib.request
 
 from . import forecast
@@ -47,6 +49,26 @@ def shelly_em(host):
     return {"grid_power": _num(_get(host, "rpc/EM.GetStatus?id=0").get("total_act_power"))}
 
 
+def shelly_em1(host):
+    """Shelly mit Messkanal EM1, z. B. Pro EM oder EM Gen3: Netzleistung am ersten Kanal (nicht geprüft)."""
+    return {"grid_power": _num(_get(host, "rpc/EM1.GetStatus?id=0").get("act_power"))}
+
+
+def opendtu(host):
+    """Hoymiles über OpenDTU: Leistung und Zähler aller Wechselrichter zusammen (nicht geprüft). Ohne Speicher ist
+    das die Erzeugung und zugleich die Abgabe ins Haus."""
+    total = _get(host, "api/livedata/status").get("total") or {}
+    power, energy = _num((total.get("Power") or {}).get("v")), _num((total.get("YieldTotal") or {}).get("v"))
+    return {"pv_power": power, "pv_energy": energy, "output_power": power, "output_energy": energy}
+
+
+def ahoydtu(host):
+    """Hoymiles über AhoyDTU: Leistung aller Wechselrichter zusammen, ohne Zähler (nicht geprüft)."""
+    powers = [_num(i.get("cur_pwr")) for i in _get(host, "api/index").get("inverter") or []]
+    power = sum(p for p in powers if p is not None) if any(p is not None for p in powers) else None
+    return {"pv_power": power, "output_power": power}
+
+
 def shelly_plug(host):
     """Shelly Plug (Gen2, Gen3) am Einspeisepunkt: Abgabe ins Haus mit Zähler."""
     s = _get(host, "rpc/Switch.GetStatus?id=0")
@@ -54,26 +76,33 @@ def shelly_plug(host):
     return {"output_power": _num(s.get("apower")), "output_energy": None if wh is None else wh / 1000}
 
 
-# Reihenfolge: spätere Geräte überschreiben frühere, so gilt die Abgabe-Leistung des Speichers vor der des Plugs
-# und der Zähler am Einspeisepunkt, den der Speicher nicht liefert, bleibt (Handbuch, Messquellen)
-TYPES = {"shelly_plug": shelly_plug, "apsystems_ezhi": apsystems_ezhi, "shelly_em": shelly_em}
+# Reihenfolge: spätere Geräte überschreiben frühere, so gilt die Abgabe des Plugs am Einspeisepunkt vor der der DTU,
+# die Abgabe-Leistung des Speichers vor der des Plugs, und der Zähler am Einspeisepunkt, den der Speicher nicht
+# liefert, bleibt (Handbuch, Messquellen)
+TYPES = {"opendtu": opendtu, "ahoydtu": ahoydtu, "shelly_plug": shelly_plug, "apsystems_ezhi": apsystems_ezhi,
+         "shelly_em": shelly_em, "shelly_em1": shelly_em1}
+
+# Erkennung: (Typ, Pfad, Prüfung der Antwort), der erste Treffer gilt
+PROBES = [
+    ("shelly_plug", "shelly", lambda d: "Plug" in (d.get("app") or "")),  # z. B. PlusPlugS, PlugSG3, OutdoorPlugSG3
+    ("shelly_em", "rpc/EM.GetStatus?id=0", lambda d: "total_act_power" in d),  # drei Phasen, z. B. Pro 3EM
+    ("shelly_em1", "rpc/EM1.GetStatus?id=0", lambda d: "act_power" in d),  # eine Phase je Kanal, z. B. Pro EM
+    ("apsystems_ezhi", "getDeviceInfo", lambda d: (d.get("data") or {}).get("type") == "EZHI"),
+    ("opendtu", "api/livedata/status", lambda d: "inverters" in d and "total" in d),
+    ("ahoydtu", "api/generic", lambda d: "modules" in d and "esp_type" in d),
+]
 
 
 def detect(host):
-    """Gerätetyp unter host erkennen (Shelly über /shelly, EZHI über /getDeviceInfo); ValueError, wenn unbekannt."""
-    try:
-        app = _get(host, "shelly").get("app") or ""
-        if app.startswith("Pro3EM"):
-            return "shelly_em"
-        if "Plug" in app:  # z. B. PlusPlugS, PlugSG3, OutdoorPlugSG3
-            return "shelly_plug"
-    except (OSError, ValueError):
-        pass
-    try:
-        if (_get(host, "getDeviceInfo").get("data") or {}).get("type") == "EZHI":
-            return "apsystems_ezhi"
-    except (OSError, ValueError):
-        pass
+    """Gerätetyp unter host erkennen; ValueError, wenn unbekannt."""
+    for typ, path, test in PROBES:
+        try:
+            if test(_get(host, path)):
+                return typ
+        except (urllib.error.HTTPError, ValueError, AttributeError):  # Gerät antwortet, aber nicht passend
+            pass
+        except OSError as e:  # nicht erreichbar: nicht jede weitere Probe auf die Zeitüberschreitung warten lassen
+            raise ValueError(f"Unter {host} antwortet kein Gerät") from e
     raise ValueError(f"Unter {host} antwortet kein bekanntes Gerät")
 
 

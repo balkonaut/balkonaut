@@ -94,3 +94,44 @@ def test_forecast_retry(monkeypatch):
     planes = devices.forecast.Planes({"lat": 50.0, "lon": 10.0}, [{"declination": 30, "azimuth": 150, "kwp": 0.87}])
     assert planes.read() == {} and planes.read() == {} and len(calls) == 1
     assert planes.next - time.time() <= 900
+
+
+def test_detect(monkeypatch):
+    """Erkennung an der Antwort; HTTP-Fehler heißt nächste Probe, keine Antwort beendet die Suche."""
+    import urllib.error
+    answers = {("pro3em", "shelly"): {"app": "Pro3EM"}, ("pro3em", "rpc/EM.GetStatus?id=0"): EM,
+               ("plug", "shelly"): {"app": "OutdoorPlugSG3"},
+               ("proem", "shelly"): {"app": "ProEM"}, ("proem", "rpc/EM1.GetStatus?id=0"): {"id": 0, "act_power": 120.5},
+               ("ezhi", "getDeviceInfo"): {"data": {"type": "EZHI"}},
+               ("opendtu", "api/livedata/status"): {"inverters": [], "total": {}, "hints": {}},
+               ("ahoy", "api/generic"): {"version": "0.8.155", "modules": "MDH", "esp_type": "ESP32"}}
+
+    def get(host, path):
+        if host == "weg":
+            raise urllib.error.URLError("timed out")
+        if (host, path) not in answers:
+            raise urllib.error.HTTPError(path, 404, "Not Found", {}, None)
+        return answers[host, path]
+    monkeypatch.setattr(devices, "_get", get)
+    found = {h: devices.detect(h) for h in ("pro3em", "plug", "proem", "ezhi", "opendtu", "ahoy")}
+    assert found == {"pro3em": "shelly_em", "plug": "shelly_plug", "proem": "shelly_em1", "ezhi": "apsystems_ezhi",
+                     "opendtu": "opendtu", "ahoy": "ahoydtu"}
+    for host in ("weg", "unbekannt"):
+        try:
+            devices.detect(host)
+            raise AssertionError(host)
+        except ValueError:
+            pass
+
+
+def test_dtu(monkeypatch):
+    """OpenDTU mit Zähler, AhoyDTU nur Leistung; ohne Speicher Erzeugung und Abgabe; der Plug gilt vor der DTU."""
+    opendtu = {"inverters": [], "total": {"Power": {"v": 412.3, "u": "W", "d": 1}, "YieldTotal": {"v": 1234.567, "u": "kWh", "d": 3}}}
+    ahoy = {"inverter": [{"id": 0, "cur_pwr": 200.0}, {"id": 1, "cur_pwr": 150.5}]}
+    answers = {("dtu", "api/livedata/status"): opendtu, ("ahoy", "api/index"): ahoy, **ANSWERS}
+    monkeypatch.setattr(devices, "_get", lambda host, path: answers[host, path])
+    assert Devices([{"type": "opendtu", "host": "dtu"}]).read() == {
+        "pv_power": 412.3, "pv_energy": 1234.567, "output_power": 412.3, "output_energy": 1234.567}
+    assert Devices([{"type": "ahoydtu", "host": "ahoy"}]).read() == {"pv_power": 350.5, "output_power": 350.5}
+    both = Devices([{"type": "shelly_plug", "host": "10.0.0.38"}, {"type": "opendtu", "host": "dtu"}]).read()
+    assert both["output_power"] == -6.7 and both["pv_power"] == 412.3

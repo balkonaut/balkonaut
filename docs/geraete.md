@@ -56,6 +56,47 @@ nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung p
 |---|---|---|---|
 | Forecast.Solar | Forecast.Solar | Tagesprognose je Fläche, benannt nach der Ausrichtung (z. B. Südost 150°) | bestätigt |
 
+## Docker-App: Geräte direkt im Heimnetz
+
+Ohne Home Assistant liest die Docker-App Geräte selbst über deren lokale Schnittstelle. In der Einrichtung
+(*Einstellungen → Geräte*) genügt die IP-Adresse; Balkonaut fragt die Adresse an und erkennt an der Antwort, welches
+Gerät dort läuft. Unbekannte Geräte meldet die Einrichtung mit „Unter … antwortet kein bekanntes Gerät“.
+
+| Gerät | IP-Adresse von | Messgrößen | Stand |
+|---|---|---|---|
+| APsystems EZHI | EZHI (lokalen Modus in der APsystems-App aktivieren) | PV, Off-Grid-Port, Akku mit Zählern, Abgabe ins Haus | bestätigt |
+| Shelly Pro 3EM und andere Shelly mit drei Phasen | Shelly | Netzleistung über alle Phasen | bestätigt (Pro 3EM) |
+| Shelly Plug (Gen2, Gen3) | Shelly | Abgabe ins Haus mit Zähler | bestätigt |
+| Shelly Pro EM, EM Gen3 (eine Phase je Kanal) | Shelly | Netzleistung am ersten Kanal | nicht geprüft |
+| Hoymiles über OpenDTU | OpenDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, mit Zähler | nicht geprüft |
+| Hoymiles über AhoyDTU | AhoyDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, ohne Zähler | nicht geprüft |
+
+### Hoymiles: welche IP-Adresse?
+
+Die klassischen Hoymiles-Mikrowechselrichter haben selbst kein WLAN, sie funken mit einer DTU. Einzutragen ist
+deshalb die IP-Adresse der DTU, nicht die des Wechselrichters:
+
+| Was angeschlossen ist | IP-Adresse von | Docker-App direkt |
+|---|---|---|
+| Hoymiles HM/HMS mit **OpenDTU** (ESP32-Box zum Selbstbauen) | OpenDTU | ja |
+| Hoymiles HM/HMS mit **AhoyDTU** (ebenfalls ESP32) | AhoyDTU | ja |
+| Hoymiles **HMS-…W-…T** mit eingebautem WLAN | – | nein, eigenes Protokoll |
+| Hoymiles **DTU-Lite, DTU-Pro** (Boxen des Herstellers) | – | nein, Cloud bzw. Modbus |
+
+Hängen mehrere Wechselrichter an einer DTU, zählt Balkonaut ihre Leistung zusammen. Ohne Speicher ist das die
+Erzeugung und zugleich die Abgabe ins Haus; ein Shelly Plug am Einspeisepunkt hat für die Abgabe Vorrang. Die
+Lesezugriffe der DTU müssen ohne Passwort erlaubt sein (Standard bei OpenDTU und AhoyDTU, nicht geprüft). AhoyDTU
+liefert keinen Zähler, Balkonaut summiert die Leistung dann selbst auf.
+
+### Was nicht direkt geht
+
+Geräte mit Modbus (z. B. Sungrow, Huawei, Victron, Fox ESS, Deye) oder nur mit Cloud-Zugang (z. B. Anker Solix,
+EcoFlow, Zendure, Growatt, Tibber) liest die Docker-App nicht selbst. Dafür gibt es zwei Wege: die
+[Integration für Home Assistant](installation.md), die viele dieser Geräte kennt (Tabellen oben), oder die Docker-App
+mit dem Abschnitt `home_assistant` in der `config.yaml`, dann kommen die Werte aus Home Assistant
+(siehe [Einstellungen](einstellungen.md)). Weitere Geräte kommen dazu, wenn jemand sie über
+[Gerät melden](installation.md#gerat-melden) beisteuert.
+
 ## Lücken und Auswege
 
 - **Ohne Zähler** (Anker Solix, Hoymiles WiFi, Huawei-PV, EcoFlow PowerStream): Balkonaut summiert die Leistung selbst

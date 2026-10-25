@@ -270,9 +270,10 @@ def zero_feed_in(request: Request):
     return templates.TemplateResponse(request, "regulation.html", {"r": regulation_data(request)})
 
 
-DEVICE_NAMES = {"apsystems_ezhi": "APsystems EZHI", "shelly_em": "Shelly Pro 3EM", "shelly_plug": "Shelly Plug"}
-HUB_NAMES = {"apsystems_ezhi": "EZHI"}  # Name in der Mitte des Energieflusses, je Speicher-Wechselrichter
-INVERTIBLE = {"shelly_plug": "output_power", "shelly_em": "grid_power"}  # Messgröße, deren Richtung vom Anschluss abhängt
+DEVICE_NAMES = {"apsystems_ezhi": "APsystems EZHI", "shelly_em": "Shelly 3EM", "shelly_em1": "Shelly EM (eine Phase)",
+                "shelly_plug": "Shelly Plug", "opendtu": "Hoymiles über OpenDTU", "ahoydtu": "Hoymiles über AhoyDTU"}
+HUB_NAMES = {"apsystems_ezhi": "EZHI", "opendtu": "Hoymiles", "ahoydtu": "Hoymiles"}  # Mitte des Energieflusses
+INVERTIBLE = {"shelly_plug": "output_power", "shelly_em": "grid_power", "shelly_em1": "grid_power"}  # Richtung je nach Anschluss
 # Anzeige der aktuellen Werte: Messgröße, Name, Einheit, Richtung bei + und -
 LIVE = [("grid_power", "Netz", "W", ("Bezug", "Einspeisung")), ("pv_power", "PV", "W", None),
         ("pv_ac_power", "Off-Grid-Port", "W", None), ("battery_power", "Akku", "W", ("lädt", "entlädt")),
@@ -330,7 +331,8 @@ async def save_devices(request, cfg, form):
         except ValueError:
             return await settings_page(request, cfg, 400, device_error=(
                 f"Unter {host} antwortet kein bekanntes Gerät. Adresse prüfen; unterstützt sind APsystems EZHI "
-                "(lokaler Modus in der APsystems-App), Shelly Pro 3EM und Shelly Plug."))
+                "(lokaler Modus in der APsystems-App), Shelly-Zähler, Shelly Plug und Hoymiles über OpenDTU oder "
+                "AhoyDTU (IP-Adresse der DTU)."))
     elif form.get("aktion") == "entfernen":
         cfg["devices"] = [d for d in devs if d["host"] != host]
     elif form.get("aktion") == "drehen":

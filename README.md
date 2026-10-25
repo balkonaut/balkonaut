@@ -114,8 +114,10 @@ type: custom:balkonaut-card
 ## Ohne Home Assistant oder mit der Docker-App
 
 Balkonaut läuft auch ganz ohne Home Assistant als Docker-Container, etwa auf einer NAS oder einem Raspberry Pi,
-mit eigener Web-Oberfläche. Er liest APsystems EZHI, Shelly Pro 3EM und Shelly Plug direkt im Heimnetz und holt
-Prognose und Jahresverlauf aus Standort und Flächen:
+mit eigener Web-Oberfläche. Er liest APsystems EZHI, Shelly-Zähler und Shelly Plug sowie Hoymiles über OpenDTU oder
+AhoyDTU direkt im Heimnetz und holt Prognose und Jahresverlauf aus Standort und Flächen. Andere Geräte liest die
+Docker-App über Home Assistant, oder man nutzt gleich die Integration, die viele Hersteller kennt
+([Unterstützte Geräte](https://balkonaut.github.io/balkonaut/geraete/)):
 
 ```yaml
 services:
