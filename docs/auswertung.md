@@ -150,6 +150,40 @@ durchreicht, zählt dabei nicht zur eigenen Abgabe.
 Das Limit liest Balkonaut aus der optionalen Messgröße `output_power_limit`, ohne Angabe gilt 800 W.
 Alle Werte setzen eine korrekte Netzmessung voraus.
 
+### Regelbereit: welche Zeiten zählen
+
+Balkonaut misst alle 10 Sekunden Netzleistung, Abgabe des Speichers und Ladestand und prüft für jeden Messpunkt,
+ob der Speicher überhaupt mehr hätte abgeben können:
+
+- Der Akku liegt über der Untergrenze plus 2 %. Ein leerer Akku kann nicht nachregeln.
+- Die eigene Abgabe liegt unter etwa 95 % des Limits. Am Limit kann er nicht mehr geben.
+
+Nur diese Zeiten fließen in *Nahe 0 W*, *Vermeidbarer Netzbezug* und die Lastsprünge ein. Netzbezug bei leerem Akku
+oder am Limit ist kein Regelfehler, sondern eine Grenze der Anlage (siehe *Stunden mit leerem Akku* im Abschnitt Akku).
+
+### Werte lesen
+
+| Wert | Regelt gut | Regelt nicht |
+|---|---|---|
+| Nahe 0 W | hoch, z. B. über 80 % | deutlich niedriger |
+| Vermeidbarer Netzbezug | klein | groß, der Speicher hätte mehr abgeben können |
+| Reaktionszeit | wenige Sekunden | lang oder viele *nicht ausgeregelt* |
+| Einspeisung | gering | hoch, z. B. weil die Abgabe zu spät zurückgeht |
+
+### Beispiel: Zeitfenster in der Hersteller-App
+
+Viele Speicher lassen sich in der Hersteller-App nach Uhrzeit einstellen, beim APsystems EZHI in AP EasyPower etwa
+„Überschussladen“ und „Ladevorgang zuerst“ mit einer Ausgangsleistung je Zeitfenster. Ob die Regelung über den
+Zähler (z. B. Shelly Pro 3EM) in einem Fenster „Ladevorgang zuerst“ Vorrang hat, beschreibt der Hersteller nicht
+(**nicht geprüft**). Hat der Modus Vorrang, lädt der Akku morgens mit der Sonne, der Speicher gibt dem Haus wenig ab
+und das Haus bezieht Netzstrom. Weil der Akku dabei über der Untergrenze und die Abgabe unter dem Limit liegt, zählt
+diese Zeit als regelbereit: Der Netzbezug erscheint als *Vermeidbarer Netzbezug* und *Nahe 0 W* sinkt.
+
+Die Seite fasst alle Uhrzeiten zusammen. Sie zeigt also, *dass* nicht geregelt wurde, aber nicht *wann*. Dafür an
+einem sonnigen Tag im [Verlauf](#verlauf) oder in Home Assistant Netzleistung, Akkuleistung und Abgabe im fraglichen
+Zeitfenster vergleichen: Bleibt die Netzleistung nahe 0 W, während der Akku lädt, regelt der Zähler; lädt der Akku
+mit voller Sonnenleistung und das Haus bezieht Netzstrom, hat der Modus Vorrang.
+
 ## Amortisation
 
 - **Bisher gespart**: Stand des Abgabezählers am Einspeisepunkt mal gemessener Eigenverbrauchsquote
