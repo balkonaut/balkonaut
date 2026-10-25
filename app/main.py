@@ -39,6 +39,7 @@ templates.env.filters.update(
     ago=lambda s: f"{s} s" if s < 120 else f"{s // 60} min" if s < 7200 else f"{s // 3600} h",
 )
 templates.env.globals["version"] = importlib.metadata.version("balkonaut")
+templates.env.globals.update(kacheln=views.KACHELN, guete=views.guete)
 # Adresse, unter der die Integration das Add-on erreicht (Hostname des Add-on-Containers im HA-Netz)
 templates.env.globals["integration_url"] = lambda: f"http://{socket.gethostname()}:8000" if config.addon() else None
 PERIODS = [("tag", "Heute"), ("monat", "Monat"), ("jahr", "Jahr"), ("gesamt", "Gesamt")]

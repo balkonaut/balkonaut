@@ -195,3 +195,11 @@ def test_regulation_zero_limit(tmp_path):
     finally:
         analytics.regulation = real
     assert seen == {"soc_min": 0, "limit": 0}
+
+
+def test_guete():
+    from balkonaut.views import KACHELN, guete
+    assert guete("nulleinspeisung", "anteil_nahe_null", 0.8) == 1 and guete("nulleinspeisung", "anteil_nahe_null", 0.3) == 0
+    assert guete("nulleinspeisung", "reaktionszeit_median", 37.5) == 0.5  # kleiner ist besser
+    assert guete("bilanz", "autarkiegrad", 0.5) is None and guete("akku", "wirkungsgrad", None) is None
+    assert all(len(e) in (1, 5) for b in KACHELN.values() for e in b.values())

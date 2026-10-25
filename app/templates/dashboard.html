@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_kachel.html" import kachel %}
 {% block title %}Übersicht{% endblock %}
 {% block content %}
 <div id="uebersicht">
@@ -171,14 +172,14 @@
 <h2>Bilanz</h2>
 <div class="tabs">{% for key, name in periods %}<a href="?zeitraum={{ key }}" class="{{ 'on' if key == period }}">{{ name }}</a>{% endfor %}</div>
 <div class="grid" style="margin-top:16px">
-  <div class="card"><div class="label">Ersparnis</div><div class="value">{{ b.ersparnis|de(2) }} €</div></div>
-  <div class="card"><div class="label">Eigenverbrauch</div><div class="value">{{ b.eigenverbrauch|de(1) }} kWh</div></div>
-  <div class="card"><div class="label">Autarkiegrad</div><div class="value">{{ b.autarkiegrad|pct }}</div></div>
-  <div class="card"><div class="label">Eigenverbrauchsquote</div><div class="value">{{ b.eigenverbrauchsquote|pct }}</div></div>
-  <div class="card"><div class="label">Erzeugung</div><div class="value">{{ b.erzeugung|de(1) }} kWh</div></div>
-  <div class="card"><div class="label">Hausverbrauch</div><div class="value">{{ b.hausverbrauch|de(1) }} kWh</div></div>
-  <div class="card"><div class="label">Netzbezug</div><div class="value">{{ b.netzbezug|de(1) }} kWh</div></div>
-  <div class="card"><div class="label">Einspeisung</div><div class="value">{{ b.einspeisung|de(1) }} kWh</div></div>
+  {{ kachel("bilanz", "ersparnis", "Ersparnis", b.ersparnis|de(2) ~ " €") }}
+  {{ kachel("bilanz", "eigenverbrauch", "Eigenverbrauch", b.eigenverbrauch|de(1) ~ " kWh") }}
+  {{ kachel("bilanz", "autarkiegrad", "Autarkiegrad", b.autarkiegrad|pct) }}
+  {{ kachel("bilanz", "eigenverbrauchsquote", "Eigenverbrauchsquote", b.eigenverbrauchsquote|pct, b.eigenverbrauchsquote) }}
+  {{ kachel("bilanz", "erzeugung", "Erzeugung", b.erzeugung|de(1) ~ " kWh") }}
+  {{ kachel("bilanz", "hausverbrauch", "Hausverbrauch", b.hausverbrauch|de(1) ~ " kWh") }}
+  {{ kachel("bilanz", "netzbezug", "Netzbezug", b.netzbezug|de(1) ~ " kWh") }}
+  {{ kachel("bilanz", "einspeisung", "Einspeisung", b.einspeisung|de(1) ~ " kWh") }}
 </div>
 
 {% macro way(name, value, total, color) %}<div class="row"><span>{{ name }}</span><b>{{ value|de(1) }} kWh</b><i><span style="width:{{ (value / total * 100)|round(0) if value and total else 0 }}%;background:var(--{{ color }})"></span></i></div>{% endmacro %}
@@ -199,12 +200,12 @@
 
 <h2>Akku</h2>
 <div class="grid">
-  <div class="card"><div class="label">Vollzyklen im Zeitraum</div><div class="value">{{ akku.zyklen|de(1) }}</div><div class="label">gesamt {{ akku.zyklen_gesamt|de(0) }}{% if akku.zyklen_pro_jahr %}, {{ akku.zyklen_pro_jahr|de(0) }} pro Jahr{% endif %}</div></div>
-  <div class="card"><div class="label">Gesundheit (SoH)</div><div class="value">{{ akku.gesundheit|de(0) }} %</div><div class="label">Kapazität {{ akku.kapazitaet|de(2) }} kWh</div></div>
-  <div class="card"><div class="label">Wirkungsgrad Akku</div><div class="value">{{ akku.wirkungsgrad|pct }}</div></div>
-  <div class="card"><div class="label">Verluste Speicher-Wechselrichter</div><div class="value">{{ akku.verluste_wechselrichter|pct }}</div></div>
-  <div class="card"><div class="label">Stunden mit vollem Akku</div><div class="value">{{ akku.stunden_voll }}</div><div class="label">dabei eingespeist {{ akku.einspeisung_bei_vollem_akku|de(1) }} kWh</div></div>
-  <div class="card"><div class="label">Stunden mit leerem Akku</div><div class="value">{{ akku.stunden_leer }}</div><div class="label">dabei Netzbezug {{ akku.netzbezug_bei_leerem_akku|de(1) }} kWh ({{ akku.kosten_bei_leerem_akku|de(2) }} €)</div></div>
+  {{ kachel("akku", "zyklen", "Vollzyklen im Zeitraum", akku.zyklen|de(1), sub="gesamt " ~ akku.zyklen_gesamt|de(0) ~ (", " ~ akku.zyklen_pro_jahr|de(0) ~ " pro Jahr" if akku.zyklen_pro_jahr else "")) }}
+  {{ kachel("akku", "gesundheit", "Gesundheit (SoH)", akku.gesundheit|de(0) ~ " %", sub="Kapazität " ~ akku.kapazitaet|de(2) ~ " kWh") }}
+  {{ kachel("akku", "wirkungsgrad", "Wirkungsgrad Akku", akku.wirkungsgrad|pct, akku.wirkungsgrad) }}
+  {{ kachel("akku", "verluste_wechselrichter", "Verluste Speicher-Wechselrichter", akku.verluste_wechselrichter|pct, akku.verluste_wechselrichter) }}
+  {{ kachel("akku", "stunden_voll", "Stunden mit vollem Akku", akku.stunden_voll, sub="dabei eingespeist " ~ akku.einspeisung_bei_vollem_akku|de(1) ~ " kWh") }}
+  {{ kachel("akku", "stunden_leer", "Stunden mit leerem Akku", akku.stunden_leer, sub="dabei Netzbezug " ~ akku.netzbezug_bei_leerem_akku|de(1) ~ " kWh (" ~ akku.kosten_bei_leerem_akku|de(2) ~ " €)") }}
 </div>
 
 <h2>Woher kommt dein Strom heute? <a href="verlauf" style="font-family:system-ui,sans-serif;text-transform:none;letter-spacing:0;font-weight:400">Verlauf</a></h2>
@@ -234,7 +235,13 @@
     try {
       const r = await fetch(location.href);
       const neu = r.ok && new DOMParser().parseFromString(await r.text(), "text/html").getElementById("uebersicht");
-      if (neu) document.getElementById("uebersicht").replaceWith(neu);
+      if (!neu) return;
+      const offen = [...document.querySelectorAll('.info[aria-expanded="true"]')].map((k) => k.getAttribute("aria-controls"));
+      document.getElementById("uebersicht").replaceWith(neu);
+      for (const id of offen) {  // aufgeklappte Erklärungen bleiben offen
+        document.getElementById(id).hidden = false;
+        document.querySelector(`[aria-controls="${id}"]`).setAttribute("aria-expanded", true);
+      }
     } catch (e) {}  // nächster Versuch in 10 Sekunden
   }, 10000);
 </script>

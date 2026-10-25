@@ -13,6 +13,10 @@ der heutige Hausverbrauch je Stunde (Anteil Balkonkraftwerk und Netz) und der St
 Die Werte aktualisieren sich alle 10 Sekunden, ohne dass die Seite neu lädt. Sind die letzten Messwerte älter als zwei Minuten, wird der Punkt
 neben „Energiefluss jetzt“ orange und oben erscheint ein Hinweis: Dann sind meist die Geräte oder Home Assistant nicht erreichbar.
 
+Jede Kachel mit einem Knopf **i** erklärt auf Druck kurz, was der Wert bedeutet. Werte mit klarer Güte tragen
+zusätzlich eine Skala von Rot (links, schlecht) bis Grün (rechts, gut) mit Marke, die Grenzen darunter und ein Wort
+(*gut*, *mittel*, *schwach*); siehe [Bewertung der Kennzahlen](#bewertung-der-kennzahlen).
+
 Hell oder dunkel richtet sich zunächst nach der Einstellung des Geräts. Der Knopf rechts in der Kopfzeile wechselt
 reihum zwischen *Automatisch*, *Hell* und *Dunkel*, die Wahl merkt sich der Browser. Unten auf jeder Seite stehen
 die Version und ein Link zum Quellcode auf GitHub.
@@ -183,6 +187,26 @@ Die Seite fasst alle Uhrzeiten zusammen. Sie zeigt also, *dass* nicht geregelt w
 einem sonnigen Tag im [Verlauf](#verlauf) oder in Home Assistant Netzleistung, Akkuleistung und Abgabe im fraglichen
 Zeitfenster vergleichen: Bleibt die Netzleistung nahe 0 W, während der Akku lädt, regelt der Zähler; lädt der Akku
 mit voller Sonnenleistung und das Haus bezieht Netzstrom, hat der Modus Vorrang.
+
+## Bewertung der Kennzahlen
+
+Diese Kacheln haben eine Skala von Rot bis Grün, in der Docker-App, im Add-on und im Panel der Integration. Zwischen
+den Grenzen läuft die Farbe stufenlos. Die Grenzen gelten für alle Anlagen gleich und sind ein Richtwert, keine Norm.
+
+| Kachel | gut | schlecht |
+|---|---|---|
+| Eigenverbrauchsquote | ≥ 90 % | ≤ 60 % |
+| Wirkungsgrad Akku | ≥ 90 % | ≤ 75 % |
+| Verluste Speicher-Wechselrichter | ≤ 5 % | ≥ 15 % |
+| Nulleinspeisung: Davon nahe 0 W | ≥ 80 % | ≤ 50 % |
+| Nulleinspeisung: Typische Netzleistung (Betrag) | ≤ 50 W | ≥ 200 W |
+| Nulleinspeisung: Vermeidbarer Netzbezug (7 Tage) | ≤ 1 kWh | ≥ 5 kWh |
+| Nulleinspeisung: Einspeisung (7 Tage) | ≤ 0,5 kWh | ≥ 3 kWh |
+| Nulleinspeisung: Reaktionszeit | ≤ 15 s | ≥ 60 s |
+| Nulleinspeisung: Abgabe über Limit | ≤ 1 % | ≥ 5 % |
+
+Der Autarkiegrad bleibt ohne Farbe: Ein Balkonkraftwerk deckt selten mehr als 30 bis 40 % des Hausverbrauchs, die
+Kachel wäre also fast immer rot, obwohl alles in Ordnung ist.
 
 ## Amortisation
 

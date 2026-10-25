@@ -71,6 +71,17 @@ const PANEL_STYLE = `
   .setup a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 6px; text-decoration: none;
     font-weight: 600; border: 1px solid var(--bk-line); color: var(--bk-ink); margin-top: auto; }
   .setup .next a { background: var(--primary-color); color: var(--text-primary-color, #fff); border-color: var(--primary-color); }
+  .card:has(> .info) { position: relative; } .card:has(> .info) > .label:first-child { padding-right: 40px; }
+  .info { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--bk-line);
+    background: var(--bk-card); color: var(--bk-muted); font: 600 14px/1 var(--bk-mono); cursor: pointer; }
+  .info[aria-expanded="true"] { background: var(--bk-ink); color: var(--bk-card); }
+  .hilfe { font-size: 14px; color: var(--bk-muted); margin: 8px 0 0; line-height: 1.4; }
+  .q-badge { display: inline-block; vertical-align: middle; font: 600 11px var(--bk-mono); letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; background: var(--q); color: #fff; }
+  .q-scale { position: relative; height: 8px; border-radius: 4px; margin: 8px 0 4px;
+    background: linear-gradient(90deg, hsl(0 60% 45%), hsl(45 75% 45%), hsl(130 55% 42%)); }
+  .q-scale i { position: absolute; top: -4px; width: 4px; height: 16px; border-radius: 2px; background: var(--bk-ink); transform: translateX(-2px); }
+  .q-ends { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--bk-muted); }
   balkonaut-card { display: block; }
   @media print { .toolbar, nav, .noprint { display: none; } }
 `;
@@ -112,6 +123,20 @@ class BalkonautPanel extends HTMLElement {
     return `<div class="card"><div class="label">${esc(label)}</div><div class="value">${esc(value)}</div>${sub ? `<div class="label">${esc(sub)}</div>` : ""}</div>`;
   }
 
+  // Kachel mit Erklärung (Knopf i) und, wo es eine Bewertung gibt, Skala von rot (links) bis grün, wie app/templates/_kachel.html
+  _kachel(bereich, key, label, value, raw = null, sub = "") {
+    const [text, good, bad, goodText, badText] = this._kacheln?.[bereich]?.[key] || [""];
+    const s = good === undefined || typeof raw !== "number" ? null : Math.min(Math.max((raw - bad) / (good - bad), 0), 1);
+    const id = `hilfe-${bereich}-${key}`, nb = (t) => esc(t).replaceAll(" ", "&nbsp;");
+    const badge = s === null ? "" : ` <span class="q-badge" style="--q:hsl(${Math.round(s * 130)} 60% 42%)">${
+      s >= 0.67 ? "gut" : s >= 0.34 ? "mittel" : "schwach"}</span>`;
+    const scale = s === null ? "" : `<div class="q-scale" aria-hidden="true"><i style="left:${(s * 100).toFixed(1)}%"></i></div>
+      <div class="q-ends"><span>schlecht ${nb(badText)}</span><span>gut ${nb(goodText)}</span></div>`;
+    return `<div class="card"><div class="label">${esc(label)}</div>${text ? `<button class="info" type="button" aria-expanded="false"
+      aria-controls="${id}" aria-label="Erklärung zu ${esc(label)}">i</button>` : ""}<div class="value">${esc(value)}${badge}</div>${scale}
+      ${sub ? `<div class="label">${esc(sub)}</div>` : ""}${text ? `<p class="hilfe" id="${id}" hidden>${esc(text)}</p>` : ""}</div>`;
+  }
+
   async _ws(type, extra = {}) {
     return this._hass.callWS({ type: `balkonaut/${type}`, ...extra });
   }
@@ -121,6 +146,7 @@ class BalkonautPanel extends HTMLElement {
     const seq = this._seq = (this._seq || 0) + 1; // nur die Antwort des letzten Klicks zeigen
     let body;
     try {
+      this._kacheln ??= await this._ws("kacheln");
       if (tab === "start") body = this._start(await this._ws("status"), await this._ws("verlauf", { ansicht: "tag" }));
       else if (tab === "verlauf") body = this._history(await this._ws("verlauf", { ansicht: this._view, datum: this._datum }));
       else if (tab === "nulleinspeisung") body = this._regulation(await this._ws("nulleinspeisung"));
@@ -146,6 +172,11 @@ class BalkonautPanel extends HTMLElement {
       this._card.setConfig({});
       this._card.hass = this._hass;
     }
+    this.shadowRoot.querySelectorAll(".info").forEach((b) => b.addEventListener("click", () => {
+      const open = b.getAttribute("aria-expanded") !== "true";
+      b.setAttribute("aria-expanded", open);
+      this.shadowRoot.getElementById(b.getAttribute("aria-controls")).hidden = !open;
+    }));
     this.shadowRoot.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => this._show(b.dataset.tab)));
     this.shadowRoot.querySelectorAll("[data-set]").forEach((b) => b.addEventListener("click", () => {
       const [key, value] = b.dataset.set.split("=");
@@ -184,10 +215,11 @@ class BalkonautPanel extends HTMLElement {
   }
 
   _balance(b) {
-    return `<div class="grid">${this._box("Ersparnis", `${this._fmt(b.ersparnis, 2)} €`)}${this._box("Eigenverbrauch", `${this._fmt(b.eigenverbrauch)} kWh`)}
-      ${this._box("Autarkiegrad", this._pct(b.autarkiegrad))}${this._box("Eigenverbrauchsquote", this._pct(b.eigenverbrauchsquote))}
-      ${this._box("Erzeugung", `${this._fmt(b.erzeugung)} kWh`)}${this._box("Hausverbrauch", `${this._fmt(b.hausverbrauch)} kWh`)}
-      ${this._box("Netzbezug", `${this._fmt(b.netzbezug)} kWh`)}${this._box("Einspeisung", `${this._fmt(b.einspeisung)} kWh`)}</div>`;
+    const k = (key, label, value, raw) => this._kachel("bilanz", key, label, value, raw);
+    return `<div class="grid">${k("ersparnis", "Ersparnis", `${this._fmt(b.ersparnis, 2)} €`)}${k("eigenverbrauch", "Eigenverbrauch", `${this._fmt(b.eigenverbrauch)} kWh`)}
+      ${k("autarkiegrad", "Autarkiegrad", this._pct(b.autarkiegrad))}${k("eigenverbrauchsquote", "Eigenverbrauchsquote", this._pct(b.eigenverbrauchsquote), b.eigenverbrauchsquote)}
+      ${k("erzeugung", "Erzeugung", `${this._fmt(b.erzeugung)} kWh`)}${k("hausverbrauch", "Hausverbrauch", `${this._fmt(b.hausverbrauch)} kWh`)}
+      ${k("netzbezug", "Netzbezug", `${this._fmt(b.netzbezug)} kWh`)}${k("einspeisung", "Einspeisung", `${this._fmt(b.einspeisung)} kWh`)}</div>`;
   }
 
   _ways(b, k) {
@@ -235,12 +267,12 @@ class BalkonautPanel extends HTMLElement {
       <h2>Bilanz</h2><div class="tabs">${tabs}</div>${this._balance(b)}
       <h2>Energiewege</h2>${this._ways(b, k)}
       <h2>Akku</h2><div class="grid">
-        ${this._box("Vollzyklen im Zeitraum", this._fmt(k.zyklen), `gesamt ${this._fmt(k.zyklen_gesamt, 0)}${k.zyklen_pro_jahr ? `, ${this._fmt(k.zyklen_pro_jahr, 0)} pro Jahr` : ""}`)}
-        ${this._box("Gesundheit (SoH)", `${this._fmt(k.gesundheit, 0)} %`, `Kapazität ${this._fmt(k.kapazitaet, 2)} kWh`)}
-        ${this._box("Wirkungsgrad Akku", this._pct(k.wirkungsgrad))}
-        ${this._box("Verluste Speicher-Wechselrichter", this._pct(k.verluste_wechselrichter))}
-        ${this._box("Stunden mit vollem Akku", k.stunden_voll ?? "–", `dabei eingespeist ${this._fmt(k.einspeisung_bei_vollem_akku)} kWh`)}
-        ${this._box("Stunden mit leerem Akku", k.stunden_leer ?? "–", `dabei Netzbezug ${this._fmt(k.netzbezug_bei_leerem_akku)} kWh (${this._fmt(k.kosten_bei_leerem_akku, 2)} €)`)}</div>
+        ${this._kachel("akku", "zyklen", "Vollzyklen im Zeitraum", this._fmt(k.zyklen), null, `gesamt ${this._fmt(k.zyklen_gesamt, 0)}${k.zyklen_pro_jahr ? `, ${this._fmt(k.zyklen_pro_jahr, 0)} pro Jahr` : ""}`)}
+        ${this._kachel("akku", "gesundheit", "Gesundheit (SoH)", `${this._fmt(k.gesundheit, 0)} %`, null, `Kapazität ${this._fmt(k.kapazitaet, 2)} kWh`)}
+        ${this._kachel("akku", "wirkungsgrad", "Wirkungsgrad Akku", this._pct(k.wirkungsgrad), k.wirkungsgrad)}
+        ${this._kachel("akku", "verluste_wechselrichter", "Verluste Speicher-Wechselrichter", this._pct(k.verluste_wechselrichter), k.verluste_wechselrichter)}
+        ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", k.stunden_voll ?? "–", null, `dabei eingespeist ${this._fmt(k.einspeisung_bei_vollem_akku)} kWh`)}
+        ${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", k.stunden_leer ?? "–", null, `dabei Netzbezug ${this._fmt(k.netzbezug_bei_leerem_akku)} kWh (${this._fmt(k.kosten_bei_leerem_akku, 2)} €)`)}</div>
       <h2>Woher kommt dein Strom heute?</h2><div class="card">${this._chart(today.balken)}</div>
       <h2>Amortisation</h2><div class="card">
         <div class="label">Bisher gespart ${this._fmt(a.bisher_gespart, 0)} € von ${this._fmt(a.kosten, 0)} €</div>
@@ -267,14 +299,15 @@ class BalkonautPanel extends HTMLElement {
       Die Ergebnisse hängen an einer korrekten Netzmessung.</p>
       ${r.regelbereit_stunden < 1 ? `<p class="note">Der Speicher konnte im Zeitraum kaum nachregeln (Akku leer oder Abgabe am Limit). Die Werte sind deshalb wenig aussagekräftig.</p>` : ""}
       <div class="grid">
-        ${this._box("Regelbereit", `${this._fmt(r.regelbereit_stunden)} h`, `von ${this._fmt(r.zeitraum_stunden, 0)} h`)}
-        ${this._box("Davon nahe 0 W (±50 W)", this._pct(r.anteil_nahe_null))}
-        ${this._box("Typische Netzleistung dabei", `${this._fmt(r.median_netz, 0)} W`, "Median, + Bezug")}
-        ${this._box("Vermeidbarer Netzbezug", `${this._fmt(r.vermeidbarer_netzbezug, 2)} kWh`, `${this._fmt(r.vermeidbare_kosten, 2)} €`)}
-        ${this._box("Einspeisung", `${this._fmt(r.einspeisung, 2)} kWh`, `Wert bei Eigenverbrauch ${this._fmt(r.einspeisung_wert, 2)} €`)}
-        ${this._box("Lastsprünge über 300 W", r.lastspruenge, `nicht ausgeregelt in 5 min: ${r.nicht_ausgeregelt}`)}
-        ${this._box("Reaktionszeit", `${this._fmt(r.reaktionszeit_median, 0)} s`, "Median bis zurück auf ±50 W")}
-        ${this._box(`Abgabe über Limit (${this._fmt(r.limit, 0)} W)`, this._pct(r.anteil_ueber_limit), `höchster Wert ${this._fmt(r.max_abgabe, 0)} W`)}
+        ${this._kachel("nulleinspeisung", "regelbereit_stunden", "Regelbereit", `${this._fmt(r.regelbereit_stunden)} h`, null, `von ${this._fmt(r.zeitraum_stunden, 0)} h`)}
+        ${this._kachel("nulleinspeisung", "anteil_nahe_null", "Davon nahe 0 W (±50 W)", this._pct(r.anteil_nahe_null), r.anteil_nahe_null)}
+        ${this._kachel("nulleinspeisung", "median_netz", "Typische Netzleistung dabei", `${this._fmt(r.median_netz, 0)} W`,
+          typeof r.median_netz === "number" ? Math.abs(r.median_netz) : null, "Median, + Bezug")}
+        ${this._kachel("nulleinspeisung", "vermeidbarer_netzbezug", "Vermeidbarer Netzbezug", `${this._fmt(r.vermeidbarer_netzbezug, 2)} kWh`, r.vermeidbarer_netzbezug, `${this._fmt(r.vermeidbare_kosten, 2)} €`)}
+        ${this._kachel("nulleinspeisung", "einspeisung", "Einspeisung", `${this._fmt(r.einspeisung, 2)} kWh`, r.einspeisung, `Wert bei Eigenverbrauch ${this._fmt(r.einspeisung_wert, 2)} €`)}
+        ${this._kachel("nulleinspeisung", "lastspruenge", "Lastsprünge über 300 W", r.lastspruenge, null, `nicht ausgeregelt in 5 min: ${r.nicht_ausgeregelt}`)}
+        ${this._kachel("nulleinspeisung", "reaktionszeit_median", "Reaktionszeit", `${this._fmt(r.reaktionszeit_median, 0)} s`, r.reaktionszeit_median, "Median bis zurück auf ±50 W")}
+        ${this._kachel("nulleinspeisung", "anteil_ueber_limit", `Abgabe über Limit (${this._fmt(r.limit, 0)} W)`, this._pct(r.anteil_ueber_limit), r.anteil_ueber_limit, `höchster Wert ${this._fmt(r.max_abgabe, 0)} W`)}
       </div>`;
   }
 

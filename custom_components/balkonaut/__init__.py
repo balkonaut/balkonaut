@@ -17,7 +17,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL, Platform
-from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_registry as er, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -234,7 +234,7 @@ def _open_storage(path: Path) -> Storage:
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """WebSocket-Befehl und Lovelace-Karte, unabhängig von den Einträgen."""
-    for command in (ws_status, ws_history, ws_report, ws_regulation):
+    for command in (ws_status, ws_history, ws_report, ws_regulation, ws_tiles):
         websocket_api.async_register_command(hass, command)
 
     async def import_from_app(call: ServiceCall) -> ServiceResponse:
@@ -360,6 +360,13 @@ async def ws_history(hass: HomeAssistant, connection: websocket_api.ActiveConnec
 async def ws_report(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
     await _view(hass, connection, msg, "bericht", {"monat": msg["monat"]},
                 lambda storage, c, now: views.report(storage, msg["monat"], c.prices, now, None, c.commissioned))
+
+
+@websocket_api.websocket_command({vol.Required("type"): "balkonaut/kacheln"})
+@callback
+def ws_tiles(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+    """Erklärungen und Grenzen der Kacheln für das Panel, wie in der Docker-App."""
+    connection.send_result(msg["id"], views.KACHELN)
 
 
 @websocket_api.websocket_command({vol.Required("type"): "balkonaut/nulleinspeisung", vol.Optional("entry_id"): str})

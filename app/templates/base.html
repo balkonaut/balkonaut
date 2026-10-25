@@ -56,6 +56,19 @@
   .label { color: var(--muted); font-size: 14px; }
   .card > .label:first-child, .eyebrow { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   .value { font: 600 28px var(--mono); letter-spacing: -.04em; font-variant-numeric: tabular-nums; margin: 4px 0; }
+  /* Kacheln mit Erklärung und Bewertung (_kachel.html) */
+  .card:has(> .info) { position: relative; } .card:has(> .info) > .label:first-child { padding-right: 40px; }
+  .info { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line);
+    background: var(--card); color: var(--muted); font: 600 14px/1 var(--mono); cursor: pointer; }
+  .info[aria-expanded="true"] { background: var(--ink); color: var(--card); }
+  .hilfe { font-size: 14px; color: var(--muted); margin: 8px 0 0; line-height: 1.4; }
+  .q-badge { display: inline-block; vertical-align: middle; font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; background: var(--q); color: #fff; }
+  :root[data-theme="dark"] .q-badge { color: #0b1626; }
+  .q-scale { position: relative; height: 8px; border-radius: 4px; margin: 8px 0 4px;
+    background: linear-gradient(90deg, hsl(0 60% var(--soc-l)), hsl(45 75% var(--soc-l)), hsl(130 55% var(--soc-l))); }
+  .q-scale i { position: absolute; top: -4px; width: 4px; height: 16px; border-radius: 2px; background: var(--ink); transform: translateX(-2px); }
+  .q-ends { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
   .note { padding: 14px 16px; border-radius: 6px; font-size: 15px; }
   .ok { background: var(--leaf-soft); } .err { background: var(--warn-soft); border-left: 4px solid var(--warn); }
   svg { width: 100%; height: auto; display: block; }
@@ -96,6 +109,14 @@
   systemDunkel.addEventListener("change", zeigeDarstellung);
   zeigeDarstellung();
   addEventListener("DOMContentLoaded", zeigeDarstellung);
+  // Erklärung an den Kacheln auf- und zuklappen (auch nach dem Austausch der Übersicht)
+  addEventListener("click", (e) => {
+    const knopf = e.target.closest(".info");
+    if (!knopf) return;
+    const offen = knopf.getAttribute("aria-expanded") !== "true";
+    knopf.setAttribute("aria-expanded", offen);
+    document.getElementById(knopf.getAttribute("aria-controls")).hidden = !offen;
+  });
 </script>
 </head>
 <body>

@@ -326,9 +326,11 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     assert msg["result"]["setup"] == {"messgroessen": False, "prognose": False, "preise": False, "inbetriebnahme": False}
     assert msg["result"]["names"] == {"hub": "EZHI", "battery": "Phylion", "extra": "EZ1-M",  # Modell aus dem Register
                                       "modules": {"storage": None, "extra": None}}
-    await ws.send_json({"id": 2, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})
+    await ws.send_json({"id": 2, "type": "balkonaut/kacheln"})
+    assert (await ws.receive_json())["result"]["nulleinspeisung"]["anteil_nahe_null"][1] == 0.8
+    await ws.send_json({"id": 3, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})
     assert (await ws.receive_json())["error"]["code"] == "not_found"
-    for i, (cmd, key) in enumerate([("verlauf", "balken"), ("bericht", "tage"), ("nulleinspeisung", None)], start=3):
+    for i, (cmd, key) in enumerate([("verlauf", "balken"), ("bericht", "tage"), ("nulleinspeisung", None)], start=4):
         await ws.send_json({"id": i, "type": f"balkonaut/{cmd}"})
         msg = await ws.receive_json()
         assert msg["success"] and (key is None or key in msg["result"]), cmd
