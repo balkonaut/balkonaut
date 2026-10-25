@@ -165,19 +165,23 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
         until = await self.hass.async_add_executor_job(self.storage.first) or int(time.time()) // 3600 * 3600
         start = until - recorder.keep_days * 86400
         entities = self.config_entry.data[CONF_ENTITIES]
-        states = await recorder.async_add_executor_job(partial(
-            history.get_significant_states, self.hass, datetime.fromtimestamp(start, UTC),
-            datetime.fromtimestamp(until, UTC), list(entities.values()), significant_changes_only=False,
-            no_attributes=True))
-        series = {}
-        for key, entity_id in entities.items():
-            # Verlauf ohne Attribute: Einheit der aktuellen Entität, wie beim Import der App
-            unit = getattr(self.hass.states.get(entity_id), "attributes", {}).get("unit_of_measurement")
-            series[key] = sorted((s.last_changed.timestamp(), normalize(
-                {"state": s.state, "attributes": {"unit_of_measurement": unit}}, self._factor(key)))
-                for s in states.get(entity_id, []))
-        async with self.lock:
-            hours = await self.hass.async_add_executor_job(self.storage.backfill, series, start, until)
+        # Verlauf ohne Attribute: Einheit der aktuellen Entität, wie beim Import der App
+        units = {key: getattr(self.hass.states.get(entity_id), "attributes", {}).get("unit_of_measurement")
+                 for key, entity_id in entities.items()}
+        hours = 0
+        for day in range(start, until, 86400):  # tageweise, damit nie der ganze Verlauf im Speicher liegt
+            end = min(day + 86400, until)
+            states = await recorder.async_add_executor_job(partial(
+                history.get_significant_states, self.hass, datetime.fromtimestamp(day, UTC),
+                datetime.fromtimestamp(end, UTC), list(entities.values()), significant_changes_only=False,
+                no_attributes=True))  # mit dem Zustand zu Tagesbeginn
+            series = {key: sorted((s.last_changed.timestamp(), normalize(
+                {"state": s.state, "attributes": {"unit_of_measurement": units[key]}}, self._factor(key)))
+                for s in states.get(entity_id, [])) for key, entity_id in entities.items()}
+            async with self.lock:
+                if self.closed:
+                    return
+                hours += await self.hass.async_add_executor_job(self.storage.backfill, series, day, end)
         _LOGGER.info("Balkonaut: %s Stunden aus dem Verlauf von Home Assistant übernommen", hours)
         self.hass.config_entries.async_update_entry(self.config_entry, data={**self.config_entry.data, BACKFILLED: True})
         await self.async_request_refresh()

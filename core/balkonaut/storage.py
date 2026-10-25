@@ -5,9 +5,9 @@ mean_pos/mean_neg (positiver/negativer Anteil, z. B. Netzbezug/Einspeisung),
 last (letzter Wert, für Zähler und Ladestand), n (Anzahl Rohwerte).
 Tageswerte entstehen in der Auswertung aus den Stundenwerten, damit Tagesgrenzen in Ortszeit liegen.
 """
-import bisect
 import functools
 import json
+import math
 import sqlite3
 import threading
 
@@ -100,18 +100,28 @@ class Storage:
         return ts
 
     def backfill(self, series, start, until):
-        """Verlauf {Messgröße: [(ts, wert)]} als Treppenfunktion abtasten und als Stundenwerte
-        für [start, until) nachtragen. Vorhandene Stunden bleiben unverändert."""
-        tmp = Storage(":memory:")
-        times = {k: [t for t, _ in s] for k, s in series.items()}
-        for t in range(int(start), int(until), 10):  # wie der Collector
-            values = {}
-            for k, s in series.items():
-                i = bisect.bisect_right(times[k], t) - 1
-                values[k] = s[i][1] if i >= 0 else None
-            tmp.add(t, values)
-        tmp.aggregate(until)
-        rows = tmp.db.execute("SELECT * FROM hourly WHERE hour < ?", (until,)).fetchall()
+        """Verlauf {Messgröße: [(ts, wert)]} als Treppenfunktion für [start, until) als Stundenwerte nachtragen,
+        so als hätte der Collector alle 10 Sekunden gemessen. Vorhandene Stunden bleiben unverändert.
+        Gerechnet je Abschnitt mit konstantem Wert, ohne die Messpunkte einzeln zu erzeugen (wenig Speicher)."""
+        rows = []
+        for key, points in series.items():
+            hours = {}  # Stunde: [n, Summe, Summe positiv, Summe negativ, letzter Wert]
+            for i, (t, value) in enumerate(points):
+                a = max(t, start)
+                b = min(points[i + 1][0] if i + 1 < len(points) else until, until)
+                while value is not None and a < b:
+                    hour = int(a // 3600 * 3600)
+                    first = start + math.ceil((a - start) / 10) * 10  # erster Messpunkt im Abschnitt
+                    n = max(0, math.ceil((min(b, hour + 3600) - first) / 10))
+                    if n:
+                        h = hours.setdefault(hour, [0, 0.0, 0.0, 0.0, None])
+                        h[0] += n
+                        h[1] += value * n
+                        h[2] += max(value, 0) * n
+                        h[3] += min(value, 0) * n
+                        h[4] = value
+                    a = hour + 3600
+            rows += [(key, hour, total / n, pos / n, neg / n, last, n) for hour, (n, total, pos, neg, last) in hours.items()]
         with self.db:
             self.db.executemany("INSERT OR IGNORE INTO hourly VALUES (?, ?, ?, ?, ?, ?, ?)", rows)
         return len({r[1] for r in rows})
