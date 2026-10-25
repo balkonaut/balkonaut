@@ -2,6 +2,7 @@
   "domain": "balkonaut",
   "name": "Balkonaut",
   "after_dependencies": [
+    "forecast_solar",
     "frontend",
     "http",
     "panel_custom",

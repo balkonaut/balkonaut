@@ -350,8 +350,28 @@ async def _view(hass, connection, msg, path: str, params: dict, compute) -> None
                                   vol.Optional("ansicht", default="tag"): str, vol.Optional("datum", default=""): str})
 @websocket_api.async_response
 async def ws_history(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+    entry = _entry(hass, msg.get("entry_id"))
+    hours = await _hourly_forecast(hass, entry) if entry and entry.runtime_data.storage else {}
     await _view(hass, connection, msg, "verlauf", {"ansicht": msg["ansicht"], "datum": msg["datum"]},
-                lambda storage, c, now: views.history(storage, msg["ansicht"], msg["datum"], c.prices, now))
+                lambda storage, c, now: views.history(storage, msg["ansicht"], msg["datum"], c.prices, now, hours))
+
+
+async def _hourly_forecast(hass: HomeAssistant, entry: ConfigEntry) -> dict:
+    """Erwartete Erzeugung je Stunde heute: aus den zugeordneten Forecast.Solar-Einträgen, sonst aus den Flächen."""
+    entities, reg = entry.data.get(CONF_ENTITIES) or {}, er.async_get(hass)
+    ids = {e.config_entry_id for key in ("pv_forecast_today", "pv_ac_forecast_today")
+           if (e := reg.async_get(entities.get(key, ""))) and e.platform == "forecast_solar"}
+    if not ids or "forecast_solar" not in hass.config.components:
+        return entry.runtime_data.forecast.current_hours()
+    from homeassistant.components.forecast_solar.energy import async_get_solar_forecast
+
+    hours, today = {}, datetime.now(analytics.TZ).date()
+    for entry_id in ids:
+        data = await async_get_solar_forecast(hass, entry_id) or {}
+        periods = {datetime.fromisoformat(k): wh for k, wh in data.get("wh_hours", {}).items()}
+        for start, kwh in forecast.per_hour(periods, today).items():
+            hours[start] = hours.get(start, 0.0) + kwh
+    return hours
 
 
 @websocket_api.websocket_command({vol.Required("type"): "balkonaut/bericht", vol.Optional("entry_id"): str,

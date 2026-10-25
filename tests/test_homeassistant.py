@@ -38,7 +38,7 @@ def test_solar_planes(monkeypatch):
 def test_planes_without_forecast_solar(monkeypatch):
     """Eingetragene Flächen: Prognose selbst abgerufen, Standort aus Home Assistant, zugeordnete Entität geht vor."""
     from balkonaut import forecast
-    monkeypatch.setattr(forecast, "today", lambda lat, lon, tilt, azimuth, kwp: {150: 4.2, 251: 3.1}[azimuth] * (lat == 50.0))
+    monkeypatch.setattr(forecast, "estimate", lambda lat, lon, tilt, azimuth, kwp: ({150: 4.2, 251: 3.1}[azimuth] * (lat == 50.0), {}))
     planes = [{"declination": 30, "azimuth": 150, "kwp": 0.87, "inverter": "storage"},
               {"declination": 30, "azimuth": 251, "kwp": 0.87, "inverter": "extra"}]
     ha = HomeAssistant("http://ha", "t", {"pv_ac_forecast_today": ("sensor.prognose", 1)}, None, planes)

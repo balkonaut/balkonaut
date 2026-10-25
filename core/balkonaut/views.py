@@ -39,6 +39,13 @@ KACHELN = {
         "stunden_leer": ("Stunden mit Ladestand nahe der Untergrenze. Der Netzbezug dabei ist die Obergrenze dessen, was "
                          "ein größerer Akku hätte abdecken können.",),
     },
+    "diagramm": {
+        "herkunft": ("Je Zeitabschnitt zwei Balken: grün, was das Balkonkraftwerk ins Haus abgegeben hat (direkt von der "
+                     "Sonne oder aus dem Akku), blau, was aus dem Netz kam; zusammen der Hausverbrauch. Der gelbe Strich "
+                     "ist die Erzeugung aller Module, egal wohin sie ging: Liegt er über Grün, ging der Rest in den Akku "
+                     "oder ins Netz; liegt er darunter, half der Akku aus. Die gestrichelte Linie ist die erwartete "
+                     "Erzeugung laut Forecast.Solar, nur für heute.",),
+    },
     "nulleinspeisung": {
         "regelbereit_stunden": ("Zeit, in der der Speicher mehr hätte abgeben können: Akku über der Untergrenze, Abgabe "
                                 "unter dem Limit. Nur diese Zeit wird bewertet.",),
@@ -77,14 +84,15 @@ def parse_day(text, today):
         return today
 
 
-def history(storage, view, datum, prices, now):
-    """Balken einer Verlaufsansicht (tag, woche, monat, jahr) und Bilanz des Zeitraums."""
+def history(storage, view, datum, prices, now, forecast=None):
+    """Balken einer Verlaufsansicht (tag, woche, monat, jahr) und Bilanz des Zeitraums; forecast: erwartete Erzeugung
+    je Stunde (nur heute bekannt), für die Tagesansicht."""
     today = datetime.fromtimestamp(now, analytics.TZ).date()
     view = view if view in VIEWS else "tag"
     title, buckets, prev, nxt = analytics.buckets(view, parse_day(datum, today))
     rows = storage.hourly(int(now))
     return {"ansicht": view, "titel": title, "zurueck": prev, "weiter": nxt if nxt <= today else None,
-            "balken": analytics.history(rows, buckets, prices),
+            "balken": analytics.history(rows, buckets, prices, forecast if view == "tag" else None),
             "bilanz": analytics.balance([r for r in rows if r[1] < buckets[-1][2]], buckets[0][1], prices)}
 
 

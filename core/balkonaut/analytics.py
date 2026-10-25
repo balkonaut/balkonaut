@@ -278,14 +278,16 @@ def buckets(view, d):
     return f"{WEEKDAYS[d.weekday()]}, {d:%d.%m.%Y}", bars, d - timedelta(days=1), d + timedelta(days=1)
 
 
-def history(rows, bars, prices):
-    """Bilanz je Balken: Eigenverbrauch, Netzbezug und Erzeugung in kWh."""
+def history(rows, bars, prices, forecast=None):
+    """Bilanz je Balken: Eigenverbrauch, Netzbezug und Erzeugung in kWh; mit forecast ({Stundenbeginn: kWh}, nur für
+    Stundenbalken) dazu die erwartete Erzeugung."""
     # ponytail: rechnet jeden Balken einzeln (Jahr: 12 Durchläufe über ein Jahr Stundenwerte); bei Bedarf vorsummieren
     rows = _recent(rows, bars[0][1], bars[-1][2])
     out = []
     for label, a, b in bars:
         x = balance([r for r in rows if r[1] < b], a, prices)
-        out.append({"label": label, "own": x["eigenverbrauch"], "grid": x["netzbezug"], "gen": x["erzeugung"]})
+        out.append({"label": label, "own": x["eigenverbrauch"], "grid": x["netzbezug"], "gen": x["erzeugung"],
+                    "fc": forecast.get(a) if forecast else None})
     return out
 
 

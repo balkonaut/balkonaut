@@ -189,10 +189,10 @@ class BalkonautPanel extends HTMLElement {
   // Balkendiagramm wie app/templates/_chart.html: Eigenverbrauch grün, Netzbezug blau, Erzeugung gelber Strich
   _chart(bars) {
     const n = bars.length, left = 36, w = (480 - left) / Math.max(n, 1), every = Math.ceil(n / 12);
-    const peak = Math.max(0, ...bars.map((b) => Math.max(b.own + b.grid, b.gen)));
+    const peak = Math.max(0, ...bars.map((b) => Math.max(b.own, b.grid, b.gen, b.fc || 0)));
     let ticks = [], scale = 0;
     if (peak) {
-      const raw = peak / 4, mag = 10 ** Math.floor(Math.log10(raw));
+      const raw = peak / 8, mag = 10 ** Math.floor(Math.log10(raw));  // etwa acht Hilfslinien
       const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw);
       const digits = Math.max(0, -Math.floor(Math.log10(step)));
       for (let i = 1; i * step <= peak + 1e-9; i++) ticks.push([i * step, this._fmt(i * step, digits)]);
@@ -200,18 +200,25 @@ class BalkonautPanel extends HTMLElement {
     }
     const grid = ticks.map(([v, l]) => `<line x1="${left}" x2="480" y1="${150 - v * scale}" y2="${150 - v * scale}" stroke="var(--bk-line)"/>
       <text x="${left - 4}" y="${153 - v * scale}" font-size="9" text-anchor="end" fill="var(--bk-muted)">${l}</text>`).join("");
+    // je Abschnitt Balkonkraftwerk und Netz nebeneinander, Erzeugung als gelber Strich darüber, wie app/templates/_chart.html
     const cols = bars.map((h, i) => {
-      const x = left + i * w + w * 0.1, bw = w * 0.8;
-      return `<rect x="${x}" y="${150 - h.own * scale}" width="${bw}" height="${h.own * scale}" fill="var(--bk-leaf)"><title>${esc(h.label)}: ${this._fmt(h.own, 2)} kWh vom Balkonkraftwerk</title></rect>
-        <rect x="${x}" y="${150 - (h.own + h.grid) * scale}" width="${bw}" height="${h.grid * scale}" fill="var(--bk-sky)"><title>${esc(h.label)}: ${this._fmt(h.grid, 2)} kWh aus dem Netz</title></rect>
-        ${h.gen ? `<rect x="${x}" y="${149 - h.gen * scale}" width="${bw}" height="3" fill="var(--bk-sun)"><title>${esc(h.label)}: ${this._fmt(h.gen, 2)} kWh erzeugt</title></rect>` : ""}
-        ${i % every === 0 ? `<text x="${x + w * 0.4}" y="166" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${esc(h.label)}</text>` : ""}`;
+      const x = left + i * w;
+      return `<rect x="${x + w * 0.1}" y="${150 - h.own * scale}" width="${w * 0.38}" height="${h.own * scale}" fill="var(--bk-leaf)"><title>${esc(h.label)}: ${this._fmt(h.own, 2)} kWh vom Balkonkraftwerk</title></rect>
+        <rect x="${x + w * 0.52}" y="${150 - h.grid * scale}" width="${w * 0.38}" height="${h.grid * scale}" fill="var(--bk-sky)"><title>${esc(h.label)}: ${this._fmt(h.grid, 2)} kWh aus dem Netz</title></rect>
+        ${h.gen ? `<rect x="${x + w * 0.1}" y="${149 - h.gen * scale}" width="${w * 0.8}" height="3" fill="var(--bk-sun)"><title>${esc(h.label)}: ${this._fmt(h.gen, 2)} kWh erzeugt</title></rect>` : ""}
+        ${i % every === 0 ? `<text x="${x + w * 0.5}" y="166" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${esc(h.label)}</text>` : ""}`;
     }).join("");
-    return `<svg class="chart" viewBox="0 0 480 170" role="img" aria-label="Hausverbrauch je Zeitabschnitt, aufgeteilt in Balkonkraftwerk und Netzbezug, mit Erzeugung">
+    const fc = bars.some((b) => typeof b.fc === "number" && b.fc > 0);
+    const line = fc ? `<polyline points="${bars.map((b, i) => `${(left + (i + 0.5) * w).toFixed(1)},${(150 - (Number(b.fc) || 0) * scale).toFixed(1)}`).join(" ")}"
+      fill="none" stroke="var(--bk-sun)" stroke-width="1.5" stroke-dasharray="4 3"><title>Erwartete Erzeugung laut Forecast.Solar</title></polyline>` : "";
+    const help = this._kacheln?.diagramm?.herkunft?.[0];
+    return `${help ? `<button class="info" type="button" aria-expanded="false" aria-controls="hilfe-diagramm" aria-label="Erklärung zum Diagramm">i</button>` : ""}
+      <svg class="chart" viewBox="0 0 480 170" role="img" aria-label="Hausverbrauch je Zeitabschnitt: Balkonkraftwerk und Netz, mit Erzeugung${fc ? " und Prognose" : ""}">
       <text x="0" y="8" font-size="9" fill="var(--bk-muted)">kWh</text>${grid}
-      <line x1="${left}" x2="480" y1="150" y2="150" stroke="var(--bk-muted)"/>${cols}</svg>
+      <line x1="${left}" x2="480" y1="150" y2="150" stroke="var(--bk-muted)"/>${cols}${line}</svg>
       <div class="legend"><span><i style="background:var(--bk-leaf)"></i>Balkonkraftwerk</span><span><i style="background:var(--bk-sky)"></i>Netz</span>
-      <span><i style="background:var(--bk-sun);height:4px;vertical-align:3px"></i>Erzeugung</span></div>`;
+      <span><i style="background:var(--bk-sun);height:4px;vertical-align:3px"></i>Erzeugung</span>${fc ? `<span><i style="background:none;height:0;border-top:2px dashed var(--bk-sun);vertical-align:3px"></i>Prognose</span>` : ""}</div>
+      ${help ? `<p class="hilfe" id="hilfe-diagramm" hidden>${esc(help)}</p>` : ""}`;
   }
 
   _balance(b) {

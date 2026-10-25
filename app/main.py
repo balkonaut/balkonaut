@@ -47,16 +47,20 @@ SUPERVISOR_IP = "172.30.32.2"  # Absender von Ingress-Anfragen im Add-on
 
 
 def chart(bars):
-    """Balken, Maßstab (Höhe 140 Einheiten) und Beschriftung der y-Achse in kWh für das SVG-Diagramm."""
-    peak = max((max(b["own"] + b["grid"], b["gen"]) for b in bars), default=0)
+    """Balken, Maßstab (Höhe 140 Einheiten), Beschriftung der y-Achse in kWh und Prognose als Punkte der Linie
+    (Mitte jedes Zeitabschnitts) für das SVG-Diagramm."""
+    peak = max((max(b["own"], b["grid"], b["gen"], b.get("fc") or 0) for b in bars), default=0)
     ticks = []
     if peak:
-        raw = peak / 4  # etwa vier Hilfslinien mit runden Werten (1, 2, 5 × 10^n)
+        raw = peak / 8  # etwa acht Hilfslinien mit runden Werten (1, 2, 5 × 10^n)
         mag = 10 ** math.floor(math.log10(raw))
         step = next(m * mag for m in (1, 2, 5, 10) if m * mag >= raw)
         digits = max(0, -math.floor(math.log10(step)))
         ticks = [(i * step, de(i * step, digits)) for i in range(1, int(peak / step + 1e-9) + 1)]
-    return {"bars": bars, "scale": 140 / peak if peak else 0, "ticks": ticks}
+    scale, w = (140 / peak if peak else 0), (480 - 36) / max(len(bars), 1)
+    forecast = " ".join(f"{36 + (i + 0.5) * w:.1f},{150 - (b.get('fc') or 0) * scale:.1f}" for i, b in enumerate(bars))
+    return {"bars": bars, "scale": scale, "ticks": ticks,
+            "forecast": forecast if any(b.get("fc") for b in bars) else None}
 
 
 def soc_gauge(live):
@@ -127,6 +131,7 @@ def start_measuring(app, cfg):
         task.cancel()
     app.state.tasks = []
     if adapter := config.adapter(cfg):
+        app.state.forecast = adapter.forecast  # Prognose je Stunde für das Diagramm
         app.state.tasks = [asyncio.create_task(collector.run(adapter, app.state.storage)),
                            asyncio.create_task(load_profile(app, adapter, app.state.config_path.parent / "ertragsprofil.json")),
                            asyncio.create_task(regulation_job(app))]
@@ -207,7 +212,7 @@ def dashboard(request: Request, zeitraum: str = "tag"):
     live["pv"] = (live.get("pv_power") or 0) + (live.get("pv_ac_power") or 0) if live else None
     today = datetime.now(analytics.TZ).date()
     bars = analytics.history(request.app.state.storage.hourly(int(time.time())),
-                             analytics.buckets("tag", today)[1], cfg["prices"])
+                             analytics.buckets("tag", today)[1], cfg["prices"], hourly_forecast(request.app))
     a = st["amortisation"]
     entities = (cfg.get("home_assistant") or {}).get("entities") or {}
     # Einrichtung: (Schritt, Hinweis, erledigt, Link); im Add-on kommen Geräte und Prognose aus dessen Konfiguration
@@ -237,7 +242,14 @@ def dashboard(request: Request, zeitraum: str = "tag"):
 
 def history_data(request, ansicht, datum):
     cfg = config.load(request.app.state.config_path)
-    return views.history(request.app.state.storage, ansicht, datum, cfg["prices"], time.time())
+    return views.history(request.app.state.storage, ansicht, datum, cfg["prices"], time.time(),
+                         hourly_forecast(request.app))
+
+
+def hourly_forecast(app):
+    """Erwartete Erzeugung je Stunde heute aus den eingetragenen Flächen, ohne Flächen leer."""
+    planes = getattr(app.state, "forecast", None)
+    return planes.current_hours() if planes else {}
 
 
 @app.get("/verlauf", include_in_schema=False)

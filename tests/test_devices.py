@@ -66,34 +66,35 @@ def test_forecast_and_planes(monkeypatch):
     """Prognose je Wechselrichter aus den Flächen, höchstens einmal je Stunde; Flächen für den Jahresverlauf."""
     calls = []
 
-    def today(lat, lon, tilt, azimuth, kwp):
+    def estimate(lat, lon, tilt, azimuth, kwp):
         calls.append(azimuth)
-        return {150: 4.2, 251: 3.1}[azimuth]
+        return {150: 4.2, 251: 3.1}[azimuth], {3600.0: {150: 0.5, 251: 0.25}[azimuth]}
     monkeypatch.setattr(devices, "_get", lambda host, path: ANSWERS[host, path])
-    monkeypatch.setattr(devices.forecast, "today", today)
+    monkeypatch.setattr(devices.forecast, "estimate", estimate)
     planes = [{"declination": 30, "azimuth": 150, "kwp": 0.87, "inverter": "storage"},
               {"declination": 30, "azimuth": 251, "kwp": 0.87, "inverter": "extra"}]
     adapter = Devices(CONFIG, {"lat": 50.0, "lon": 10.0}, planes)
     values = adapter.read()
     assert values["pv_forecast_today"] == 4.2 and values["pv_ac_forecast_today"] == 3.1
     adapter.read()
-    assert calls == [150, 251]  # zweiter Abruf erst nach einer Stunde
+    assert calls == [150, 251]  # zweiter Abruf erst zur nächsten halben Stunde
+    assert adapter.forecast.current_hours() == {3600.0: 0.75}  # Stundenwerte aller Flächen zusammen
     assert adapter.solar_planes() == (50.0, 10.0, [(30, 150, 0.87), (30, 251, 0.87)])
     assert Devices(CONFIG).solar_planes() == (0.0, 0.0, [])
 
 
 def test_forecast_retry(monkeypatch):
-    """Fehlgeschlagener Abruf: keine Prognose, nächster Versuch erst nach 15 Minuten statt bei jeder Messung."""
+    """Fehlgeschlagener Abruf: keine Prognose, nächster Versuch erst zur nächsten halben Stunde, nicht bei jeder Messung."""
     import time
     calls = []
 
-    def today(*args):
+    def estimate(*args):
         calls.append(args)
         raise OSError("nicht erreichbar")
-    monkeypatch.setattr(devices.forecast, "today", today)
+    monkeypatch.setattr(devices.forecast, "estimate", estimate)
     planes = devices.forecast.Planes({"lat": 50.0, "lon": 10.0}, [{"declination": 30, "azimuth": 150, "kwp": 0.87}])
     assert planes.read() == {} and planes.read() == {} and len(calls) == 1
-    assert planes.next - time.time() <= 900
+    assert 0 < planes.next - time.time() <= 1800 and planes.next % 1800 == 0
 
 
 def test_detect(monkeypatch):
@@ -135,3 +136,28 @@ def test_dtu(monkeypatch):
     assert Devices([{"type": "ahoydtu", "host": "ahoy"}]).read() == {"pv_power": 350.5, "output_power": 350.5}
     both = Devices([{"type": "shelly_plug", "host": "10.0.0.38"}, {"type": "opendtu", "host": "dtu"}]).read()
     assert both["output_power"] == -6.7 and both["pv_power"] == 412.3
+
+
+def test_estimate(monkeypatch):
+    """Forecast.Solar /estimate: Tageswert von heute, Stundenwerte von heute dem Stundenbeginn zugeordnet."""
+    import io
+    import json
+    from datetime import datetime
+    from balkonaut.analytics import TZ
+    body = {"result": {"watt_hours_day": {"2026-10-25": 2250, "2026-10-26": 3000},
+                       "watt_hours_period": {"2026-10-25 07:29:00": 0, "2026-10-25 08:00:00": 40, "2026-10-25 09:00:00": 210,
+                                             "2026-10-25 16:46:00": 35, "2026-10-26 09:00:00": 300}}}
+
+    class Answer(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+    urls = []
+    monkeypatch.setattr(devices.forecast.urllib.request, "urlopen",
+                        lambda url, timeout: urls.append(url) or Answer(json.dumps(body).encode()))
+    day, hours = devices.forecast.estimate(52.0, 11.3, 30, 150, 0.87)
+    at = lambda h: datetime(2026, 10, 25, h, tzinfo=TZ).timestamp()
+    assert day == 2.25 and urls == ["https://api.forecast.solar/estimate/52.0/11.3/30/-30/0.87"]
+    assert hours == {at(7): 0.04, at(8): 0.21, at(16): 0.035}

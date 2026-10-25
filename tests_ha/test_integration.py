@@ -206,8 +206,8 @@ async def test_standalone_options(hass):
 async def test_planes_without_forecast_solar(hass, monkeypatch):
     """Fläche unter Konfigurieren: Prognose selbst abgerufen (Standort von HA), unvollständige Fläche abgelehnt."""
     from custom_components.balkonaut.core import forecast
-    monkeypatch.setattr(forecast, "today",
-                        lambda lat, lon, tilt, azimuth, kwp: 4.2 if (lat, azimuth) == (hass.config.latitude, 150) else 0)
+    monkeypatch.setattr(forecast, "estimate",
+                        lambda lat, lon, tilt, azimuth, kwp: (4.2 if (lat, azimuth) == (hass.config.latitude, 150) else 0, {}))
     hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
     entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", data={"entities": {"grid_power": "sensor.netz"}, "invert": []})
     entry.add_to_hass(hass)
@@ -384,4 +384,31 @@ async def test_import_from_app(hass, aioclient_mock, hass_read_only_user):
     with pytest.raises(Unauthorized):
         await hass.services.async_call(DOMAIN, "import_from_app", {CONF_URL: URL}, blocking=True,
                                        context=Context(user_id=hass_read_only_user.id))
+    assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_hourly_forecast_from_forecast_solar(hass, monkeypatch):
+    """Prognose je Stunde aus dem zugeordneten Forecast.Solar-Eintrag (Ende des Zeitraums -> Stundenbeginn)."""
+    import sys
+    import types
+    from datetime import datetime
+    from custom_components.balkonaut import _hourly_forecast
+    from custom_components.balkonaut.core.analytics import TZ
+    solar = MockConfigEntry(domain="forecast_solar")
+    solar.add_to_hass(hass)
+    er.async_get(hass).async_get_or_create("sensor", "forecast_solar", f"{solar.entry_id}_energy_production_today",
+                                           suggested_object_id="prognose", config_entry=solar)
+    hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone",
+                            data={"entities": {"grid_power": "sensor.netz", "pv_forecast_today": "sensor.prognose"}, "invert": []})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    nine = datetime.now(TZ).replace(hour=9, minute=0, second=0, microsecond=0)
+
+    async def solar_forecast(hass, entry_id):  # Energie-Plattform der Forecast.Solar-Integration
+        return {"wh_hours": {nine.isoformat(): 210}} if entry_id == solar.entry_id else None
+    monkeypatch.setitem(sys.modules, "homeassistant.components.forecast_solar.energy",
+                        types.SimpleNamespace(async_get_solar_forecast=solar_forecast))
+    hass.config.components.add("forecast_solar")
+    assert await _hourly_forecast(hass, entry) == {nine.replace(hour=8).timestamp(): 0.21}
     assert await hass.config_entries.async_unload(entry.entry_id)

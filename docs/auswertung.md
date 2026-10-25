@@ -41,6 +41,26 @@ Werte je Modul liefern. Die Modulfelder tragen die Ausrichtung der Flächen (z. 
 Einstellungen, in der Integration aus den Forecast.Solar-Einträgen, die der Prognose des jeweiligen Wechselrichters
 zugeordnet sind. Ohne Flächen heißen sie **Module**.
 
+### Woher kommt dein Strom heute?
+
+Das Diagramm zeigt je Stunde zwei Balken nebeneinander: **grün**, was das Balkonkraftwerk ins Haus abgegeben hat
+(direkt von der Sonne oder aus dem Akku), **blau**, was aus dem Netz kam. Zusammen ergeben sie den Hausverbrauch.
+Der **gelbe Strich** ist die Erzeugung aller Module in dieser Stunde, egal wohin sie ging; mit der Maus darüber steht
+der Wert da.
+
+| Gelber Strich liegt … | bedeutet |
+|---|---|
+| auf Höhe von Grün | die Erzeugung ging direkt ins Haus |
+| deutlich über Grün | der Rest ging in den Akku oder ins Netz |
+| unter Grün oder fehlt (nachts) | das Haus bekam Strom aus dem Akku |
+
+Die **gestrichelte Linie** ist die erwartete Erzeugung je Stunde laut Forecast.Solar, alle Flächen zusammen. Sie
+erscheint nur für heute und nur mit Tagesprognose: in der Docker-App und im Add-on aus den eingetragenen Flächen, in
+der Integration aus der zugeordneten Forecast.Solar-Integration oder den Flächen unter *Konfigurieren*. Liegen die
+gelben Striche deutlich unter der Linie, lohnt ein Blick auf den [Ertragswächter](#warnungen). Der Knopf **i** am
+Diagramm erklärt das ebenfalls kurz. Dasselbe Diagramm zeigt die Seite *Verlauf* für Woche, Monat und Jahr, dort ohne
+Prognose.
+
 ### Akku
 
 Der Ring zeigt den Ladestand. Seine Farbe geht von Rot an der eingestellten Untergrenze bis Grün an der
