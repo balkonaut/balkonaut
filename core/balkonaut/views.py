@@ -63,6 +63,6 @@ def store_regulation_days(storage, prices, now):
     stored = storage.regulation_days(days[0].isoformat(), days[-1].isoformat())
     for day in days:
         if day.isoformat() not in stored:
-            start = datetime.combine(day, datetime.min.time(), analytics.TZ).timestamp()
-            if r := regulation(storage, prices, start, start + 86400):
+            # Tagesende über Ortszeit: bei Zeitumstellung hat der Tag 23 oder 25 Stunden
+            if r := regulation(storage, prices, analytics._ts(day), analytics._ts(day + timedelta(days=1))):
                 storage.save_regulation_day(day.isoformat(), r)

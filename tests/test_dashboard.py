@@ -90,6 +90,18 @@ def test_store_regulation_days(client):
     assert r["nulleinspeisung"]["tage"] == 1
 
 
+def test_store_regulation_days_dst(client):
+    from datetime import datetime
+    from balkonaut.views import store_regulation_days
+    from balkonaut.analytics import TZ
+    storage = app.state.storage
+    t0 = int(datetime(2026, 10, 25, 23, tzinfo=TZ).timestamp())  # letzte Stunde des 25-Stunden-Tags
+    for t in range(t0, t0 + 3600, 10):
+        storage.add(t, {"grid_power": 20, "output_power": 300, "pv_ac_power": 0, "battery_soc": 50})
+    store_regulation_days(storage, {"energy": 0.3, "feed_in": 0}, datetime(2026, 10, 26, 12, tzinfo=TZ).timestamp())
+    assert "2026-10-25" in storage.regulation_days("2026-10-25", "2026-10-25")
+
+
 def test_soc_gauge():
     from app.main import soc_gauge
     assert soc_gauge({}) is None
