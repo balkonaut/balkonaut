@@ -276,15 +276,13 @@ def _entry(hass: HomeAssistant, entry_id: str | None) -> ConfigEntry | None:
 @websocket_api.websocket_command({vol.Required("type"): "balkonaut/status", vol.Optional("entry_id"): str})
 @websocket_api.async_response
 async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
-    """Status für Karte und Panel: berechnete Werte und, im eigenständigen Betrieb, die zugeordneten Entitäten
-    für Live-Werte. Frisch berechnet, höchstens alle 10 Sekunden (Sperre des Koordinators)."""
+    """Status für Karte und Panel, frisch berechnet, höchstens alle 10 Sekunden (Sperre des Koordinators)."""
     if (entry := _entry(hass, msg.get("entry_id"))) is None:
         connection.send_error(msg["id"], "not_found", "Kein Balkonaut-Eintrag geladen")
         return
     await entry.runtime_data.async_request_refresh()
     connection.send_result(msg["id"], {
-        "entry_id": entry.entry_id, "entities": entry.data.get(CONF_ENTITIES), "invert": entry.data.get(CONF_INVERT, []),
-        "status": entry.runtime_data.data,
+        "entry_id": entry.entry_id, "status": entry.runtime_data.data,
         "names": _names(hass, entry)})
 
 

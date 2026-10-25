@@ -214,8 +214,8 @@ Dashboard *Bearbeiten → Karte hinzufügen* und nach *Balkonaut* suchen, oder a
 type: custom:balkonaut-card
 ```
 
-Im eigenständigen Betrieb zeigt die Karte die Leistungen live aus den zugeordneten Entitäten. Mit einer
-Balkonaut-App kommen sie aus deren letztem Stand. Optional: `title` für eine eigene Überschrift, `entry_id`, wenn
+Die Karte holt ihre Werte alle 10 Sekunden selbst, im eigenständigen Betrieb aus der letzten Messung, mit einer
+Balkonaut-App aus deren letztem Stand. Optional: `title` für eine eigene Überschrift, `entry_id`, wenn
 mehrere Balkonaut-Einträge eingerichtet sind (ohne Angabe nimmt die Karte den eigenständigen).
 
 ### Einstellungen, Diagnose, Störungen

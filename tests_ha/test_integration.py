@@ -322,8 +322,7 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     ws = await hass_ws_client(hass)
     await ws.send_json({"id": 1, "type": "balkonaut/status"})
     msg = await ws.receive_json()
-    assert msg["success"] and msg["result"]["entities"] == {"battery_soc": "sensor.soc"}
-    assert msg["result"]["invert"] == ["output_power"] and "tag" in msg["result"]["status"]["bilanz"]
+    assert msg["success"] and "tag" in msg["result"]["status"]["bilanz"]
     assert msg["result"]["names"] == {"hub": "EZHI", "battery": "Phylion", "extra": "EZ1-M",  # Modell aus dem Register
                                       "modules": {"storage": None, "extra": None}}
     await ws.send_json({"id": 2, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})

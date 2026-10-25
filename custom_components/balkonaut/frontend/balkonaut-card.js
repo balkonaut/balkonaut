@@ -9,7 +9,6 @@ const ICONS = {
   home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   pole: '<path d="M12 2v20M2 5h20M3 3v2M7 3v2M17 3v2M21 3v2"/><path d="m19 5-7 7-7-7"/>',
 };
-const UNITS = { kW: 1000, Wh: 0.001 }; // wie core/homeassistant.py
 // Texte aus Optionen und Geräteregister kommen ins HTML, daher maskieren
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -92,21 +91,14 @@ class BalkonautCard extends HTMLElement {
       this._error = err.message || String(err);
     }
     this._loading = false;
-    this._last = null;
     this._render();
   }
 
-  // Messgröße in W bzw. %: im eigenständigen Betrieb live aus der Entität, sonst aus dem letzten Status
+  // Messgröße in W bzw. %, aus dem eigenen Abruf: unabhängig davon, ob Home Assistant der Karte neue Zustände
+  // übergibt (die App auf dem Handy tut das nach dem Hintergrund nicht immer). Nur echte Zahlen, sie landen in SVG-Attributen.
   _value(key) {
-    const d = this._data;
-    if (!d.entities) { // App: nur echte Zahlen, die Werte landen auch in SVG-Attributen
-      const v = Number(d.status?.live?.[key] ?? NaN);
-      return Number.isFinite(v) ? v : null;
-    }
-    const state = d.entities[key] && this._hass.states[d.entities[key]];
-    const v = state ? parseFloat(state.state) : NaN;
-    if (Number.isNaN(v)) return null;
-    return v * (UNITS[state.attributes.unit_of_measurement] || 1) * (d.invert.includes(key) ? -1 : 1);
+    const v = Number(this._data.status?.live?.[key] ?? NaN);
+    return Number.isFinite(v) ? v : null;
   }
 
   _fmt(v, digits = 0) {
@@ -125,7 +117,7 @@ class BalkonautCard extends HTMLElement {
     const keys = ["pv_power", "pv_ac_power", "battery_power", "battery_soc", "output_power", "grid_power",
       "battery_soc_min", "battery_soc_max", "battery_discharge_protection", "battery_capacity"];
     const v = Object.fromEntries(keys.map((k) => [k, this._value(k)]));
-    const sig = JSON.stringify(v);
+    const sig = JSON.stringify([v, this._data.status?.bilanz?.tag]);
     if (sig === this._last) return; // nur neu zeichnen, wenn sich ein Wert geändert hat
     this._last = sig;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${this._flow(v)}${this._battery(v)}${this._stats()}</ha-card>`;
