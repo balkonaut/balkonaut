@@ -100,6 +100,7 @@ class BalkonautPanel extends HTMLElement {
 
   async _show(tab) {
     this._tab = tab;
+    const seq = this._seq = (this._seq || 0) + 1; // nur die Antwort des letzten Klicks zeigen
     let body;
     try {
       if (tab === "start") body = this._start(await this._ws("status"), await this._ws("verlauf", { ansicht: "tag" }));
@@ -109,7 +110,7 @@ class BalkonautPanel extends HTMLElement {
     } catch (err) {
       body = `<p class="note">Balkonaut ist nicht verfügbar: ${esc(err.message || err)}</p>`;
     }
-    this._render(body);
+    if (seq === this._seq) this._render(body);
   }
 
   _render(body) {
