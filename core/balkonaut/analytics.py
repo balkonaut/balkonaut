@@ -28,6 +28,11 @@ def periods(now):
             "jahr": day.replace(month=1, day=1).timestamp(), "gesamt": 0}
 
 
+def _recent(rows, start, end=float("inf")):
+    """Zeilen von start bis end, dazu eine Woche davor: Zähler brauchen einen Basiswert vor start."""
+    return [r for r in rows if start - 7 * 86400 <= r[1] < end]
+
+
 def _collect(rows, start):
     """Summen ab start: Wh je Messgröße (+/- Anteile), Zählerzuwächse und Stundenwerte je Messgröße."""
     wh = defaultdict(float)
@@ -53,9 +58,10 @@ def _collect(rows, start):
     return wh, counter, hours, energy
 
 
-def balance(rows, start, prices):
-    """rows: (key, hour, mean, mean_pos, mean_neg, last), sortiert nach key und hour. Energie in kWh."""
-    wh, counter, hours, energy = _collect(rows, start)
+def balance(rows, start, prices, collected=None):
+    """rows: (key, hour, mean, mean_pos, mean_neg, last), sortiert nach key und hour. Energie in kWh.
+    collected: Ergebnis von _collect(rows, start), wenn schon vorhanden."""
+    wh, counter, hours, energy = collected or _collect(rows, start)
     grid_import, grid_export = wh["grid_power+"] / 1000, wh["grid_power-"] / 1000
     output = energy("output_energy", "output_power+")
     self_use = max(output - grid_export, 0.0)
@@ -83,7 +89,7 @@ def expected_share(start, end, profile):
     return energy / sum(profile)
 
 
-def amortization(rows, prices, cost, commissioned=None, profile=None):
+def amortization(rows, prices, cost, commissioned=None, profile=None, total=None):
     """Bisherige Ersparnis und Restlaufzeit bis zur Amortisation.
 
     Bisherige Ersparnis: Stand des Abgabezählers mal gemessener Eigenverbrauchsquote mal Arbeitspreis;
@@ -91,7 +97,7 @@ def amortization(rows, prices, cost, commissioned=None, profile=None):
     Abgabezählers) der Durchschnitt seitdem, sonst der Messzeitraum. Mit Ertragsprofil (kWh je Monat)
     wird der Zeitraum nach seinem erwarteten Anteil am Jahresertrag hochgerechnet statt nach Tagen.
     """
-    total = balance(rows, 0, prices)
+    total = total or balance(rows, 0, prices)  # total: Bilanz gesamt, wenn schon berechnet
     hours = [h for _, h, *_ in rows]
     days = (max(hours) - min(hours) + 3600) / 86400 if hours else 0
     meter = [last for key, _, _, _, _, last in rows if key == "output_energy" and last is not None]
@@ -128,9 +134,9 @@ def amortization(rows, prices, cost, commissioned=None, profile=None):
     }
 
 
-def battery(rows, start, prices, commissioned=None):
+def battery(rows, start, prices, commissioned=None, collected=None):
     """Akku-Auswertung ab start: Zyklen, Gesundheit, Wirkungsgrad, Zeiten mit vollem/leerem Akku."""
-    wh, counter, hours, energy = _collect(rows, start)
+    wh, counter, hours, energy = collected or _collect(rows, start)
 
     def first(key):
         return hours[key][min(hours[key])][3] if hours.get(key) else None
@@ -276,8 +282,7 @@ def buckets(view, d):
 def history(rows, bars, prices):
     """Bilanz je Balken: Eigenverbrauch, Netzbezug und Erzeugung in kWh."""
     # ponytail: rechnet jeden Balken einzeln (Jahr: 12 Durchläufe über ein Jahr Stundenwerte); bei Bedarf vorsummieren
-    lo = bars[0][1] - 7 * 86400  # Zähler brauchen einen Basiswert vor dem ersten Balken
-    rows = [r for r in rows if lo <= r[1] < bars[-1][2]]
+    rows = _recent(rows, bars[0][1], bars[-1][2])
     out = []
     for label, a, b in bars:
         x = balance([r for r in rows if r[1] < b], a, prices)
@@ -301,7 +306,8 @@ def yield_watch(rows, now):
     # ponytail: ein voller Akku regelt die PV am Speicher ab und senkt dessen Ertrag; Tage mit vollem Akku ausklammern, falls das stört
     end = periods(now)["tag"]
     start = datetime.combine(datetime.fromtimestamp(end, TZ).date() - timedelta(days=7), time(), TZ).timestamp()
-    hours = _collect([r for r in rows if r[1] < end], start)[2]
+    rows = _recent(rows, start, end)  # nur die letzten 7 Tage, nicht für jeden Tag die ganze Historie
+    hours = _collect(rows, start)[2]
     result, warnings = {}, []
     for name, (counter_key, power_key, forecast_key) in INVERTERS.items():
         by_day = defaultdict(list)
@@ -310,9 +316,8 @@ def yield_watch(rows, now):
         forecast = sum(sum(v) / len(v) for v in by_day.values())
         actual = 0.0  # nur Tage mit Prognose vergleichen, sonst verzerrt eine junge Prognose die Quote
         for day in by_day:
-            day_start = datetime.combine(day, time(), TZ).timestamp()
-            # ponytail: Tag als 24 h, an Tagen der Zeitumstellung eine Stunde daneben
-            w, c, _, _ = _collect([r for r in rows if r[1] < day_start + 86400], day_start)
+            day_end = _ts(day + timedelta(days=1))  # Ortszeit: 23 oder 25 Stunden bei Zeitumstellung
+            w, c, _, _ = _collect([r for r in rows if r[1] < day_end], _ts(day))
             actual += c[counter_key] if counter_key in c else w[power_key + "+"] / 1000
         result[name] = {"ertrag": actual, "prognose": forecast, "tage": len(by_day),
                         "quote": actual / forecast if forecast >= 1 else None}
@@ -386,7 +391,8 @@ def combine_regulation(days):
 def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
     """Gesamtstand wie /api/v1/status: Warnungen, Ertrag, letzte Messwerte, Bilanz und Akku für heute, Monat,
     Jahr und gesamt sowie Amortisation. rows: Stundenwerte, latest: {Messgröße: (ts, wert)}."""
-    starts = periods(now)
+    recent = {name: (r := _recent(rows, start), start, _collect(r, start)) for name, start in periods(now).items()}
+    bilanz = {name: balance(r, start, prices, c) for name, (r, start, c) in recent.items()}
     watch = yield_watch(rows, now)
     warnings = watch["warnungen"]
     # Prognosen kommen auch, wenn alle Geräte ausfallen, und zählen deshalb nicht als Messwert
@@ -399,7 +405,7 @@ def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
         "ertrag": watch["wechselrichter"],
         "stand": datetime.fromtimestamp(stand, TZ) if stand is not None else None,
         "live": {k: v for k, (_, v) in latest.items()},
-        "bilanz": {name: balance(rows, start, prices) for name, start in starts.items()},
-        "akku": {name: battery(rows, start, prices, commissioned) for name, start in starts.items()},
-        "amortisation": amortization(rows, prices, cost, commissioned, profile),
+        "bilanz": bilanz,
+        "akku": {name: battery(r, start, prices, commissioned, c) for name, (r, start, c) in recent.items()},
+        "amortisation": amortization(rows, prices, cost, commissioned, profile, bilanz["gesamt"]),
     }
