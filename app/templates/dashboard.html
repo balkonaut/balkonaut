@@ -66,6 +66,14 @@
   .setup .next a.btn { background: var(--act-bg); color: var(--act-ink); border-color: var(--act-bg); }
   .bar { height: 10px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 8px 0 16px; }
   .bar span { display: block; height: 100%; background: var(--leaf); }
+  /* Energiewege: Zeilen mit Anteilsbalken */
+  .ways { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+  .ways .head { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 6px; }
+  .ways .head b { margin-left: auto; font: 600 28px var(--mono); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+  .ways .row { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: baseline; padding: 6px 0 6px 16px; border-top: 1px solid var(--line); }
+  .ways .row b { font: 600 18px var(--mono); font-variant-numeric: tabular-nums; }
+  .ways .row i { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; display: block; }
+  .ways .row i span { display: block; height: 100%; }
 </style>
 {% set done = setup|selectattr(2)|list|length %}
 {% if done < setup|length %}{% set next = (setup|rejectattr(2)|first)[0] %}
@@ -171,6 +179,22 @@
   <div class="card"><div class="label">Hausverbrauch</div><div class="value">{{ b.hausverbrauch|de(1) }} kWh</div></div>
   <div class="card"><div class="label">Netzbezug</div><div class="value">{{ b.netzbezug|de(1) }} kWh</div></div>
   <div class="card"><div class="label">Einspeisung</div><div class="value">{{ b.einspeisung|de(1) }} kWh</div></div>
+</div>
+
+{% macro way(name, value, total, color) %}<div class="row"><span>{{ name }}</span><b>{{ value|de(1) }} kWh</b><i><span style="width:{{ (value / total * 100)|round(0) if value and total else 0 }}%;background:var(--{{ color }})"></span></i></div>{% endmacro %}
+<h2>Energiewege</h2>
+<div class="card ways">
+  <div>
+    <div class="head"><span class="chip" style="background:var(--sun-soft);color:var(--sun-ink)"><svg class="ico" aria-hidden="true"><use href="#i-sun"/></svg></span>Sonne erzeugt<b>{{ b.erzeugung|de(1) }} <span class="unit">kWh</span></b></div>
+    {{ way("direkt ins Haus", akku.direkt_ins_haus, b.erzeugung, "leaf") }}
+    {{ way("in den Akku geladen", akku.geladen, b.erzeugung, "batt") }}
+    {{ way("eingespeist", b.einspeisung, b.erzeugung, "sky") }}
+  </div>
+  <div>
+    <div class="head"><span class="chip" style="background:var(--batt-soft);color:var(--batt)"><svg class="ico" aria-hidden="true"><use href="#i-batt"/></svg></span>Akku entladen<b>{{ akku.entladen|de(1) }} <span class="unit">kWh</span></b></div>
+    {{ way("davon im Haus angekommen", akku.entladen_ins_haus, akku.entladen, "leaf") }}
+    {{ way("Verluste und Netz", akku.entladen - akku.entladen_ins_haus if akku.entladen_ins_haus is not none else none, akku.entladen, "muted") }}
+  </div>
 </div>
 
 <h2>Akku</h2>

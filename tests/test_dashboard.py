@@ -18,11 +18,12 @@ def test_dashboard(client):
     now = int(time.time()) // 3600 * 3600
     storage = app.state.storage
     for t in range(now - 7200, now, 600):
-        storage.add(t, {"grid_power": 300, "output_power": 200, "pv_power": 150, "battery_soc": 40})
+        storage.add(t, {"grid_power": 300, "output_power": 200, "pv_power": 150, "battery_soc": 40, "battery_power": -100})
     storage.aggregate(now)
     r = client.get("/?zeitraum=gesamt")
     assert r.status_code == 200
     assert "40 %" in r.text and "Jetzt eintragen" in r.text
+    assert "davon im Haus angekommen</span><b>0,2 kWh" in r.text  # Energiewege: 2 h Entladung mit 100 W
     assert client.get("/?zeitraum=unsinn").status_code == 200
     assert 'href="verlauf"' in r.text and 'href="/' not in r.text  # relativ, für Ingress
 

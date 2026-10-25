@@ -90,6 +90,25 @@ abregeln und so eine Warnung „Ertrag niedrig“ auslösen, obwohl alles in Ord
 | Autarkiegrad | Anteil des Hausverbrauchs, den das Balkonkraftwerk deckt |
 | Ersparnis | Eigenverbrauch × Arbeitspreis + Einspeisung × Einspeisevergütung |
 
+## Energiewege
+
+Die Kachel unter der Bilanz zeigt für den gewählten Zeitraum, wohin die Energie geflossen ist (Docker-App, Add-on und
+Panel der Integration):
+
+| Wert | Bedeutung |
+|---|---|
+| Sonne erzeugt | Erzeugung aller Module, wie in der Bilanz |
+| direkt ins Haus | Eigenverbrauch ohne den Anteil aus dem Akku |
+| in den Akku geladen | Geladene Energie laut Zähler des Speichers (`battery_charge_energy`), sonst aus der Akkuleistung |
+| eingespeist | Einspeisung ins Netz, wie in der Bilanz |
+| Akku entladen | Entladene Energie laut Zähler des Speichers (`battery_discharge_energy`), sonst aus der Akkuleistung |
+| davon im Haus angekommen | Je Stunde die Entladung, höchstens aber der Eigenverbrauch dieser Stunde |
+| Verluste und Netz | Rest der Entladung: Wandlungsverluste und, was ins Netz ging |
+
+Die Aufteilung rechnet mit Stundenwerten und braucht die Messgrößen `battery_power` und `output_power`, sonst steht
+dort ein Strich. In Stunden, in denen Sonne und Akku gleichzeitig liefern, zählt der Akku zuerst. Weil die Werte aus
+verschiedenen Zählern stammen, ergeben die drei Wege der Sonne zusammen nicht immer genau die Erzeugung.
+
 ## Akku
 
 | Wert | Bedeutung |

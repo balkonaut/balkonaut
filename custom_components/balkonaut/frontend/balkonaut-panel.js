@@ -11,7 +11,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 const PANEL_STYLE = `
   :host { display: block; min-height: 100%; background: var(--primary-background-color);
-    --bk-sun: #f2b733; --bk-leaf: #3fa66b; --bk-sky: #4a8fd0; --bk-warn: #d9682f;
+    --bk-sun: #f2b733; --bk-leaf: #3fa66b; --bk-batt: #0b84a5; --bk-sky: #4a8fd0; --bk-warn: #d9682f;
     --bk-line: var(--divider-color, #c4cfdd); --bk-ink: var(--primary-text-color); --bk-muted: var(--secondary-text-color);
     --bk-card: var(--ha-card-background, var(--card-background-color, #fff));
     --bk-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; color: var(--bk-ink); }
@@ -46,6 +46,13 @@ const PANEL_STYLE = `
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   th, td { padding: 6px 8px; border-bottom: 1px solid var(--bk-line); text-align: right; }
   th:first-child, td:first-child { text-align: left; }
+  .ways { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+  .ways .head { display: flex; align-items: baseline; font-weight: 600; margin-bottom: 6px; }
+  .ways .head b, .ways .row b { margin-left: auto; font: 600 18px var(--bk-mono); font-variant-numeric: tabular-nums; }
+  .ways .head b { font-size: 26px; letter-spacing: -.04em; }
+  .ways .row { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: baseline; padding: 6px 0 6px 16px; border-top: 1px solid var(--bk-line); }
+  .ways .row i { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--bk-line); overflow: hidden; display: block; }
+  .ways .row i span { display: block; height: 100%; }
   balkonaut-card { display: block; }
   @media print { .toolbar, nav, .noprint { display: none; } }
 `;
@@ -164,6 +171,17 @@ class BalkonautPanel extends HTMLElement {
       ${this._box("Netzbezug", `${this._fmt(b.netzbezug)} kWh`)}${this._box("Einspeisung", `${this._fmt(b.einspeisung)} kWh`)}</div>`;
   }
 
+  _ways(b, k) {
+    const row = (name, v, total, color) => `<div class="row"><span>${name}</span><b>${this._fmt(v)} kWh</b><i><span style="width:${
+      v && total ? Math.round((v / total) * 100) : 0}%;background:var(--bk-${color})"></span></i></div>`;
+    const lost = k.entladen_ins_haus == null ? null : k.entladen - k.entladen_ins_haus;
+    return `<div class="card ways"><div><div class="head">Sonne erzeugt<b>${this._fmt(b.erzeugung)} kWh</b></div>
+      ${row("direkt ins Haus", k.direkt_ins_haus, b.erzeugung, "leaf")}${row("in den Akku geladen", k.geladen, b.erzeugung, "batt")}
+      ${row("eingespeist", b.einspeisung, b.erzeugung, "sky")}</div>
+      <div><div class="head">Akku entladen<b>${this._fmt(k.entladen)} kWh</b></div>
+      ${row("davon im Haus angekommen", k.entladen_ins_haus, k.entladen, "leaf")}${row("Verluste und Netz", lost, k.entladen, "muted")}</div></div>`;
+  }
+
   _start(data, today) {
     const st = data.status, b = st.bilanz[this._period], k = st.akku[this._period], a = st.amortisation;
     const tabs = PERIODS.map(([key, name]) => `<button data-set="_period=${key}" class="${key === this._period ? "on" : ""}">${name}</button>`).join("");
@@ -172,6 +190,7 @@ class BalkonautPanel extends HTMLElement {
     return `${st.warnungen.map((w) => `<p class="note">${esc(w.text)}</p>`).join("")}
       <balkonaut-card></balkonaut-card>
       <h2>Bilanz</h2><div class="tabs">${tabs}</div>${this._balance(b)}
+      <h2>Energiewege</h2>${this._ways(b, k)}
       <h2>Akku</h2><div class="grid">
         ${this._box("Vollzyklen im Zeitraum", this._fmt(k.zyklen), `gesamt ${this._fmt(k.zyklen_gesamt, 0)}${k.zyklen_pro_jahr ? `, ${this._fmt(k.zyklen_pro_jahr, 0)} pro Jahr` : ""}`)}
         ${this._box("Gesundheit (SoH)", `${this._fmt(k.gesundheit, 0)} %`, `Kapazität ${this._fmt(k.kapazitaet, 2)} kWh`)}

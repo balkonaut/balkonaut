@@ -147,6 +147,15 @@ def battery(rows, start, prices, commissioned=None):
     inputs = energy("pv_energy", "pv_power") + (wh["pv_ac_power"] + wh["output_power-"]) / 1000 + (discharge or 0)
     outputs = energy("output_energy", "output_power+") + (charge or 0)
 
+    # Wege der Energie: aus dem Akku ins Haus je Stunde höchstens der Eigenverbrauch dieser Stunde, der Rest der
+    # Entladung sind Wandlungsverluste oder ging ins Netz. ponytail: in Stunden mit Sonne und Entladung zählt der Akku
+    # zuerst, genauer ginge es nur mit Messwerten im Sekundentakt.
+    self_use = max(energy("output_energy", "output_power+") - wh["grid_power-"] / 1000, 0.0)
+    to_house = None
+    if "battery_power" in hours and "output_power" in hours:
+        to_house = sum(min(-neg, max(hours["output_power"].get(h, (0, 0))[1] + hours["grid_power"].get(h, (0, 0, 0))[2], 0))
+                       for h, (_, _, neg, _) in hours["battery_power"].items()) / 1000
+
     soc_max, soc_min = latest("battery_soc_max") or 100, latest("battery_soc_min") or 0
     full = empty = 0
     export_full = import_empty = 0.0
@@ -172,6 +181,10 @@ def battery(rows, start, prices, commissioned=None):
         "stunden_leer": empty,
         "netzbezug_bei_leerem_akku": import_empty,
         "kosten_bei_leerem_akku": import_empty * prices["energy"],
+        "geladen": charge if charge is not None else wh["battery_power+"] / 1000,
+        "entladen": discharge if discharge is not None else wh["battery_power-"] / 1000,
+        "entladen_ins_haus": to_house,
+        "direkt_ins_haus": None if to_house is None else max(self_use - to_house, 0.0),
     }
 
 

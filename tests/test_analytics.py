@@ -67,7 +67,19 @@ def test_battery():
     assert abs(b["wirkungsgrad"] - (4 + (10 - 95) / 100 * 5) / 1) < 1e-9
     assert (b["stunden_voll"], b["einspeisung_bei_vollem_akku"]) == (1, 0.3)
     assert (b["stunden_leer"], b["netzbezug_bei_leerem_akku"]) == (1, 0.8)
+    assert (b["geladen"], b["entladen"], b["entladen_ins_haus"]) == (1.0, 4.0, None)  # ohne Leistungen kein Weg
     assert battery([], 0, PRICES)["zyklen"] is None  # ohne Daten
+
+
+def test_battery_paths():
+    rows = [  # Mittag: Sonne lädt und versorgt das Haus, Abend: Akku gibt 500 Wh ab, 100 Wh davon ins Netz
+        ("battery_power", 0, 300, 300, 0, None), ("battery_power", 3600, -500, 0, -500, None),
+        ("grid_power", 0, 0, 0, 0, None), ("grid_power", 3600, -100, 0, -100, None),
+        ("output_power", 0, 200, 200, 0, None), ("output_power", 3600, 500, 500, 0, None),
+    ]
+    b = battery(sorted(rows), 0, PRICES)
+    assert (b["geladen"], b["entladen"]) == (0.3, 0.5)
+    assert b["entladen_ins_haus"] == 0.4 and abs(b["direkt_ins_haus"] - 0.2) < 1e-9
 
 
 def test_amortization_with_commissioning():
