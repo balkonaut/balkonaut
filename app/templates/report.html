@@ -26,8 +26,6 @@
   <tr><td>Autarkiegrad</td>{% for b in (r.bilanz, r.vormonat, r.vorjahr) %}<td>{{ b.autarkiegrad|pct }}</td>{% endfor %}</tr>
   <tr><td>Eigenverbrauchsquote</td>{% for b in (r.bilanz, r.vormonat, r.vorjahr) %}<td>{{ b.eigenverbrauchsquote|pct }}</td>{% endfor %}</tr>
 </table>
-{% if r.erwartet %}<p class="label">Erwartete Erzeugung laut PVGIS für diesen Zeitraum: {{ r.erwartet|de(1) }} kWh,
-erreicht: {{ (r.bilanz.erzeugung / r.erwartet)|pct }}.</p>{% endif %}
 </div>
 
 <h2>Tageswerte</h2>

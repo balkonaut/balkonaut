@@ -359,7 +359,7 @@ async def ws_history(hass: HomeAssistant, connection: websocket_api.ActiveConnec
 @websocket_api.async_response
 async def ws_report(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
     await _view(hass, connection, msg, "bericht", {"monat": msg["monat"]},
-                lambda storage, c, now: views.report(storage, msg["monat"], c.prices, now, None, c.commissioned))
+                lambda storage, c, now: views.report(storage, msg["monat"], c.prices, now, c.commissioned))
 
 
 @websocket_api.websocket_command({vol.Required("type"): "balkonaut/kacheln"})

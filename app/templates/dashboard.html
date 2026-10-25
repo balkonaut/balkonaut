@@ -224,7 +224,6 @@
       {% if a.jahre_bis_amortisation %}<div class="label">in {{ a.jahre_bis_amortisation|de(1) }} Jahren</div>{% endif %}</div>
   </div>
   {% if a.basis == "messtage" %}<p class="label">Hochgerechnet aus {{ a.messtage|de(1) }} Messtagen{{ " nach erwartetem Jahresverlauf" if a.jahresverlauf else ", ohne Jahresverlauf" }}. Mit dem <a href="einstellungen#commissioned">Datum der Inbetriebnahme</a> wird sie genauer.</p>{% endif %}
-  {% if a.erwarteter_ertrag_jahr %}<p class="label">Erwarteter Jahresertrag laut PVGIS: {{ a.erwarteter_ertrag_jahr|de(0) }} kWh.</p>{% endif %}
   {% if not a.zaehler_plausibel %}<p class="note err">Der Abgabezähler ist für den Zeitraum seit der Inbetriebnahme zu hoch. Stimmt das Datum?</p>{% endif %}
 </div>
 </div>

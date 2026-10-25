@@ -177,8 +177,7 @@ def api_history(request: Request, ansicht: str = "tag", datum: str = ""):
 
 def report_data(request, monat):
     cfg = config.load(request.app.state.config_path)
-    return views.report(request.app.state.storage, monat, cfg["prices"], time.time(), request.app.state.profile,
-                        config.commissioned(cfg))
+    return views.report(request.app.state.storage, monat, cfg["prices"], time.time(), config.commissioned(cfg))
 
 
 @app.get("/api/v1/bericht")

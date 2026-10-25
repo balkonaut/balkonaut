@@ -133,7 +133,7 @@ def test_expected_share_and_profile():
     rows = [("output_energy", h * 3600, 0, 0, 0, 1.0 + h * 0.01) for h in range(int(start // 3600), int(start // 3600) + 24 * 31)]
     a = amortization(rows, PRICES, 500, profile=profile)  # Januar gemessen
     flat = amortization(rows, PRICES, 500)
-    assert a["jahresverlauf"] and a["erwarteter_ertrag_jahr"] == 240
+    assert a["jahresverlauf"]
     # Januar bringt laut Profil 10/240 des Jahres, nach Tagen wären es 31/365,25
     assert abs(a["ersparnis_pro_jahr"] / flat["ersparnis_pro_jahr"] - (240 / 10) / (365.25 / 31)) < 1e-9
 

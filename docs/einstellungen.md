@@ -68,7 +68,9 @@ planes:
 - `kwp`: Modulleistung der Fläche in kWp
 - `inverter`: `storage` für Flächen am Speicher, `extra` für Flächen an einem zusätzlichen Wechselrichter
 
-Die Tagesprognose kommt von Forecast.Solar, höchstens einmal je Stunde abgerufen, der Jahresverlauf von PVGIS.
+Die Tagesprognose kommt von Forecast.Solar, höchstens einmal je Stunde abgerufen. Den erwarteten Jahresverlauf
+(langjähriges Mittel, keine Prognose) holt Balkonaut einmal bei PVGIS, wenn sich Standort oder Flächen ändern; er
+dient nur der Hochrechnung der Amortisation, solange das Datum der Inbetriebnahme fehlt.
 
 Auch mit Home Assistant (Abschnitt `home_assistant`, ebenso im Add-on) braucht es dafür keine Forecast.Solar-Integration:
 Sind Flächen eingetragen, ruft Balkonaut die Prognose selbst ab. Fehlt `location`, gilt der Standort aus Home

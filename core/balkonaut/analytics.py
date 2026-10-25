@@ -124,7 +124,6 @@ def amortization(rows, prices, cost, commissioned=None, profile=None, total=None
         "ersparnis_pro_jahr": per_year,
         "basis": basis,
         "jahresverlauf": bool(profile),
-        "erwarteter_ertrag_jahr": sum(profile) if profile else None,
         "rest": remaining,
         "jahre_bis_amortisation": years_left,
         "amortisiert_am": (datetime.fromtimestamp(max(hours) + 3600, TZ) + timedelta(days=years_left * 365.25)).date()
@@ -334,9 +333,8 @@ def yield_watch(rows, now):
     return {"wechselrichter": result, "warnungen": warnings}
 
 
-def month_report(rows, d, prices, now, profile=None, commissioned=None):
-    """Monatsbericht für den Monat von d: Bilanz im Vergleich zu Vormonat und Vorjahresmonat, Akku,
-    Erzeugung gegen Erwartung (Ertragsprofil) und Tageswerte."""
+def month_report(rows, d, prices, commissioned=None):
+    """Monatsbericht für den Monat von d: Bilanz im Vergleich zu Vormonat und Vorjahresmonat, Akku und Tageswerte."""
     def bounds(day):
         bars = buckets("monat", day)[1]
         return bars[0][1], bars[-1][2], bars
@@ -348,16 +346,11 @@ def month_report(rows, d, prices, now, profile=None, commissioned=None):
     start, end, bars = bounds(first)
     prev = (first - timedelta(days=1)).replace(day=1)
     last_year = first.replace(year=first.year - 1)
-    expected = None
-    measured = [h for _, h, *_ in rows if start <= h < end]
-    if profile and measured:  # nur den Teil des Monats, für den es Messwerte gibt
-        expected = expected_share(max(start, min(measured)), min(end, now), profile) * sum(profile)
     return {
         "monat": f"{MONTHS[first.month - 1]} {first.year}",
         "zurueck": prev, "weiter": (first + timedelta(days=32)).replace(day=1),
         "bilanz": bal(start, end), "vormonat": bal(*bounds(prev)[:2]), "vorjahr": bal(*bounds(last_year)[:2]),
         "akku": battery([r for r in rows if r[1] < end], start, prices, commissioned),
-        "erwartet": expected,
         "tage": history(rows, bars, prices),
     }
 

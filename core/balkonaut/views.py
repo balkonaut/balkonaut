@@ -88,11 +88,11 @@ def history(storage, view, datum, prices, now):
             "bilanz": analytics.balance([r for r in rows if r[1] < buckets[-1][2]], buckets[0][1], prices)}
 
 
-def report(storage, monat, prices, now, profile=None, commissioned=None):
+def report(storage, monat, prices, now, commissioned=None):
     """Monatsbericht (monat=JJJJ-MM, sonst der laufende Monat) mit gespeicherter Regelgüte der Tage."""
     today = datetime.fromtimestamp(now, analytics.TZ).date()
     day = parse_day(monat + "-01" if monat else "", today)
-    r = analytics.month_report(storage.hourly(int(now)), day, prices, now, profile, commissioned)
+    r = analytics.month_report(storage.hourly(int(now)), day, prices, commissioned)
     if r["weiter"] > today:
         r["weiter"] = None
     first = day.replace(day=1)

@@ -58,8 +58,12 @@ Voraussetzung: Home Assistant 2026.10 oder neuer.
    *Vorzeichen drehen* wählen.
 3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht.
 
-Danach unter *Konfigurieren* Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme eintragen,
-ohne Forecast.Solar-Integration dort auch die Flächen für die Tagesprognose.
+Danach unter *Konfigurieren* Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme eintragen.
+
+**Tagesprognose (optional):** Der Ertragswächter braucht eine Tagesprognose. Dafür entweder die
+[Forecast.Solar-Integration](https://www.home-assistant.io/integrations/forecast_solar/) einrichten und in Schritt 2
+unter *Prognose* zuordnen, oder unter *Konfigurieren* eine Fläche je Wechselrichter eintragen; dann ruft Balkonaut
+die Prognose selbst bei Forecast.Solar ab. Ohne beides fehlt nur der Ertragswächter.
 Die Zuordnung lässt sich später über *⋮ → Neu konfigurieren* ändern, ohne Messdaten zu verlieren.
 
 ### Unterstützte Geräte

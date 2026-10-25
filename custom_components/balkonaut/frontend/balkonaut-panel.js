@@ -324,8 +324,7 @@ class BalkonautPanel extends HTMLElement {
     return `<div class="pager noprint"><button data-set="_monat=${esc(month(r.zurueck))}">← zurück</button><b>Monatsbericht ${esc(r.monat)}</b>
         <button ${r.weiter ? `data-set="_monat=${esc(month(r.weiter))}"` : "disabled"}>weiter →</button>
         <button onclick="window.print()">Drucken</button></div>
-      <h2>Bilanz</h2><div class="card"><table><tr><th></th><th>${esc(r.monat)}</th><th>Vormonat</th><th>Vorjahresmonat</th></tr>${table}</table>
-        ${r.erwartet ? `<p class="label">Erwartete Erzeugung laut PVGIS: ${this._fmt(r.erwartet)} kWh, erreicht: ${this._pct(r.bilanz.erzeugung / r.erwartet)}.</p>` : ""}</div>
+      <h2>Bilanz</h2><div class="card"><table><tr><th></th><th>${esc(r.monat)}</th><th>Vormonat</th><th>Vorjahresmonat</th></tr>${table}</table></div>
       <h2>Tageswerte</h2><div class="card">${this._chart(r.tage)}</div>
       <h2>Akku</h2><div class="grid">
         ${this._box("Vollzyklen", this._fmt(r.akku.zyklen))}${this._box("Wirkungsgrad", this._pct(r.akku.wirkungsgrad))}

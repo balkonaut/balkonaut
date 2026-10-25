@@ -163,6 +163,11 @@ Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die E
 
 Pflicht ist nur eine einzige Messgröße. Fehlt eine, entfällt nur die Funktion, die sie braucht.
 
+!!! note "Tagesprognose ist optional"
+    Für die Tagesprognose des Ertragswächters entweder die Forecast.Solar-Integration einrichten und in Schritt 2
+    unter *Prognose* zuordnen, oder später unter *Konfigurieren* eine Fläche je Wechselrichter eintragen; dann ruft
+    Balkonaut die Prognose selbst bei Forecast.Solar ab. Ohne beides fehlt nur der Ertragswächter.
+
 Danach zeigt das Balkonaut-Panel in der Seitenleiste oben die Kachel *Einrichtung*, solange etwas Wichtiges fehlt:
 Messgrößen für Netz, Abgabe, Erzeugung und Ladestand (*⋮ → Neu konfigurieren*), eine Prognose-Entität oder eine
 Fläche sowie Arbeitspreis und Anlagekosten (beides unter *Konfigurieren*). Das Datum der Inbetriebnahme ist als

@@ -81,7 +81,7 @@
           },
           "forecast": {
             "name": "Prognose",
-            "description": "Tagesprognose je Wechselrichter, z. B. aus Forecast.Solar",
+            "description": "Optional, für den Ertragswächter: Tagesprognose je Wechselrichter aus der Forecast.Solar-Integration. Ohne sie später unter Konfigurieren eine Fläche eintragen, dann ruft Balkonaut die Prognose selbst bei Forecast.Solar ab.",
             "data": {
               "pv_forecast_today": "Prognose Speicher",
               "pv_ac_forecast_today": "Prognose Zusatz"
@@ -91,7 +91,7 @@
       },
       "summary": {
         "title": "Zusammenfassung",
-        "description": "Damit verfügbar:\n{available}\n\nNicht verfügbar, dafür fehlen Messgrößen:\n{missing}\n\nAktuelle Werte:\n{values}",
+        "description": "Damit verfügbar:\n{available}\n\nNicht verfügbar, dafür fehlen Messgrößen:\n{missing}\n\nTagesprognose (optional, für den Ertragswächter): Forecast.Solar-Integration zuordnen oder später unter Konfigurieren eine Fläche eintragen.\n\nAktuelle Werte:\n{values}",
         "menu_options": {
           "create": "Speichern",
           "entities": "Zuordnung ändern"
@@ -128,7 +128,7 @@
         "sections": {
           "plane_storage": {
             "name": "Fläche am Speicher",
-            "description": "Für die Tagesprognose ohne Forecast.Solar-Integration. Ausrichtung 0 = Nord, 90 = Ost, 180 = Süd, 270 = West; Neigung 0 = waagerecht, 90 = senkrecht.",
+            "description": "Für die Tagesprognose (Ertragswächter, optional), wenn keine Forecast.Solar-Integration zugeordnet ist: Balkonaut ruft sie dann selbst bei Forecast.Solar ab. Ausrichtung 0 = Nord, 90 = Ost, 180 = Süd, 270 = West; Neigung 0 = waagerecht, 90 = senkrecht.",
             "data": {
               "declination": "Neigung",
               "azimuth": "Ausrichtung",

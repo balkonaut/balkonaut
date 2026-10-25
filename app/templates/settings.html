@@ -79,7 +79,8 @@
 
 <h2 id="flaechen">Standort und Flächen</h2>
 <form method="post" action="einstellungen" class="card"><input type="hidden" name="bereich" value="flaechen">
-  <p class="intro">Für die Tagesprognose (Forecast.Solar) und den erwarteten Jahresverlauf (PVGIS).{% if addon %}
+  <p class="intro">Für die Tagesprognose (Forecast.Solar, Ertragswächter) und die Hochrechnung der Amortisation nach
+  Jahresverlauf (PVGIS, langjähriges Mittel).{% if addon %}
   Nur nötig, wenn im Add-on keine Prognose-Entität zugeordnet ist. Ohne Breiten- und Längengrad gilt der Standort
   aus Home Assistant.{% endif %}</p>
   {% set src = entered or cfg %}
