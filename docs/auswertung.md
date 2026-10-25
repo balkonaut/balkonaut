@@ -150,7 +150,8 @@ Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Mes
 ## Monatsbericht
 
 Die Seite *Bericht* fasst einen Monat zusammen: Bilanz im Vergleich zu Vormonat und Vorjahresmonat,
-Tageswerte als Diagramm und die Akku-Kennzahlen.
+Tageswerte als Diagramm und die Akku-Kennzahlen. Bei der Nulleinspeisung im Bericht sind nur die Anteile (nahe 0 W,
+Abgabe über Limit) bewertet; die Grenzen der übrigen Werte gelten für 7 Tage, nicht für einen Monat.
 Mit *Drucken / als PDF speichern* entsteht daraus eine druckfertige Seite oder PDF-Datei. Die Regelgüte der
 Nulleinspeisung speichert Balkonaut einmal pro Tag für den Vortag, der Bericht fasst diese Tageswerte zusammen.
 Sie beginnen mit dem Tag, an dem Balkonaut selbst zu messen begann; importierter Verlauf enthält keine 10-Sekunden-Werte.

@@ -77,12 +77,15 @@ const PANEL_STYLE = `
     display: grid; place-items: center; padding: 0; }
   .info[aria-expanded="true"] { background: var(--bk-ink); color: var(--bk-card); }
   .hilfe { font-size: 14px; color: var(--bk-muted); margin: 8px 0 0; line-height: 1.4; }
+  .grid > .card:has(> .info) { display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: 4px; align-content: start; }
+  .grid > .card:has(> .info) > .label:first-child { align-self: end; }
+  .k-body { display: flex; flex-direction: column; } .q-wrap { margin-top: auto; }  /* Skala unten: in einer Reihe auf einer Linie */
   .q-badge { display: inline-block; vertical-align: middle; font: 600 11px var(--bk-mono); letter-spacing: .06em; text-transform: uppercase;
     padding: 2px 8px; border-radius: 999px; background: var(--q); color: #fff; }
   .q-scale { position: relative; height: 8px; border-radius: 4px; margin: 8px 0 4px;
     background: linear-gradient(90deg, hsl(0 60% 45%), hsl(45 75% 45%), hsl(130 55% 42%)); }
   .q-scale i { position: absolute; top: -4px; width: 4px; height: 16px; border-radius: 2px; background: var(--bk-ink); transform: translateX(-2px); }
-  .q-ends { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--bk-muted); }
+  .q-ends { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--bk-muted); line-height: 1.3; } .q-ends span:last-child { text-align: right; }
   balkonaut-card { display: block; }
   @media print { .toolbar, nav, .noprint { display: none; } }
 `;
@@ -120,22 +123,18 @@ class BalkonautPanel extends HTMLElement {
     return v === null || v === undefined ? "–" : `${this._fmt(v * 100, 0)} %`;
   }
 
-  _box(label, value, sub = "") {
-    return `<div class="card"><div class="label">${esc(label)}</div><div class="value">${esc(value)}</div>${sub ? `<div class="label">${esc(sub)}</div>` : ""}</div>`;
-  }
-
   // Kachel mit Erklärung (Knopf i) und, wo es eine Bewertung gibt, Skala von rot (links) bis grün, wie app/templates/_kachel.html
   _kachel(bereich, key, label, value, raw = null, sub = "") {
     const [text, good, bad, goodText, badText] = this._kacheln?.[bereich]?.[key] || [""];
     const s = good === undefined || typeof raw !== "number" ? null : Math.min(Math.max((raw - bad) / (good - bad), 0), 1);
     const id = `hilfe-${bereich}-${key}`, nb = (t) => esc(t).replaceAll(" ", "&nbsp;");
-    const badge = s === null ? "" : ` <span class="q-badge" style="--q:hsl(${Math.round(s * 130)} 60% 42%)">${
-      s >= 0.67 ? "gut" : s >= 0.34 ? "mittel" : "schwach"}</span>`;
-    const scale = s === null ? "" : `<div class="q-scale" aria-hidden="true"><i style="left:${(s * 100).toFixed(1)}%"></i></div>
-      <div class="q-ends"><span>schlecht ${nb(badText)}</span><span>gut ${nb(goodText)}</span></div>`;
+    const badge = s === null ? "" : `<div><span class="q-badge" style="--q:hsl(${Math.round(s * 130)} 60% 42%)">${
+      s >= 0.67 ? "gut" : s >= 0.34 ? "mittel" : "schwach"}</span></div>`;
+    const scale = s === null ? "" : `<div class="q-wrap" aria-hidden="true"><div class="q-scale"><i style="left:${(s * 100).toFixed(1)}%"></i></div>
+      <div class="q-ends"><span>schlecht<br>${nb(badText)}</span><span>gut<br>${nb(goodText)}</span></div></div>`;
     return `<div class="card"><div class="label">${esc(label)}</div>${text ? `<button class="info" type="button" aria-expanded="false"
-      aria-controls="${id}" aria-label="Erklärung zu ${esc(label)}">i</button>` : ""}<div class="value">${esc(value)}${badge}</div>${scale}
-      ${sub ? `<div class="label">${esc(sub)}</div>` : ""}${text ? `<p class="hilfe" id="${id}" hidden>${esc(text)}</p>` : ""}</div>`;
+      aria-controls="${id}" aria-label="Erklärung zu ${esc(label)}">i</button>` : ""}<div class="k-body"><div class="value">${esc(value)}</div>${badge}
+      ${sub ? `<div class="label">${esc(sub)}</div>` : ""}${scale}${text ? `<p class="hilfe" id="${id}" hidden>${esc(text)}</p>` : ""}</div></div>`;
   }
 
   async _ws(type, extra = {}) {
@@ -335,12 +334,14 @@ class BalkonautPanel extends HTMLElement {
       <h2>Bilanz</h2><div class="card"><table><tr><th></th><th>${esc(r.monat)}</th><th>Vormonat</th><th>Vorjahresmonat</th></tr>${table}</table></div>
       <h2>Tageswerte</h2><div class="card">${this._chart(r.tage)}</div>
       <h2>Akku</h2><div class="grid">
-        ${this._box("Vollzyklen", this._fmt(r.akku.zyklen))}${this._box("Wirkungsgrad", this._pct(r.akku.wirkungsgrad))}
-        ${this._box("Stunden voll / leer", `${r.akku.stunden_voll} / ${r.akku.stunden_leer}`)}${this._box("Gesundheit (SoH)", `${this._fmt(r.akku.gesundheit, 0)} %`)}</div>
+        ${this._kachel("akku", "zyklen", "Vollzyklen", this._fmt(r.akku.zyklen))}${this._kachel("akku", "wirkungsgrad", "Wirkungsgrad", this._pct(r.akku.wirkungsgrad), r.akku.wirkungsgrad)}
+        ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", r.akku.stunden_voll ?? "–")}${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", r.akku.stunden_leer ?? "–")}
+        ${this._kachel("akku", "gesundheit", "Gesundheit (SoH)", `${this._fmt(r.akku.gesundheit, 0)} %`)}</div>
       ${n ? `<h2>Nulleinspeisung</h2><div class="grid">
-        ${this._box("Regelbereit", `${this._fmt(n.regelbereit_stunden, 0)} h`, `an ${n.tage} Tagen`)}${this._box("Davon nahe 0 W", this._pct(n.anteil_nahe_null))}
-        ${this._box("Vermeidbarer Netzbezug", `${this._fmt(n.vermeidbarer_netzbezug)} kWh`, `${this._fmt(n.vermeidbare_kosten, 2)} €`)}
-        ${this._box("Abgabe über Limit", this._pct(n.anteil_ueber_limit), `höchster Wert ${this._fmt(n.max_abgabe, 0)} W`)}</div>` : ""}`;
+        ${this._kachel("nulleinspeisung", "regelbereit_stunden", "Regelbereit", `${this._fmt(n.regelbereit_stunden, 0)} h`, null, `an ${n.tage} Tagen`)}
+        ${this._kachel("nulleinspeisung", "anteil_nahe_null", "Davon nahe 0 W", this._pct(n.anteil_nahe_null), n.anteil_nahe_null)}
+        ${this._kachel("nulleinspeisung", "vermeidbarer_netzbezug", "Vermeidbarer Netzbezug", `${this._fmt(n.vermeidbarer_netzbezug)} kWh`, null, `${this._fmt(n.vermeidbare_kosten, 2)} €`)}
+        ${this._kachel("nulleinspeisung", "anteil_ueber_limit", "Abgabe über Limit", this._pct(n.anteil_ueber_limit), n.anteil_ueber_limit, `höchster Wert ${this._fmt(n.max_abgabe, 0)} W`)}</div>` : ""}`;
   }
 }
 
