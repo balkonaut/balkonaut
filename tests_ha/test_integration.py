@@ -323,6 +323,7 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     await ws.send_json({"id": 1, "type": "balkonaut/status"})
     msg = await ws.receive_json()
     assert msg["success"] and "tag" in msg["result"]["status"]["bilanz"]
+    assert msg["result"]["setup"] == {"messgroessen": False, "prognose": False, "preise": False, "inbetriebnahme": False}
     assert msg["result"]["names"] == {"hub": "EZHI", "battery": "Phylion", "extra": "EZ1-M",  # Modell aus dem Register
                                       "modules": {"storage": None, "extra": None}}
     await ws.send_json({"id": 2, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})
@@ -358,9 +359,11 @@ async def test_views_from_app(hass, hass_ws_client, aioclient_mock):
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     ws = await hass_ws_client(hass)
-    await ws.send_json({"id": 1, "type": "balkonaut/verlauf", "ansicht": "woche"})
+    await ws.send_json({"id": 1, "type": "balkonaut/status"})
+    assert (await ws.receive_json())["result"]["setup"] is None  # die App hat ihre eigene Einrichtung
+    await ws.send_json({"id": 2, "type": "balkonaut/verlauf", "ansicht": "woche"})
     assert (await ws.receive_json())["result"]["titel"] == "KW 43"  # von der App durchgereicht
-    await ws.send_json({"id": 2, "type": "balkonaut/nulleinspeisung"})
+    await ws.send_json({"id": 3, "type": "balkonaut/nulleinspeisung"})
     assert (await ws.receive_json())["error"]["code"] == "unreachable"
 
 

@@ -53,6 +53,24 @@ const PANEL_STYLE = `
   .ways .row { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: baseline; padding: 6px 0 6px 16px; border-top: 1px solid var(--bk-line); }
   .ways .row i { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--bk-line); overflow: hidden; display: block; }
   .ways .row i span { display: block; height: 100%; }
+  .setup { margin-bottom: 16px; }
+  .setup .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+  .setup .head b { font-size: 1.1rem; }
+  .setup .bar { height: 6px; border-radius: 3px; }
+  .setup .bar span { background: var(--bk-sun); }
+  .setup ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+  .setup li { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px;
+    border: 1px solid var(--bk-line); border-radius: 6px; }
+  .setup li.next { border: 2px solid var(--bk-sun); }
+  .setup .mark { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+    font: 600 14px var(--bk-mono); border: 2px solid var(--bk-line); color: var(--bk-muted); }
+  .setup .done .mark { background: var(--bk-leaf); border-color: var(--bk-leaf); color: var(--bk-card); }
+  .setup .next .mark { border-color: var(--bk-sun); color: var(--bk-ink); }
+  .setup .done b { color: var(--bk-muted); }
+  .setup li span { color: var(--bk-muted); font-size: 14px; }
+  .setup a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 6px; text-decoration: none;
+    font-weight: 600; border: 1px solid var(--bk-line); color: var(--bk-ink); margin-top: auto; }
+  .setup .next a { background: var(--primary-color); color: var(--text-primary-color, #fff); border-color: var(--primary-color); }
   balkonaut-card { display: block; }
   @media print { .toolbar, nav, .noprint { display: none; } }
 `;
@@ -183,12 +201,36 @@ class BalkonautPanel extends HTMLElement {
       ${row("davon im Haus angekommen", k.entladen_ins_haus, k.entladen, "leaf")}${row("Verluste und Netz", lost, k.entladen, "muted")}</div></div>`;
   }
 
+  // Kachel Einrichtung wie in der Docker-App, solange ein Pflichtschritt fehlt; die Inbetriebnahme ist nur empfohlen
+  _setup(setup) {
+    if (!setup) return "";
+    const steps = [
+      ["messgroessen", "Messgrößen zuordnen", "Netz, Abgabe, Erzeugung und Ladestand, sonst bleibt die Bilanz leer. Unter ⋮ → Neu konfigurieren."],
+      ["prognose", "Prognose", "Forecast.Solar-Entität zuordnen oder eine Fläche eintragen, für den Ertragswächter. Unter Konfigurieren."],
+      ["preise", "Preise und Anlage", "Ohne Arbeitspreis und Anlagekosten stehen Ersparnis und Amortisation auf 0&nbsp;€. Unter Konfigurieren."],
+      ["inbetriebnahme", "Datum der Inbetriebnahme", "Empfohlen: macht die Ersparnis pro Jahr genauer. Unter Konfigurieren.", true],
+    ];
+    const required = steps.filter(([, , , optional]) => !optional);
+    const done = required.filter(([key]) => setup[key]).length;
+    if (done === required.length) return "";
+    const next = steps.find(([key]) => !setup[key])[0];
+    const items = steps.map(([key, title, hint], i) => {
+      const cls = setup[key] ? "done" : key === next ? "next" : "";
+      return `<li class="${cls}"><span class="mark" aria-hidden="true">${setup[key] ? "✓" : i + 1}</span>
+        <div><b>${title}</b><br><span>${setup[key] ? "Erledigt." : hint}</span></div>
+        <a href="/config/integrations/integration/balkonaut">${setup[key] ? "Ändern" : key === next ? "Jetzt eintragen" : "Eintragen"}</a></li>`;
+    }).join("");
+    return `<section class="card setup"><div class="head"><b>Einrichtung</b><span class="label">${done} von ${required.length} erledigt</span></div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${required.length}" aria-valuenow="${done}" aria-label="Einrichtung">
+      <span style="width:${Math.round((done / required.length) * 100)}%"></span></div><ol>${items}</ol></section>`;
+  }
+
   _start(data, today) {
     const st = data.status, b = st.bilanz[this._period], k = st.akku[this._period], a = st.amortisation;
     const tabs = PERIODS.map(([key, name]) => `<button data-set="_period=${key}" class="${key === this._period ? "on" : ""}">${name}</button>`).join("");
     const progress = a.kosten ? Math.min((a.bisher_gespart / a.kosten) * 100, 100) : 0;
     const date = (iso) => iso ? new Date(iso).toLocaleDateString(this._hass.locale?.language || "de", { month: "2-digit", year: "numeric" }) : "–";
-    return `${st.warnungen.map((w) => `<p class="note">${esc(w.text)}</p>`).join("")}
+    return `${this._setup(data.setup)}${st.warnungen.map((w) => `<p class="note">${esc(w.text)}</p>`).join("")}
       <balkonaut-card></balkonaut-card>
       <h2>Bilanz</h2><div class="tabs">${tabs}</div>${this._balance(b)}
       <h2>Energiewege</h2>${this._ways(b, k)}

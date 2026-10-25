@@ -286,8 +286,22 @@ async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnect
         return
     await entry.runtime_data.async_request_refresh()
     connection.send_result(msg["id"], {
-        "entry_id": entry.entry_id, "status": entry.runtime_data.data,
+        "entry_id": entry.entry_id, "status": entry.runtime_data.data, "setup": _setup(entry),
         "names": _names(hass, entry)})
+
+
+def _setup(entry: ConfigEntry) -> dict | None:
+    """Stand der Einrichtung für die Kachel im Panel; None mit Balkonaut-App, die hat ihre eigene."""
+    if entry.data.get(CONF_URL):
+        return None
+    entities, opts = entry.data.get(CONF_ENTITIES) or {}, entry.options
+    return {
+        "messgroessen": {"grid_power", "output_power", "battery_soc"} <= entities.keys()
+        and bool({"pv_power", "pv_energy"} & entities.keys()),
+        "prognose": bool({"pv_forecast_today", "pv_ac_forecast_today"} & entities.keys() or planes(entry)),
+        "preise": opts.get("energy", 0) > 0 and opts.get("cost", 0) > 0,
+        "inbetriebnahme": bool(opts.get("commissioned")),
+    }
 
 
 def _names(hass: HomeAssistant, entry: ConfigEntry) -> dict:

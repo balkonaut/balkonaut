@@ -163,6 +163,12 @@ Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die E
 
 Pflicht ist nur eine einzige Messgröße. Fehlt eine, entfällt nur die Funktion, die sie braucht.
 
+Danach zeigt das Balkonaut-Panel in der Seitenleiste oben die Kachel *Einrichtung*, solange etwas Wichtiges fehlt:
+Messgrößen für Netz, Abgabe, Erzeugung und Ladestand (*⋮ → Neu konfigurieren*), eine Prognose-Entität oder eine
+Fläche sowie Arbeitspreis und Anlagekosten (beides unter *Konfigurieren*). Das Datum der Inbetriebnahme ist als
+vierter Schritt empfohlen, hält die Kachel aber nicht offen. Mit einer Balkonaut-App erscheint die Kachel nicht,
+die App hat ihre eigene.
+
 #### Unterstützte Geräte
 
 Welche Geräte Balkonaut kennt, welche davon geprüft sind und was bei den übrigen zu beachten ist, steht unter
