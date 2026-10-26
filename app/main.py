@@ -233,7 +233,8 @@ def dashboard(request: Request, zeitraum: str = "tag"):
         "live_age": int(time.time() - st["stand"].timestamp()) if st["stand"] else None,
         "chart": chart(bars), "a": a, "warnings": st["warnungen"],
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
-        "hub_name": next((HUB_NAMES[d["type"]] for d in cfg.get("devices") or [] if d["type"] in HUB_NAMES), "Wechselrichter"),
+        "hub_name": next((devices.HUB_NAMES[d["type"]] for d in cfg.get("devices") or []
+                          if d["type"] in devices.HUB_NAMES), "Wechselrichter"),
         "battery_name": (cfg["system"].get("battery_name") or "Akku")[:10],
         "extra_name": (cfg["system"].get("extra_name") or "Zusatz-WR")[:14],
         "modules": {inv: " + ".join(direction(p["azimuth"]).split()[0] for p in cfg.get("planes") or []
@@ -284,7 +285,6 @@ def zero_feed_in(request: Request):
 
 DEVICE_NAMES = {"apsystems_ezhi": "APsystems EZHI", "shelly_em": "Shelly 3EM", "shelly_em1": "Shelly EM (eine Phase)",
                 "shelly_plug": "Shelly Plug", "opendtu": "Hoymiles über OpenDTU", "ahoydtu": "Hoymiles über AhoyDTU"}
-HUB_NAMES = {"apsystems_ezhi": "EZHI", "opendtu": "Hoymiles", "ahoydtu": "Hoymiles"}  # Mitte des Energieflusses
 INVERTIBLE = {"shelly_plug": "output_power", "shelly_em": "grid_power", "shelly_em1": "grid_power"}  # Richtung je nach Anschluss
 # Anzeige der aktuellen Werte: Messgröße, Name, Einheit, Richtung bei + und -
 LIVE = [("grid_power", "Netz", "W", ("Bezug", "Einspeisung")), ("pv_power", "PV", "W", None),

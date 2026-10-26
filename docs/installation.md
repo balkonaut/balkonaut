@@ -125,8 +125,8 @@ mehrfach laufen.
 Die Integration bringt Balkonaut nach Home Assistant: 22 Sensoren (Bilanz für heute, Monat und Jahr,
 Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Beim Einrichten gibt es zwei Betriebsarten:
 
-- **Eigenständig in Home Assistant**: Die Integration misst selbst. Balkonaut liest die Werte alle 10 Sekunden und
-  speichert sie in `balkonaut/balkonaut.db` im Konfigurationsordner von Home Assistant. Eine App, ein Container oder
+- **Eigenständig in Home Assistant**: Die Integration misst selbst. Balkonaut liest die Werte alle 10 Sekunden, aus
+  Entitäten anderer Integrationen oder direkt von den Geräten im Heimnetz, und speichert sie in `balkonaut/balkonaut.db` im Konfigurationsordner von Home Assistant. Eine App, ein Container oder
   ein Add-on ist nicht nötig. Beim ersten Start übernimmt Balkonaut einmalig den Verlauf der zugeordneten Entitäten
   aus dem Recorder von Home Assistant (standardmäßig die letzten 10 Tage), die Auswertung beginnt also nicht bei null.
   Die Einrichtung ist geführt, siehe [Geführte Einrichtung](#gefuhrte-einrichtung). Arbeitspreis,
@@ -158,10 +158,27 @@ Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die E
    „Akkuleistung: 80 W (lädt)“. Passt die Richtung nicht, etwa „Abgabe ins Haus“ als Bezug während der Akku entlädt,
    die Messgröße unter *Vorzeichen drehen* wählen. Bei Prognosen von Forecast.Solar steht die
    Ausrichtung der Flächen dabei, z. B. „Prognose Speicher: 4,2 kWh (Südost 150°)“.
+   Unter *Geräte direkt abfragen* lassen sich Adressen von Geräten eintragen, die Balkonaut selbst abfragt, ohne
+   Integration des Herstellers in Home Assistant, durch Komma getrennt (z. B. `192.168.1.11, 192.168.1.20`). Den
+   Gerätetyp erkennt Balkonaut selbst, wie in der Docker-App: APsystems EZHI (lokalen Modus in der App aktivieren),
+   Shelly Pro 3EM, Shelly mit einer Phase, Shelly Plug, OpenDTU und AhoyDTU. Ihre Werte stehen mit „(Gerät)“ bei den
+   aktuellen Werten. Ist für eine Messgröße zusätzlich eine Entität zugeordnet, geht die Entität vor.
 3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht, weil Messgrößen fehlen.
    *Speichern* schließt ab, *Zuordnung ändern* führt zurück zu Schritt 2.
 
-Pflicht ist nur eine einzige Messgröße. Fehlt eine, entfällt nur die Funktion, die sie braucht.
+Pflicht ist nur eine einzige Messgröße oder ein Gerät.
+
+!!! tip "Pro Gerät eine Quelle: Integration oder Adresse"
+    Ein Gerät entweder über seine Integration in Home Assistant einbinden oder direkt über die Adresse, nicht beides.
+    Sonst fragen zwei Stellen dasselbe Gerät ab, ohne dass es mehr Werte gibt. Beispiel APsystems EZHI:
+
+    | Fall | Einrichtung | Ergebnis |
+    |---|---|---|
+    | Integration „APsystems EZHI Local API“ installiert | Schritt 1: EZHI als *Speicher oder Wechselrichter* wählen, keine Adresse eintragen | alle Messgrößen samt Akkukapazität, Ladegrenzen, Entladeschutz und Abgabelimit |
+    | ohne diese Integration | Schritt 2: Adresse unter *Geräte direkt abfragen* | PV, Akku mit Zählern, Abgabe ins Haus, Off-Grid-Port; ohne Akkukapazität, Ladegrenzen, Entladeschutz und Abgabelimit, damit ohne Marken am Akku-Ring |
+
+    Die Integration lohnt sich auch, wenn man den EZHI aus Home Assistant steuern will (z. B. den Entladeschutz per
+    Automation); Balkonaut liest nur. Fehlt eine, entfällt nur die Funktion, die sie braucht.
 
 !!! note "Tagesprognose ist optional"
     Für die Tagesprognose des Ertragswächters entweder die Forecast.Solar-Integration einrichten und in Schritt 2
@@ -237,13 +254,16 @@ mehrere Balkonaut-Einträge eingerichtet sind (ohne Angabe nimmt die Karte den e
   Ausrichtung und Leistung. Wer keine Forecast.Solar-Integration hat, bekommt so trotzdem die Tagesprognose für den
   Ertragswächter: Balkonaut ruft sie zur vollen und halben Stunde selbst bei Forecast.Solar ab, mit dem Standort aus
   Home Assistant. Ist eine Prognose-Entität zugeordnet, geht sie vor. Bisher eine Fläche je Wechselrichter.
-- Unter *⋮ → Neu konfigurieren*: im eigenständigen Betrieb die Zuordnung der Entitäten ändern (Schritte 2 und 3 der
+- Unter *⋮ → Neu konfigurieren*: im eigenständigen Betrieb die Zuordnung der Entitäten und die direkt abgefragten Geräte ändern (Schritte 2 und 3 der
   [geführten Einrichtung](#gefuhrte-einrichtung)), mit einer App deren Adresse. Eintrag und Messdaten bleiben erhalten.
   Für neu zugeordnete Entitäten übernimmt Balkonaut keinen Verlauf aus dem Recorder, sie zählen ab der Änderung.
 - Gibt es eine zugeordnete Entität nicht mehr oder ist sie deaktiviert, etwa weil die Integration des Geräts sie
   umbenannt hat, erscheint unter *Einstellungen → Reparaturen* ein Hinweis mit den betroffenen Entitäten und einem
   Link zu Balkonaut, dort über *Neu konfigurieren* neu zuordnen. Kurz nicht verfügbare Entitäten (Neustart, WLAN)
   lösen keinen Hinweis aus. Der Hinweis verschwindet, sobald alle Entitäten wieder da sind.
+- Antwortet ein direkt abgefragtes Gerät dreimal hintereinander nicht, erscheint unter *Einstellungen → Reparaturen*
+  ein Hinweis mit der Adresse. Er verschwindet, sobald das Gerät wieder antwortet. Die Adresse lässt sich über
+  *Neu konfigurieren* ändern.
 - Antwortet die App dreimal hintereinander nicht, erscheint unter *Einstellungen → Reparaturen* ein Hinweis. Er
   verschwindet, sobald die App wieder antwortet.
 - Über *⋮ → Diagnose herunterladen* gibt es eine Datei mit Einstellungen und letzter Antwort der App, die Adresse

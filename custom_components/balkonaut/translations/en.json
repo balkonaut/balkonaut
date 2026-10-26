@@ -36,10 +36,12 @@
         "title": "Check entities",
         "description": "Suggested assignment, every entity can be changed or added. Empty sections are collapsed.\n\nCurrent values:\n{values}",
         "data": {
-          "invert": "Invert sign"
+          "invert": "Invert sign",
+          "hosts": "Query devices directly"
         },
         "data_description": {
-          "invert": "Measurements whose entity reports the opposite sign, e.g. output to the house on the APsystems EZHI"
+          "invert": "Measurements whose entity reports the opposite sign, e.g. output to the house on the APsystems EZHI",
+          "hosts": "Addresses of devices Balkonaut queries itself on the local network, without the manufacturer's integration, separated by commas, e.g. 192.168.1.11, 192.168.1.20. Detected: APsystems EZHI, Shelly Pro 3EM, single-phase Shelly (EM1), Shelly Plug, OpenDTU and AhoyDTU. An entity mapped above takes precedence over the device."
         },
         "sections": {
           "grid": {
@@ -100,7 +102,8 @@
     },
     "error": {
       "cannot_connect": "Balkonaut cannot be reached at this address.",
-      "no_entities": "Please select at least one entity."
+      "no_entities": "Please select at least one entity or enter a device.",
+      "unknown_device": "No known device answers at one of the addresses."
     },
     "abort": {
       "already_configured": "This Balkonaut app is already configured.",
@@ -247,6 +250,10 @@
     "missing_entities": {
       "title": "Balkonaut: entity missing",
       "description": "These assigned entities no longer exist or are disabled: {entities}. Often the device integration has renamed them. Until then Balkonaut does not measure these values. Reassign them under [Balkonaut](/config/integrations/integration/balkonaut) → ⋮ → *Reconfigure*. This notice disappears once all entities are back."
+    },
+    "unreachable_devices": {
+      "title": "Balkonaut: device unreachable",
+      "description": "Balkonaut has not reached these devices for several queries: {hosts}. Is the device powered and on the network, does it still have the same address? On the APsystems EZHI, local mode must be enabled in the app. Balkonaut does not measure the affected values meanwhile. Change the address under [Balkonaut](/config/integrations/integration/balkonaut) → ⋮ → *Reconfigure*. This notice disappears once the devices answer again."
     }
   },
   "selector": {

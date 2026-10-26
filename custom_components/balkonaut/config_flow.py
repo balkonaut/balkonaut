@@ -1,4 +1,5 @@
-"""Einrichtung der Balkonaut-Integration: eigenständig mit Entitäten oder mit der Adresse einer Balkonaut-App."""
+"""Einrichtung der Balkonaut-Integration: eigenständig mit Entitäten und/oder Geräten per Adresse oder mit der
+Adresse einer Balkonaut-App."""
 from datetime import date
 import re
 from typing import Any
@@ -33,7 +34,9 @@ from homeassistant.helpers.selector import (
 )
 from homeassistant.helpers.translation import async_get_translations
 
-from . import CONF_ENTITIES, CONF_INVERT, DEFAULT_SCAN_INTERVAL, DOMAIN, KEYS, PLANES, SIGNED_KEYS, fetch_status
+from . import (CONF_DEVICES, CONF_ENTITIES, CONF_INVERT, DEFAULT_SCAN_INTERVAL, DOMAIN, KEYS, PLANES, SIGNED_KEYS,
+               fetch_status)
+from .core.devices import Devices, detect
 from .core.homeassistant import normalize
 from .core.profiles import PROFILES, direction, suggest
 
@@ -75,6 +78,7 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         self._abort_if_unique_id_configured()
         if user_input is not None:
             self._entities, self._invert = self._suggest(user_input)
+            self._devices, self._device_values = [], {}
             return await self.async_step_entities()
         device = DeviceSelector(DeviceSelectorConfig(entity=[EntityFilterSelectorConfig(domain="sensor")]))
         return self.async_show_form(step_id="standalone", data_schema=vol.Schema({vol.Optional(r): device for r in ROLES}))
@@ -84,26 +88,37 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             entities = {k: v for sec in SECTIONS for k, v in user_input.get(sec, {}).items() if v}
-            if entities:
-                self._entities = entities
-                self._invert = [k for k in user_input.get(CONF_INVERT, []) if k in entities]
-                return await self.async_step_summary()
-            errors["base"] = "no_entities"
+            hosts = [h.strip() for h in user_input.get("hosts", "").split(",") if h.strip()]
+            try:
+                self._devices = [{"type": await self.hass.async_add_executor_job(detect, h), "host": h} for h in hosts]
+            except ValueError:
+                errors["hosts"] = "unknown_device"
+            else:
+                self._device_values = await self.hass.async_add_executor_job(Devices(self._devices).read)
+                if entities or self._devices:
+                    self._entities = entities
+                    self._invert = [k for k in user_input.get(CONF_INVERT, [])
+                                    if k in entities or self._device_values.get(k) is not None]
+                    return await self.async_step_summary()
+                errors["base"] = "no_entities"
         entity = EntitySelector(EntitySelectorConfig(domain=["sensor", "number", "input_number"]))
         schema = {vol.Required(sec): section(
             vol.Schema({vol.Optional(k): entity for k in keys}),
             {"collapsed": bool(self._entities) and not any(k in self._entities for k in keys)})
             for sec, keys in SECTIONS.items()}
+        # Geräte, die Balkonaut selbst abfragt, ohne Integration des Herstellers
+        schema[vol.Optional("hosts", default="")] = str
         schema[vol.Optional(CONF_INVERT, default=[])] = SelectSelector(SelectSelectorConfig(
             options=SIGNED_KEYS, multiple=True, translation_key=CONF_INVERT))
         suggested = {sec: {k: self._entities[k] for k in keys if k in self._entities} for sec, keys in SECTIONS.items()}
         return self.async_show_form(
             step_id="entities", errors=errors, description_placeholders={"values": await self._values()},
-            data_schema=self.add_suggested_values_to_schema(vol.Schema(schema), suggested | {CONF_INVERT: self._invert}))
+            data_schema=self.add_suggested_values_to_schema(vol.Schema(schema), suggested | {
+                CONF_INVERT: self._invert, "hosts": ", ".join(d["host"] for d in self._devices)}))
 
     async def async_step_summary(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Schritt 3: was mit dieser Zuordnung geht und was nicht, dann einrichten oder zurück."""
-        have = set(self._entities)
+        have = set(self._entities) | {k for k, v in self._device_values.items() if v is not None}
         ok = [name for name, needs in FEATURES.items() if all(have & set(alt) for alt in needs)]
         return self.async_show_menu(step_id="summary", menu_options=["create", "entities"], description_placeholders={
             "available": "\n".join(f"- {n}" for n in ok) or "–",
@@ -112,6 +127,8 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_create(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         data = {CONF_ENTITIES: self._entities, CONF_INVERT: self._invert}
+        if self._devices:
+            data[CONF_DEVICES] = self._devices
         if self.source == SOURCE_RECONFIGURE:  # Datenbank bleibt, sie hängt nicht am Eintrag
             return self.async_update_reload_and_abort(self._get_reconfigure_entry(), data_updates=data)
         return self.async_create_entry(title="Balkonaut", data=data)
@@ -122,6 +139,10 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         if CONF_ENTITIES not in entry.data:
             return await self.async_step_app()
         self._entities, self._invert = dict(entry.data[CONF_ENTITIES]), list(entry.data.get(CONF_INVERT, []))
+        self._devices = list(entry.data.get(CONF_DEVICES, []))
+        self._device_values = {}
+        if self._devices:
+            self._device_values = await self.hass.async_add_executor_job(Devices(self._devices).read)
         return await self.async_step_entities()
 
     def _suggest(self, devices: dict[str, str]) -> tuple[dict[str, str], list[str]]:
@@ -175,16 +196,22 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         forecasts = self._forecasts()
         lines = []
         for sec, keys in SECTIONS.items():
-            for key in (k for k in keys if k in self._entities):
+            for key in keys:
                 label = labels.get(f"component.{DOMAIN}.config.step.entities.sections.{sec}.data.{key}", key)
-                where = f" ({forecasts[self._entities[key]]})" if self._entities[key] in forecasts else ""
-                lines.append(f"- {label}: {self._live(key)}{where}")
+                if key in self._entities:
+                    where = f" ({forecasts[self._entities[key]]})" if self._entities[key] in forecasts else ""
+                    lines.append(f"- {label}: {self._live(key)}{where}")
+                elif self._device_values.get(key) is not None:
+                    lines.append(f"- {label}: {self._live(key)} (Gerät)")
         return "\n".join(lines) or "–"
 
     def _live(self, key: str) -> str:
-        state = self.hass.states.get(self._entities[key])
-        value = normalize(state and {"state": state.state, "attributes": state.attributes},
-                          -1 if key in self._invert else 1)
+        sign = -1 if key in self._invert else 1
+        if key in self._entities:
+            state = self.hass.states.get(self._entities[key])
+            value = normalize(state and {"state": state.state, "attributes": state.attributes}, sign)
+        else:
+            value = sign * self._device_values[key]
         if value is None:
             return "kein Wert"
         unit = "W" if key.endswith(("_power", "_limit")) else "kWh" if key.endswith(("_energy", "_today", "_capacity")) else "%"

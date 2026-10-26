@@ -36,10 +36,12 @@
         "title": "Entitäten prüfen",
         "description": "Vorgeschlagene Zuordnung, jede Entität lässt sich ändern oder ergänzen. Leere Abschnitte sind eingeklappt.\n\nAktuelle Werte:\n{values}",
         "data": {
-          "invert": "Vorzeichen drehen"
+          "invert": "Vorzeichen drehen",
+          "hosts": "Geräte direkt abfragen"
         },
         "data_description": {
-          "invert": "Messgrößen, deren Entität das umgekehrte Vorzeichen liefert, z. B. Abgabe ins Haus beim APsystems EZHI"
+          "invert": "Messgrößen, deren Entität das umgekehrte Vorzeichen liefert, z. B. Abgabe ins Haus beim APsystems EZHI",
+          "hosts": "Adressen von Geräten, die Balkonaut selbst im Heimnetz abfragt, ohne Integration des Herstellers, durch Komma getrennt, z. B. 192.168.1.11, 192.168.1.20. Erkannt werden APsystems EZHI, Shelly Pro 3EM, Shelly mit einer Phase (EM1), Shelly Plug, OpenDTU und AhoyDTU. Eine oben zugeordnete Entität geht dem Gerät vor."
         },
         "sections": {
           "grid": {
@@ -100,7 +102,8 @@
     },
     "error": {
       "cannot_connect": "Balkonaut ist unter dieser Adresse nicht erreichbar.",
-      "no_entities": "Bitte mindestens eine Entität wählen."
+      "no_entities": "Bitte mindestens eine Entität oder ein Gerät angeben.",
+      "unknown_device": "Unter einer der Adressen antwortet kein bekanntes Gerät."
     },
     "abort": {
       "already_configured": "Diese Balkonaut-App ist bereits eingerichtet.",
@@ -247,6 +250,10 @@
     "missing_entities": {
       "title": "Balkonaut: Entität fehlt",
       "description": "Diese zugeordneten Entitäten gibt es nicht mehr oder sie sind deaktiviert: {entities}. Oft hat die Integration des Geräts sie umbenannt. Balkonaut misst die betroffenen Größen so lange nicht. Unter [Balkonaut](/config/integrations/integration/balkonaut) → ⋮ → *Neu konfigurieren* neu zuordnen. Der Hinweis verschwindet, sobald alle Entitäten wieder da sind."
+    },
+    "unreachable_devices": {
+      "title": "Balkonaut: Gerät nicht erreichbar",
+      "description": "Balkonaut erreicht diese Geräte seit mehreren Abfragen nicht: {hosts}. Ist das Gerät an und im Netz, hat es noch dieselbe Adresse? Beim APsystems EZHI muss in der App der lokale Modus an sein. Balkonaut misst die betroffenen Größen so lange nicht. Die Adresse lässt sich unter [Balkonaut](/config/integrations/integration/balkonaut) → ⋮ → *Neu konfigurieren* ändern. Der Hinweis verschwindet, sobald die Geräte wieder antworten."
     }
   },
   "selector": {

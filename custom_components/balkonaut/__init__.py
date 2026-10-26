@@ -1,7 +1,8 @@
 """Balkonaut: Bilanz, Amortisation und Akku-Auswertung als Sensoren.
 
 Zwei Betriebsarten: Werte von einer laufenden Balkonaut-App abholen (Adresse) oder eigenständig in Home Assistant
-messen, speichern und rechnen (Entitäten). Die Rechenlogik kommt in beiden Fällen aus core/ (balkonaut-Paket).
+messen, speichern und rechnen (Entitäten, Geräte direkt per Adresse oder beides). Die Rechenlogik kommt in beiden
+Fällen aus core/ (balkonaut-Paket).
 """
 import asyncio
 from datetime import UTC, date, datetime, timedelta
@@ -29,6 +30,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.loader import async_get_integration
 
 from .core import analytics, forecast, views
+from .core.devices import HUB_NAMES, Devices
 from .core.homeassistant import normalize
 from .core.profiles import direction
 from .core.storage import Storage
@@ -39,6 +41,7 @@ FAILURES_BEFORE_ISSUE = 3  # so viele Abfragen in Folge ohne Antwort, bis HA ein
 SAMPLE_INTERVAL = timedelta(seconds=10)  # wie der Collector der App
 CONF_ENTITIES = "entities"
 CONF_INVERT = "invert"
+CONF_DEVICES = "devices"  # Geräte, die Balkonaut selbst abfragt: [{"type": ..., "host": ...}]
 BACKFILLED = "backfilled"  # Verlauf aus dem Recorder schon übernommen
 # Messgrößen, die Balkonaut aus Home-Assistant-Entitäten liest (Bedeutung: Handbuch, Einstellungen)
 KEYS = ["grid_power", "pv_power", "pv_ac_power", "battery_power", "battery_soc", "output_power", "output_energy",
@@ -91,6 +94,9 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
         # Prognose aus eingetragenen Flächen, falls keine Prognose-Entität zugeordnet ist
         self.forecast = forecast.Planes({"lat": hass.config.latitude, "lon": hass.config.longitude}, planes(entry))
         self.forecasting = False
+        self.devices = Devices(entry.data.get(CONF_DEVICES, []))
+        self.device_values = {}  # letzte Werte der Geräte, für den Stand der Einrichtung
+        self.sampling = False
         self.closed = False  # Datenbank beim Entladen geschlossen
 
     async def _async_update_data(self) -> dict:
@@ -124,6 +130,14 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
             ir.async_create_issue(self.hass, DOMAIN, issue_id, is_fixable=False, severity=ir.IssueSeverity.WARNING,
                                   translation_key="missing_entities",
                                   translation_placeholders={"entities": ", ".join(missing)})
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+        hosts = [h for h, n in self.devices.failures.items() if n >= FAILURES_BEFORE_ISSUE]
+        issue_id = f"unreachable_devices_{self.config_entry.entry_id}"
+        if hosts:
+            ir.async_create_issue(self.hass, DOMAIN, issue_id, is_fixable=False, severity=ir.IssueSeverity.WARNING,
+                                  translation_key="unreachable_devices",
+                                  translation_placeholders={"hosts": ", ".join(hosts)})
         else:
             ir.async_delete_issue(self.hass, DOMAIN, issue_id)
 
@@ -199,8 +213,23 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
             self.forecasting = False
 
     async def async_sample(self, _now=None) -> None:
-        """Aktuelle Zustände der Entitäten normalisieren und speichern, abgeschlossene Stunden aggregieren."""
+        """Geräte abfragen und aktuelle Zustände der Entitäten normalisieren und speichern, abgeschlossene Stunden
+        aggregieren. Zugeordnete Entitäten gehen den Geräten vor."""
+        if self.sampling:  # Gerät antwortet langsam: Messung läuft noch, diese auslassen
+            return
+        self.sampling = True
+        try:
+            await self._sample()
+        finally:
+            self.sampling = False
+
+    async def _sample(self) -> None:
         values = {}
+        if self.devices.devices:
+            values = self.device_values = await self.hass.async_add_executor_job(self.devices.read)
+            for key in self.config_entry.data.get(CONF_INVERT, []):
+                if values.get(key) is not None:
+                    values[key] = -values[key]
         for key, entity_id in self.config_entry.data[CONF_ENTITIES].items():
             state = self.hass.states.get(entity_id)
             values[key] = normalize(state and {"state": state.state, "attributes": state.attributes},
@@ -295,10 +324,11 @@ def _setup(entry: ConfigEntry) -> dict | None:
     if entry.data.get(CONF_URL):
         return None
     entities, opts = entry.data.get(CONF_ENTITIES) or {}, entry.options
+    keys = entities.keys() | {k for k, v in entry.runtime_data.device_values.items() if v is not None}
     return {
-        "messgroessen": {"grid_power", "output_power", "battery_soc"} <= entities.keys()
-        and bool({"pv_power", "pv_energy"} & entities.keys()),
-        "prognose": bool({"pv_forecast_today", "pv_ac_forecast_today"} & entities.keys() or planes(entry)),
+        "messgroessen": {"grid_power", "output_power", "battery_soc"} <= keys
+        and bool({"pv_power", "pv_energy"} & keys),
+        "prognose": bool({"pv_forecast_today", "pv_ac_forecast_today"} & keys or planes(entry)),
         "preise": opts.get("energy", 0) > 0 and opts.get("cost", 0) > 0,
         "inbetriebnahme": bool(opts.get("commissioned")),
     }
@@ -323,7 +353,8 @@ def _names(hass: HomeAssistant, entry: ConfigEntry) -> dict:
 
     hub, extra = device("pv_power", "battery_power", "battery_soc"), device("pv_ac_power")
     own_extra = extra and (not hub or extra.id != hub.id) and extra.model
-    return {"hub": hub.model if hub and hub.model else None, "battery": entry.options.get("battery_name") or None,
+    direct = next((HUB_NAMES[d["type"]] for d in entry.data.get(CONF_DEVICES, []) if d["type"] in HUB_NAMES), None)
+    return {"hub": hub.model if hub and hub.model else direct, "battery": entry.options.get("battery_name") or None,
             "extra": own_extra or entry.options.get("extra_name") or None,
             "modules": {"storage": modules("pv_forecast_today", "storage"), "extra": modules("pv_ac_forecast_today", "extra")}}
 

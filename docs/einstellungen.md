@@ -46,7 +46,7 @@ devices:
 | `shelly_plug` | Shelly Plug Gen2 oder Gen3 am Einspeisepunkt | Abgabe ins Haus mit Zähler |
 
 Welche IP-Adresse bei Hoymiles einzutragen ist und was die Docker-App nicht direkt liest, steht unter
-[Unterstützte Geräte](geraete.md#docker-app-gerate-direkt-im-heimnetz). Hat das System einen Speicher, gilt dessen
+[Unterstützte Geräte](geraete.md#gerate-direkt-im-heimnetz). Hat das System einen Speicher, gilt dessen
 Abgabe-Leistung, vom Plug zählt nur der Zähler (siehe
 [Messquellen](messquellen.md)). Meldet ein Gerät eine Richtung umgekehrt, die Messgröße unter `invert` eintragen,
 z. B. `invert: [output_power]`. Ladegrenzen, Entladeschutz und Abgabelimit des EZHI gibt es nur über die

@@ -412,3 +412,45 @@ async def test_hourly_forecast_from_forecast_solar(hass, monkeypatch):
     hass.config.components.add("forecast_solar")
     assert await _hourly_forecast(hass, entry) == {nine.replace(hour=8).timestamp(): 0.21}
     assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_direct_devices(hass, monkeypatch):
+    """Geräte per Adresse ohne Integration des Herstellers: Einrichtung, Messung, Entität geht vor, Hinweis bei Ausfall."""
+    from homeassistant.helpers import issue_registry as ir
+    from custom_components.balkonaut import config_flow
+    from custom_components.balkonaut.core import devices
+    reachable = True
+
+    def ezhi(host):
+        if not reachable:
+            raise OSError("keine Antwort")
+        return {"battery_soc": 44.0, "grid_power": 999.0, "output_power": 120.0}
+
+    monkeypatch.setitem(devices.TYPES, "apsystems_ezhi", ezhi)
+    monkeypatch.setattr(config_flow, "detect", lambda host: "apsystems_ezhi" if host == "192.168.1.11" else
+                        (_ for _ in ()).throw(ValueError("unbekannt")))
+    hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
+    result = await start_flow(hass, "standalone")
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    form = {"grid": {"grid_power": "sensor.netz"}, "generation": {}, "battery": {}, "output": {}, "forecast": {},
+            "invert": []}
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], form | {"hosts": "192.168.1.99"})
+    assert result["errors"] == {"hosts": "unknown_device"}
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], form | {"hosts": " 192.168.1.11 "})
+    assert "Akku-Auswertung" in result["description_placeholders"]["available"]
+    assert "44 % (Gerät)" in result["description_placeholders"]["values"]
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "create"})
+    assert result["data"] == {"entities": {"grid_power": "sensor.netz"}, "invert": [],
+                              "devices": [{"type": "apsystems_ezhi", "host": "192.168.1.11"}]}
+    await hass.async_block_till_done()
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    latest = await hass.async_add_executor_job(entry.runtime_data.storage.latest)
+    assert {k: v for k, (_, v) in latest.items()} == {"battery_soc": 44, "grid_power": 300, "output_power": 120}
+
+    reachable = False
+    for _ in range(3):
+        await entry.runtime_data.async_sample()
+    await entry.runtime_data.async_refresh()
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, f"unreachable_devices_{entry.entry_id}")
+    assert issue.translation_placeholders == {"hosts": "192.168.1.11"}
+    assert await hass.config_entries.async_unload(entry.entry_id)

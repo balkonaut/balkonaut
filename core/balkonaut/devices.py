@@ -81,6 +81,7 @@ def shelly_plug(host):
 # liefert, bleibt (Handbuch, Messquellen)
 TYPES = {"opendtu": opendtu, "ahoydtu": ahoydtu, "shelly_plug": shelly_plug, "apsystems_ezhi": apsystems_ezhi,
          "shelly_em": shelly_em, "shelly_em1": shelly_em1}
+HUB_NAMES = {"apsystems_ezhi": "EZHI", "opendtu": "Hoymiles", "ahoydtu": "Hoymiles"}  # Mitte des Energieflusses
 
 # Erkennung: (Typ, Pfad, Prüfung der Antwort), der erste Treffer gilt
 PROBES = [
@@ -113,6 +114,7 @@ class Devices:
         self.devices = sorted(devices, key=lambda d: list(TYPES).index(d["type"]))
         self.forecast = forecast.Planes(location, planes)
         self.high = {}  # höchster Zählerstand je Messgröße
+        self.failures = {}  # Abfragen in Folge ohne Antwort je Adresse
 
     def read(self):
         """Aktuelle Werte aller Geräte; fehlt ein Gerät, fehlen nur seine Messgrößen."""
@@ -122,7 +124,9 @@ class Devices:
                 new = TYPES[dev["type"]](dev["host"])
             except (OSError, ValueError) as e:  # nicht erreichbar, Zeitüberschreitung, kein JSON
                 log.warning("%s nicht lesbar: %s", dev["host"], e)
+                self.failures[dev["host"]] = self.failures.get(dev["host"], 0) + 1
                 continue
+            self.failures.pop(dev["host"], None)
             for key in dev.get("invert", []):
                 if new.get(key) is not None:
                     new[key] = -new[key]

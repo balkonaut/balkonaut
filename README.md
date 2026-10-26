@@ -55,7 +55,9 @@ Voraussetzung: Home Assistant 2026.10 oder neuer.
    eine Messung am Einspeisepunkt. Was man nicht hat, bleibt leer.
 2. **Entitäten prüfen**: Balkonaut schlägt zu jeder Messgröße eine Entität vor und zeigt die aktuellen Werte mit
    Richtung, z. B. „Netzleistung: 312 W (Bezug)“. Stimmt eine Richtung nicht, die Messgröße unter
-   *Vorzeichen drehen* wählen.
+   *Vorzeichen drehen* wählen. Geräte ohne Integration in Home Assistant fragt Balkonaut auch selbst ab: ihre
+   Adressen unter *Geräte direkt abfragen* eintragen (APsystems EZHI, Shelly Pro 3EM, Shelly mit einer Phase,
+   Shelly Plug, OpenDTU, AhoyDTU).
 3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht.
 
 Danach unter *Konfigurieren* Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme eintragen.

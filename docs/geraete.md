@@ -56,11 +56,16 @@ nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung p
 |---|---|---|---|
 | Forecast.Solar | Forecast.Solar | Tagesprognose je Fläche, benannt nach der Ausrichtung (z. B. Südost 150°) | bestätigt |
 
-## Docker-App: Geräte direkt im Heimnetz
+## Geräte direkt im Heimnetz
 
-Ohne Home Assistant liest die Docker-App Geräte selbst über deren lokale Schnittstelle. In der Einrichtung
-(*Einstellungen → Geräte*) genügt die IP-Adresse; Balkonaut fragt die Adresse an und erkennt an der Antwort, welches
-Gerät dort läuft. Unbekannte Geräte meldet die Einrichtung mit „Unter … antwortet kein bekanntes Gerät“.
+Diese Geräte liest Balkonaut selbst über deren lokale Schnittstelle, ohne Integration des Herstellers: die Docker-App
+(*Einstellungen → Geräte*) und die Integration für Home Assistant (*Geräte direkt abfragen* in Schritt 2 der
+[geführten Einrichtung](installation.md#gefuhrte-einrichtung)). Es genügt die IP-Adresse; Balkonaut fragt die Adresse
+an und erkennt an der Antwort, welches Gerät dort läuft. Unbekannte Geräte meldet die Einrichtung.
+
+Direkt abgefragt liefert der EZHI weniger als über seine Integration: Akkukapazität, Ladegrenzen, Entladeschutz und
+Abgabelimit fehlen, damit auch die Marken am Akku-Ring. Wer die Integration „APsystems EZHI Local API“ hat, ordnet
+besser deren Entitäten zu.
 
 | Gerät | IP-Adresse von | Messgrößen | Stand |
 |---|---|---|---|
@@ -76,7 +81,7 @@ Gerät dort läuft. Unbekannte Geräte meldet die Einrichtung mit „Unter … a
 Die klassischen Hoymiles-Mikrowechselrichter haben selbst kein WLAN, sie funken mit einer DTU. Einzutragen ist
 deshalb die IP-Adresse der DTU, nicht die des Wechselrichters:
 
-| Was angeschlossen ist | IP-Adresse von | Docker-App direkt |
+| Was angeschlossen ist | IP-Adresse von | Direkt abfragbar |
 |---|---|---|
 | Hoymiles HM/HMS mit **OpenDTU** (ESP32-Box zum Selbstbauen) | OpenDTU | ja |
 | Hoymiles HM/HMS mit **AhoyDTU** (ebenfalls ESP32) | AhoyDTU | ja |
@@ -91,8 +96,9 @@ liefert keinen Zähler, Balkonaut summiert die Leistung dann selbst auf.
 ### Was nicht direkt geht
 
 Geräte mit Modbus (z. B. Sungrow, Huawei, Victron, Fox ESS, Deye) oder nur mit Cloud-Zugang (z. B. Anker Solix,
-EcoFlow, Zendure, Growatt, Tibber) liest die Docker-App nicht selbst. Dafür gibt es zwei Wege: die
-[Integration für Home Assistant](installation.md), die viele dieser Geräte kennt (Tabellen oben), oder die Docker-App
+EcoFlow, Zendure, Growatt, Tibber) liest Balkonaut nicht selbst. Dafür gibt es zwei Wege: die
+[Integration für Home Assistant](installation.md) mit der Integration des Herstellers, deren Entitäten Balkonaut für
+viele dieser Geräte kennt (Tabellen oben), oder die Docker-App
 mit dem Abschnitt `home_assistant` in der `config.yaml`, dann kommen die Werte aus Home Assistant
 (siehe [Einstellungen](einstellungen.md)). Weitere Geräte kommen dazu, wenn jemand sie über
 [Gerät melden](installation.md#gerat-melden) beisteuert.
