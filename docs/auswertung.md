@@ -159,6 +159,17 @@ verschiedenen Zählern stammen, ergeben die drei Wege der Sonne zusammen nicht i
 Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Messgrößen
 `battery_capacity`, `battery_soh`, `battery_soc_min` und `battery_soc_max` (siehe [Einstellungen](einstellungen.md)).
 
+### Lohnt sich ein größerer Akku?
+
+Eine genaue Rechnung dafür ist [geplant](geplant.md). Bis dahin geben die beiden Stunden-Kennzahlen einen guten
+Anhaltspunkt, am besten über einen Monat oder länger betrachtet:
+
+- Viele **Stunden mit vollem Akku**: Tagsüber bleibt Überschuss übrig, den ein größerer Akku speichern könnte.
+- Viele **Stunden mit leerem Akku**: Abends oder nachts fehlt Energie, die ein größerer Akku liefern könnte.
+
+Ein weiterer Akku lohnt sich erst, wenn beides häufig vorkommt: Nur dann gibt es Überschuss zum Laden *und* Bedarf
+zum Entladen. Ist der Akku nur oft voll, fehlt der Bedarf; ist er nur oft leer, fehlt der Überschuss.
+
 ## Monatsbericht
 
 Die Seite *Bericht* fasst einen Monat zusammen: Bilanz im Vergleich zu Vormonat und Vorjahresmonat,
