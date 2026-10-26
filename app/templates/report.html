@@ -6,6 +6,9 @@
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   th, td { padding: .35rem .5rem; border-bottom: 1px solid var(--line); text-align: right; }
   th:first-child, td:first-child { text-align: left; }
+  .table { overflow-x: auto; }  /* Handy: Tabelle scrollt in der Karte statt die Seite zu verbreitern */
+  td + td { white-space: nowrap; }
+  @media (max-width: 30rem) { .table { padding-inline: 8px; } th, td { padding: .3rem .15rem; font-size: .8rem; } }
   h2 { font-size: 1.1rem; margin: 1.5rem 0 .5rem; }
 </style>
 <p class="noprint" style="display:flex;gap:1rem;align-items:baseline">
@@ -16,16 +19,16 @@
 <h1 style="display:flex;align-items:center;gap:.6rem"><img src="handbuch/assets/logo.svg" alt="" width="40" height="40">Monatsbericht {{ r.monat }}</h1>
 
 <h2>Bilanz</h2>
-<div class="card">
+<div class="card table">
 <table>
-  <tr><th></th><th>{{ r.monat }}</th><th>Vormonat</th><th>Vorjahresmonat</th></tr>
+  <tr><th></th><th>{{ r.monat }}</th><th>Vormonat</th><th>Vorjahres&shy;monat</th></tr>
   {% for key, name, unit, digits in [("erzeugung", "Erzeugung", "kWh", 1), ("abgabe", "Abgabe ins Haus", "kWh", 1),
        ("hausverbrauch", "Hausverbrauch", "kWh", 1), ("eigenverbrauch", "Eigenverbrauch", "kWh", 1),
        ("netzbezug", "Netzbezug", "kWh", 1), ("einspeisung", "Einspeisung", "kWh", 2), ("ersparnis", "Ersparnis", "€", 2)] %}
   <tr><td>{{ name }}</td>{% for b in (r.bilanz, r.vormonat, r.vorjahr) %}<td>{{ b[key]|de(digits) if b.hausverbrauch else "–" }} {{ unit if b.hausverbrauch }}</td>{% endfor %}</tr>
   {% endfor %}
   <tr><td>Autarkiegrad</td>{% for b in (r.bilanz, r.vormonat, r.vorjahr) %}<td>{{ b.autarkiegrad|pct }}</td>{% endfor %}</tr>
-  <tr><td>Eigenverbrauchsquote</td>{% for b in (r.bilanz, r.vormonat, r.vorjahr) %}<td>{{ b.eigenverbrauchsquote|pct }}</td>{% endfor %}</tr>
+  <tr><td>Eigenverbrauchs&shy;quote</td>{% for b in (r.bilanz, r.vormonat, r.vorjahr) %}<td>{{ b.eigenverbrauchsquote|pct }}</td>{% endfor %}</tr>
 </table>
 </div>
 
