@@ -154,10 +154,14 @@ def battery(rows, start, prices, commissioned=None, collected=None, known=None):
 
     cap = latest("battery_capacity") or known.get("battery_capacity")
     charge, discharge = counter.get("battery_charge_energy"), counter.get("battery_discharge_energy")
-    soc0, soc1 = first("battery_soc"), latest("battery_soc")
+    # Ladestand zu Beginn: letzter Wert vor dem Zeitraum, denn die Zähler zählen ab dessen Beginn
+    before = [last for key, hour, _, _, _, last in rows if key == "battery_soc" and hour < start and last is not None]
+    soc0, soc1 = before[-1] if before else first("battery_soc"), latest("battery_soc")
     efficiency = None
     if cap and charge and charge > 0.5 and discharge is not None and None not in (soc0, soc1):
         efficiency = (discharge + (soc1 - soc0) / 100 * cap) / charge
+        if efficiency > 1:  # Ladestand nur auf 1 bis 2 % genau: über 100 % ist Messungenauigkeit, kein Wert
+            efficiency = None
     inputs = energy("pv_energy", "pv_power") + (wh["pv_ac_power"] + wh["output_power-"]) / 1000 + (discharge or 0)
     outputs = energy("output_energy", "output_power+") + (charge or 0)
 

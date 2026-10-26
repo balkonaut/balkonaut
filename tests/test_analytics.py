@@ -73,6 +73,9 @@ def test_battery():
     late = battery(sorted(r for r in rows if not (r[0] in ("battery_capacity", "battery_soc_max", "battery_soc_min")
                                                   and r[1] == 7200)), 7200, PRICES)
     assert (late["kapazitaet"], late["stunden_leer"]) == (5.0, 1)
+    # Ladestand zu Beginn ist der letzte Wert vor dem Zeitraum (95 %), nicht der erste darin (50 %)
+    # mit 50 % wären es (4 − 2) / 1 = 200 %
+    assert battery(sorted(rows), 3600, PRICES)["wirkungsgrad"] == b["wirkungsgrad"]
     assert (b["geladen"], b["entladen"], b["entladen_ins_haus"]) == (1.0, 4.0, None)  # ohne Leistungen kein Weg
     assert battery([], 0, PRICES)["zyklen"] is None  # ohne Daten
 
