@@ -69,6 +69,10 @@ def test_battery():
     assert (b["stunden_leer"], b["netzbezug_bei_leerem_akku"]) == (1, 0.8)
     # zusätzliches Modul 2,5 kWh, nutzbar 2,5 × 0,85 × 0,9 ≈ 1,9 kWh: deckt die 0,8 kWh nach dem vollen Akku
     assert (b["zusatz_kapazitaet"], b["groesserer_akku"]) == (2.5, 0.8)
+    # Kapazität und Grenzen nur vor dem Zeitraum gemeldet: letzter bekannter Wert gilt weiter
+    late = battery(sorted(r for r in rows if not (r[0] in ("battery_capacity", "battery_soc_max", "battery_soc_min")
+                                                  and r[1] == 7200)), 7200, PRICES)
+    assert (late["kapazitaet"], late["stunden_leer"]) == (5.0, 1)
     assert (b["geladen"], b["entladen"], b["entladen_ins_haus"]) == (1.0, 4.0, None)  # ohne Leistungen kein Weg
     assert battery([], 0, PRICES)["zyklen"] is None  # ohne Daten
 

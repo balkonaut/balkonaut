@@ -133,9 +133,18 @@ def amortization(rows, prices, cost, commissioned=None, profile=None, total=None
     }
 
 
-def battery(rows, start, prices, commissioned=None, collected=None):
-    """Akku-Auswertung ab start: Zyklen, Gesundheit, Wirkungsgrad, Zeiten mit vollem/leerem Akku."""
+def _known(rows):
+    """Letzte bekannte Kapazität und Ladegrenzen aus allen Stundenwerten, auch vor dem Zeitraum: Geräte melden sie
+    selten oder nur über die Cloud (EZHI-Grenzen), dann fehlen sie im Zeitraum."""
+    return {k: last for k, _, _, _, _, last in rows if k in ("battery_capacity", "battery_soc_max", "battery_soc_min")
+            and last is not None}
+
+
+def battery(rows, start, prices, commissioned=None, collected=None, known=None):
+    """Akku-Auswertung ab start: Zyklen, Gesundheit, Wirkungsgrad, Zeiten mit vollem/leerem Akku.
+    known: Ergebnis von _known(alle Stundenwerte), wenn schon vorhanden."""
     wh, counter, hours, energy = collected or _collect(rows, start)
+    known = _known(rows) if known is None else known
 
     def first(key):
         return hours[key][min(hours[key])][3] if hours.get(key) else None
@@ -143,7 +152,7 @@ def battery(rows, start, prices, commissioned=None, collected=None):
     def latest(key):
         return hours[key][max(hours[key])][3] if hours.get(key) else None
 
-    cap = latest("battery_capacity")
+    cap = latest("battery_capacity") or known.get("battery_capacity")
     charge, discharge = counter.get("battery_charge_energy"), counter.get("battery_discharge_energy")
     soc0, soc1 = first("battery_soc"), latest("battery_soc")
     efficiency = None
@@ -161,7 +170,8 @@ def battery(rows, start, prices, commissioned=None, collected=None):
         to_house = sum(min(-neg, max(hours["output_power"].get(h, (0, 0))[1] + hours["grid_power"].get(h, (0, 0, 0))[2], 0))
                        for h, (_, _, neg, _) in hours["battery_power"].items()) / 1000
 
-    soc_max, soc_min = latest("battery_soc_max") or 100, latest("battery_soc_min") or 0
+    soc_max = latest("battery_soc_max") or known.get("battery_soc_max") or 100
+    soc_min = latest("battery_soc_min") or known.get("battery_soc_min") or 0
     full = empty = 0
     export_full = import_empty = 0.0
     # Größerer Akku: Nach Stunden mit vollem Akku hätte ein zusätzliches Modul (halbe Kapazität, nutzbar zwischen den
@@ -410,6 +420,7 @@ def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
     Jahr und gesamt sowie Amortisation. rows: Stundenwerte, latest: {Messgröße: (ts, wert)}."""
     recent = {name: (r := _recent(rows, start), start, _collect(r, start)) for name, start in periods(now).items()}
     bilanz = {name: balance(r, start, prices, c) for name, (r, start, c) in recent.items()}
+    known = _known(rows)
     watch = yield_watch(rows, now)
     warnings = watch["warnungen"]
     # Prognosen kommen auch, wenn alle Geräte ausfallen, und zählen deshalb nicht als Messwert
@@ -423,6 +434,6 @@ def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
         "stand": datetime.fromtimestamp(stand, TZ) if stand is not None else None,
         "live": {k: v for k, (_, v) in latest.items()},
         "bilanz": bilanz,
-        "akku": {name: battery(r, start, prices, commissioned, c) for name, (r, start, c) in recent.items()},
+        "akku": {name: battery(r, start, prices, commissioned, c, known) for name, (r, start, c) in recent.items()},
         "amortisation": amortization(rows, prices, cost, commissioned, profile, bilanz["gesamt"]),
     }

@@ -30,7 +30,7 @@ nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung p
 
 | Gerät | Integration in Home Assistant | Messgrößen | Vorzeichen | Direkt per Adresse | Stand |
 |---|---|---|---|---|---|
-| APsystems EZHI | APsystems EZHI Local API (HACS) | PV, Akku mit Zählern, Kapazität und Ladegrenzen, Abgabe ins Haus, Off-Grid-Port, Abgabelimit | belegt | ja, ohne Kapazität, Ladegrenzen, Entladeschutz und Abgabelimit | bestätigt |
+| APsystems EZHI | APsystems EZHI Local API (HACS) | PV, Akku mit Zählern, Kapazität und Ladegrenzen, Abgabe ins Haus, Off-Grid-Port, Abgabelimit | belegt | ja, ohne Ladegrenzen, Entladeschutz und Abgabelimit | bestätigt |
 | APsystems EZ1-M | APsystems | PV-Leistung, PV-Zähler, Abgabelimit | — | nein | bestätigt |
 | Deye (Hybrid und Mikrowechselrichter) | Solarman (HACS), Varianten von davidrapan und StephanJoubert | PV, Akku mit Zählern, Netz, Abgabe | Akku belegt, Netz prüfen | nein | nicht geprüft |
 | Huawei SUN2000 mit LUNA2000 | Huawei Solar (HACS) | PV-Leistung, Akku mit Zählern, Kapazität und Ladegrenzen, Netz über Power Meter, Abgabe | belegt | nein | nicht geprüft |
@@ -67,13 +67,13 @@ Diese Geräte liest Balkonaut selbst über deren lokale Schnittstelle, ohne Inte
 [geführten Einrichtung](installation.md#gefuhrte-einrichtung)). Es genügt die IP-Adresse; Balkonaut fragt die Adresse
 an und erkennt an der Antwort, welches Gerät dort läuft. Unbekannte Geräte meldet die Einrichtung.
 
-Direkt abgefragt liefert der EZHI weniger als über seine Integration: Akkukapazität, Ladegrenzen, Entladeschutz und
-Abgabelimit fehlen, damit auch die Marken am Akku-Ring. Wer die Integration „APsystems EZHI Local API“ hat, ordnet
+Direkt abgefragt liefert der EZHI weniger als über seine Integration: Ladegrenzen, Entladeschutz und Abgabelimit
+(nur über die APsystems-Cloud) fehlen, damit auch die Marken am Akku-Ring. Wer die Integration „APsystems EZHI Local API“ hat, ordnet
 besser deren Entitäten zu.
 
 | Gerät | IP-Adresse von | Messgrößen | Stand |
 |---|---|---|---|
-| APsystems EZHI | EZHI (lokalen Modus in der APsystems-App aktivieren) | PV, Off-Grid-Port, Akku mit Zählern, Abgabe ins Haus | bestätigt |
+| APsystems EZHI | EZHI (lokalen Modus in der APsystems-App aktivieren) | PV, Off-Grid-Port, Akku mit Zählern und Kapazität, Abgabe ins Haus | bestätigt |
 | Shelly Pro 3EM und andere Shelly mit drei Phasen | Shelly | Netzleistung über alle Phasen | bestätigt (Pro 3EM) |
 | Shelly Plug (Gen2, Gen3) | Shelly | Abgabe ins Haus mit Zähler | bestätigt |
 | Shelly Pro EM, EM Gen3 (eine Phase je Kanal) | Shelly | Netzleistung am ersten Kanal | nicht geprüft |

@@ -38,7 +38,7 @@ devices:
 
 | `type` | Gerät | Messgrößen |
 |---|---|---|
-| `apsystems_ezhi` | APsystems EZHI (in der APsystems-App den lokalen Modus aktivieren) | PV, Off-Grid-Port, Akku mit Zählern, Gesundheit, Abgabe ins Haus |
+| `apsystems_ezhi` | APsystems EZHI (in der APsystems-App den lokalen Modus aktivieren) | PV, Off-Grid-Port, Akku mit Zählern, Gesundheit und Kapazität, Abgabe ins Haus |
 | `shelly_em` | Shelly Pro 3EM und andere Shelly mit drei Phasen | Netzleistung über alle Phasen saldiert |
 | `shelly_em1` | Shelly Pro EM, EM Gen3 (nicht geprüft) | Netzleistung am ersten Kanal |
 | `opendtu` | Hoymiles über OpenDTU (nicht geprüft) | Erzeugung und Abgabe aller Wechselrichter, mit Zähler |
@@ -50,7 +50,8 @@ Welche IP-Adresse bei Hoymiles einzutragen ist und was die Docker-App nicht dire
 Abgabe-Leistung, vom Plug zählt nur der Zähler (siehe
 [Messquellen](messquellen.md)). Meldet ein Gerät eine Richtung umgekehrt, die Messgröße unter `invert` eintragen,
 z. B. `invert: [output_power]`. Ladegrenzen, Entladeschutz und Abgabelimit des EZHI gibt es nur über die
-APsystems-Cloud; ohne sie rechnet Balkonaut mit Standardwerten. Der Import des Verlaufs (`app.backfill`) geht nur
+APsystems-Cloud; ohne sie rechnet Balkonaut mit den zuletzt bekannten Werten (etwa aus einem früheren Betrieb über
+Home Assistant), sonst mit 0 und 100 %. Der Import des Verlaufs (`app.backfill`) geht nur
 über Home Assistant.
 
 Für Prognose (Ertragswächter) und Jahresverlauf ohne Home Assistant Standort und Flächen eintragen (im Browser

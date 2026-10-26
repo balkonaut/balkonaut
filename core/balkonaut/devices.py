@@ -4,6 +4,7 @@ Liefert dieselben Messgrößen wie der Home-Assistant-Adapter (W, kWh, Vorzeiche
 Geprüft an APsystems EZHI, Shelly Pro 3EM und Shelly Outdoor Plug S Gen3 (Oktober 2026). Shelly mit einer Phase
 (EM1), OpenDTU und AhoyDTU sind aus deren Dokumentation und Quellcode abgeleitet, nicht an Geräten geprüft.
 """
+import functools
 import json
 import logging
 import urllib.error
@@ -26,6 +27,12 @@ def _num(value):
         return None
 
 
+@functools.lru_cache
+def _ezhi_capacity(host):
+    """Akku-Kapazität in kWh, einmal je Start. ponytail: ein weiteres Modul zeigt sich erst nach einem Neustart."""
+    return _num((_get(host, "getDeviceInfo").get("data") or {}).get("batteryCapacity"))
+
+
 def apsystems_ezhi(host):
     """APsystems EZHI, lokale API (in der APsystems-App den lokalen Modus aktivieren)."""
     d = _get(host, "getOutputData").get("data") or {}
@@ -37,6 +44,7 @@ def apsystems_ezhi(host):
         "battery_power": _num(d.get("batP")),  # + Laden
         "battery_soc": _num(d.get("batSoc")),
         "battery_soh": _num(d.get("batSoh")),
+        "battery_capacity": _ezhi_capacity(host),
         "battery_charge_energy": _num(d.get("batCTE")),
         "battery_discharge_energy": _num(d.get("batDTE")),
         "output_power": None if og is None else 0.0 - og,  # EZHI: negativ bei Abgabe ins Haus; 0.0 - og ohne -0,0

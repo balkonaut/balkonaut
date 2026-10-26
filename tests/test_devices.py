@@ -10,7 +10,8 @@ EZHI = {"data": {"batSoc": "12.0", "batSoh": "100", "batTemp": "10.3", "devTemp"
                  "ofgITE": "20498022925214.1641"}, "batS": "2", "deviceId": "D02000000000", "message": "SUCCESS"}
 EM = {"id": 0, "a_act_power": 24.2, "b_act_power": 224.3, "c_act_power": 287.7, "total_act_power": 536.22}
 PLUG = {"id": 0, "output": True, "apower": -6.7, "aenergy": {"total": 1612401.687}}
-ANSWERS = {("10.0.0.11", "getOutputData"): EZHI, ("10.0.0.168", "rpc/EM.GetStatus?id=0"): EM,
+ANSWERS = {("10.0.0.11", "getOutputData"): EZHI, ("10.0.0.11", "getDeviceInfo"): {"data": {"type": "EZHI", "batteryCapacity": "5.52"}},
+           ("10.0.0.168", "rpc/EM.GetStatus?id=0"): EM,
            ("10.0.0.38", "rpc/Switch.GetStatus?id=0"): PLUG}
 CONFIG = [{"type": "shelly_em", "host": "10.0.0.168"}, {"type": "apsystems_ezhi", "host": "10.0.0.11"},
           {"type": "shelly_plug", "host": "10.0.0.38"}]
@@ -21,7 +22,7 @@ def test_read(monkeypatch):
     monkeypatch.setattr(devices, "_get", lambda host, path: ANSWERS[host, path])
     assert Devices(CONFIG).read() == {
         "grid_power": 536.22, "pv_power": 51, "pv_energy": 985.9183, "pv_ac_power": 39, "battery_power": 90,
-        "battery_soc": 12, "battery_soh": 100, "battery_charge_energy": 880.1033,
+        "battery_soc": 12, "battery_soh": 100, "battery_capacity": 5.52, "battery_charge_energy": 880.1033,
         "battery_discharge_energy": 854.795, "output_power": 21,  # vom EZHI, nicht vom Plug
         "output_energy": approx(1612.401687)}  # vom Plug
 
