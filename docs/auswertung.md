@@ -95,7 +95,8 @@ Ein gelber Ring bei etwa 50 % ist deshalb dort schon „schwach“.
 Die Seite *Verlauf* zeigt Tag (Stunden), Woche, Monat (je Tag) und Jahr (je Monat) als Balkendiagramm:
 grün der Teil des Hausverbrauchs, den das Balkonkraftwerk gedeckt hat, blau der Netzbezug, der gelbe Strich
 die Erzeugung. Mit *zurück* und *weiter* blätterst du durch die Zeiträume, darunter steht die Bilanz des
-gewählten Zeitraums.
+gewählten Zeitraums. Stundenwerte bleiben unbegrenzt gespeichert, du kannst also bis zum ersten Messtag
+(oder bis zum Beginn des importierten Verlaufs) zurückblättern.
 
 ## Warnungen
 
@@ -161,7 +162,8 @@ Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Mes
 ## Monatsbericht
 
 Die Seite *Bericht* fasst einen Monat zusammen: Bilanz im Vergleich zu Vormonat und Vorjahresmonat,
-Tageswerte als Diagramm und die Akku-Kennzahlen. Bei der Nulleinspeisung im Bericht sind nur die Anteile (nahe 0 W,
+Tageswerte als Diagramm und die Akku-Kennzahlen. Ein Klick auf einen Tag im Diagramm öffnet ihn im
+*Verlauf* mit den Stundenwerten; das geht für jeden Tag, für den Balkonaut Werte gespeichert hat. Bei der Nulleinspeisung im Bericht sind nur die Anteile (nahe 0 W,
 Abgabe über Limit) bewertet; die Grenzen der übrigen Werte gelten für 7 Tage, nicht für einen Monat.
 Mit *Drucken / als PDF speichern* entsteht daraus eine druckfertige Seite oder PDF-Datei. Die Regelgüte der
 Nulleinspeisung speichert Balkonaut einmal pro Tag für den Vortag, der Bericht fasst diese Tageswerte zusammen.

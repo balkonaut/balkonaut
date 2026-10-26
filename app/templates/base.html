@@ -78,6 +78,7 @@
   .ok { background: var(--leaf-soft); } .err { background: var(--warn-soft); border-left: 4px solid var(--warn); }
   svg { width: 100%; height: auto; display: block; }
   .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 14px; color: var(--muted); margin-top: 8px; }
+  .day .hit { fill: var(--ink); opacity: 0; } .day:hover .hit, .day:focus-visible .hit { opacity: .08; }  /* Tag im Bericht anklickbar */
   .dot { display: inline-block; width: 12px; height: 12px; border-radius: 1px; vertical-align: -1px; margin-right: 6px; }
   .tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); width: max-content; max-width: 100%; }
   .tabs a { min-height: 40px; display: flex; align-items: center; padding: 0 14px; border-radius: 4px; text-decoration: none; color: var(--muted);

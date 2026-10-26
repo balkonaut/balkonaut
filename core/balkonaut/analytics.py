@@ -294,7 +294,7 @@ def history(rows, bars, prices, forecast=None):
     for label, a, b in bars:
         x = balance([r for r in rows if r[1] < b], a, prices)
         out.append({"label": label, "own": x["eigenverbrauch"], "grid": x["netzbezug"], "gen": x["erzeugung"],
-                    "fc": forecast.get(a) if forecast else None})
+                    "fc": forecast.get(a) if forecast else None, "datum": datetime.fromtimestamp(a, TZ).date().isoformat()})
     return out
 
 

@@ -39,6 +39,7 @@ const PANEL_STYLE = `
   .pager button { background: none; border: 0; color: var(--primary-color); font: inherit; cursor: pointer; padding: 8px; }
   .pager button:disabled { color: var(--bk-muted); cursor: default; }
   svg.chart { width: 100%; height: auto; display: block; }
+  .day .hit { fill: var(--bk-ink); opacity: 0; } .day:hover .hit, .day:focus-visible .hit { opacity: .08; }
   .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 14px; color: var(--bk-muted); margin-top: 8px; }
   .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 1px; margin-right: 6px; vertical-align: -1px; }
   .bar { height: 10px; background: var(--bk-line); border-radius: 2px; overflow: hidden; margin: 8px 0 16px; }
@@ -178,6 +179,11 @@ class BalkonautPanel extends HTMLElement {
       this.shadowRoot.getElementById(b.getAttribute("aria-controls")).hidden = !open;
     }));
     this.shadowRoot.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => this._show(b.dataset.tab)));
+    this.shadowRoot.querySelectorAll("[data-day]").forEach((a) => a.addEventListener("click", (e) => {
+      e.preventDefault();
+      [this._view, this._datum] = ["tag", a.dataset.day];
+      this._show("verlauf");
+    }));
     this.shadowRoot.querySelectorAll("[data-set]").forEach((b) => b.addEventListener("click", () => {
       const [key, value] = b.dataset.set.split("=");
       this[key] = value;
@@ -187,7 +193,7 @@ class BalkonautPanel extends HTMLElement {
   }
 
   // Balkendiagramm wie app/templates/_chart.html: Eigenverbrauch grün, Netzbezug blau, Erzeugung gelber Strich
-  _chart(bars) {
+  _chart(bars, dayLink = false) {  // dayLink: jeder Balken öffnet den Tag im Verlauf
     const n = bars.length, left = 36, w = (480 - left) / Math.max(n, 1), every = Math.ceil(n / 12);
     const peak = Math.max(0, ...bars.map((b) => Math.max(b.own, b.grid, b.gen, b.fc || 0)));
     let ticks = [], scale = 0;
@@ -203,10 +209,10 @@ class BalkonautPanel extends HTMLElement {
     // je Abschnitt Balkonkraftwerk und Netz nebeneinander, Erzeugung als gelber Strich darüber, wie app/templates/_chart.html
     const cols = bars.map((h, i) => {
       const x = left + i * w;
-      return `<rect x="${x + w * 0.1}" y="${150 - h.own * scale}" width="${w * 0.38}" height="${h.own * scale}" fill="var(--bk-leaf)"><title>${esc(h.label)}: ${this._fmt(h.own, 2)} kWh vom Balkonkraftwerk</title></rect>
+      return `${dayLink ? `<a class="day" href="#" data-day="${esc(h.datum)}" aria-label="${esc(h.datum)} im Verlauf öffnen"><rect class="hit" x="${x}" y="0" width="${w}" height="150"/>` : ""}<rect x="${x + w * 0.1}" y="${150 - h.own * scale}" width="${w * 0.38}" height="${h.own * scale}" fill="var(--bk-leaf)"><title>${esc(h.label)}: ${this._fmt(h.own, 2)} kWh vom Balkonkraftwerk</title></rect>
         <rect x="${x + w * 0.52}" y="${150 - h.grid * scale}" width="${w * 0.38}" height="${h.grid * scale}" fill="var(--bk-sky)"><title>${esc(h.label)}: ${this._fmt(h.grid, 2)} kWh aus dem Netz</title></rect>
         ${h.gen ? `<rect x="${x + w * 0.1}" y="${149 - h.gen * scale}" width="${w * 0.8}" height="3" fill="var(--bk-sun)"><title>${esc(h.label)}: ${this._fmt(h.gen, 2)} kWh erzeugt</title></rect>` : ""}
-        ${i % every === 0 ? `<text x="${x + w * 0.5}" y="166" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${esc(h.label)}</text>` : ""}`;
+        ${dayLink ? "</a>" : ""}${i % every === 0 ? `<text x="${x + w * 0.5}" y="166" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${esc(h.label)}</text>` : ""}`;
     }).join("");
     const fc = bars.some((b) => typeof b.fc === "number" && b.fc > 0);
     const line = fc ? `<polyline points="${bars.map((b, i) => `${(left + (i + 0.5) * w).toFixed(1)},${(150 - (Number(b.fc) || 0) * scale).toFixed(1)}`).join(" ")}"
@@ -357,7 +363,7 @@ class BalkonautPanel extends HTMLElement {
         <button ${r.weiter ? `data-set="_monat=${esc(month(r.weiter))}"` : "disabled"}>weiter →</button>
         <button onclick="window.print()">Drucken</button></div>
       <h2>Bilanz</h2><div class="card"><table><tr><th></th><th>${esc(r.monat)}</th><th>Vormonat</th><th>Vorjahresmonat</th></tr>${table}</table></div>
-      <h2>Tageswerte</h2><div class="card">${this._chart(r.tage)}</div>
+      <h2>Tageswerte</h2><div class="card">${this._chart(r.tage, true)}<p class="label noprint">Ein Klick auf einen Tag öffnet ihn im Verlauf.</p></div>
       <h2>Akku</h2><div class="grid">
         ${this._kachel("akku", "zyklen", "Vollzyklen", this._fmt(r.akku.zyklen))}${this._kachel("akku", "wirkungsgrad", "Wirkungsgrad", this._pct(r.akku.wirkungsgrad), r.akku.wirkungsgrad)}
         ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", r.akku.stunden_voll ?? "–")}${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", r.akku.stunden_leer ?? "–")}

@@ -77,6 +77,7 @@ def test_api_v1(client):
 def test_report(client):
     r = client.get("/bericht?monat=2026-02")
     assert r.status_code == 200 and "Monatsbericht Februar 2026" in r.text and "monat=2026-01" in r.text
+    assert 'href="verlauf?ansicht=tag&amp;datum=2026-02-28"' in r.text  # Tagesbalken öffnen den Tag im Verlauf
     assert client.get("/bericht?monat=unsinn").status_code == 200
     j = client.get("/api/v1/bericht?monat=2026-02").json()
     assert len(j["tage"]) == 28 and j["vorjahr"]["ersparnis"] == 0

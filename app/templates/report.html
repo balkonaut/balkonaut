@@ -30,7 +30,8 @@
 </div>
 
 <h2>Tageswerte</h2>
-<div class="card">{% include "_chart.html" %}</div>
+{% set day_link = "verlauf?ansicht=tag&datum=" %}<div class="card">{% include "_chart.html" %}
+  <p class="label noprint" style="margin:8px 0 0">Ein Klick auf einen Tag öffnet ihn im Verlauf.</p></div>
 
 <h2>Akku</h2>
 <div class="grid">
