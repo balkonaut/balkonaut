@@ -46,7 +46,9 @@ zugeordnet sind. Ohne Flächen heißen sie **Module**.
 Das Diagramm zeigt je Stunde zwei Balken nebeneinander: **grün**, was das Balkonkraftwerk ins Haus abgegeben hat
 (direkt von der Sonne oder aus dem Akku), **blau**, was aus dem Netz kam. Zusammen ergeben sie den Hausverbrauch.
 Der **gelbe Strich** ist die Erzeugung aller Module in dieser Stunde, egal wohin sie ging; mit der Maus darüber steht
-der Wert da.
+der Wert da. Die Skala richtet sich nach dem höchsten Wert im Zeitraum: Zahlen stehen an runden Werten (etwa 0,2 kWh
+an einem Tag mit 2 kWh Spitze), die blassen Linien dazwischen teilen weiter (dort 0,1 kWh). Bei größeren Anlagen oder
+im Monat werden die Schritte entsprechend gröber.
 
 | Gelber Strich liegt … | bedeutet |
 |---|---|

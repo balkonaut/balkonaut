@@ -68,11 +68,12 @@ def chart(bars):
     peak = max((max(b["own"], b["grid"], b["gen"], b.get("fc") or 0) for b in bars), default=0)
     ticks = []
     if peak:
-        raw = peak / 8  # etwa acht Hilfslinien mit runden Werten (1, 2, 5 × 10^n)
+        raw = peak / 12  # höchstens 12 beschriftete Hilfslinien mit runden Werten (1, 2, 5 × 10^n)
         mag = 10 ** math.floor(math.log10(raw))
         step = next(m * mag for m in (1, 2, 5, 10) if m * mag >= raw)
         digits = max(0, -math.floor(math.log10(step)))
-        ticks = [(i * step, de(i * step, digits)) for i in range(1, int(peak / step + 1e-9) + 1)]
+        # dazwischen je eine blasse Linie ohne Zahl, z. B. Zahlen alle 0,2, Linien alle 0,1
+        ticks = [(i * step / 2, "" if i % 2 else de(i * step / 2, digits)) for i in range(1, int(2 * peak / step + 1e-9) + 1)]
     scale, w = (140 / peak if peak else 0), (480 - 36) / max(len(bars), 1)
     forecast = " ".join(f"{36 + (i + 0.5) * w:.1f},{150 - (b.get('fc') or 0) * scale:.1f}" for i, b in enumerate(bars))
     return {"bars": bars, "scale": scale, "ticks": ticks,

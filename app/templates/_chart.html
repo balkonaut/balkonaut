@@ -5,8 +5,8 @@
 <svg viewBox="0 0 480 170" role="img" aria-label="Hausverbrauch je Zeitabschnitt: Balkonkraftwerk und Netz, mit Erzeugung{{ ' und Prognose' if chart.forecast }}">
   <text x="0" y="8" font-size="9" fill="var(--muted)" font-family="var(--mono)">kWh</text>
   {% for value, label in chart.ticks %}
-    <line x1="{{ left }}" x2="480" y1="{{ 150 - value * chart.scale }}" y2="{{ 150 - value * chart.scale }}" stroke="var(--line)" stroke-width="1"/>
-    <text x="{{ left - 4 }}" y="{{ 153 - value * chart.scale }}" font-size="9" text-anchor="end" fill="var(--muted)">{{ label }}</text>
+    <line x1="{{ left }}" x2="480" y1="{{ 150 - value * chart.scale }}" y2="{{ 150 - value * chart.scale }}" stroke="var(--line)" stroke-width="1"{% if not label %} stroke-opacity=".45"{% endif %}/>
+    {% if label %}<text x="{{ left - 4 }}" y="{{ 153 - value * chart.scale }}" font-size="9" text-anchor="end" fill="var(--muted)">{{ label }}</text>{% endif %}
   {% endfor %}
   <line x1="{{ left }}" x2="480" y1="150" y2="150" stroke="var(--muted)" stroke-width="1"/>
   {% for h in chart.bars %}

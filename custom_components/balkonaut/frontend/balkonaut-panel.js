@@ -198,14 +198,15 @@ class BalkonautPanel extends HTMLElement {
     const peak = Math.max(0, ...bars.map((b) => Math.max(b.own, b.grid, b.gen, b.fc || 0)));
     let ticks = [], scale = 0;
     if (peak) {
-      const raw = peak / 8, mag = 10 ** Math.floor(Math.log10(raw));  // etwa acht Hilfslinien
+      const raw = peak / 12, mag = 10 ** Math.floor(Math.log10(raw));  // höchstens 12 beschriftete Hilfslinien
       const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw);
       const digits = Math.max(0, -Math.floor(Math.log10(step)));
-      for (let i = 1; i * step <= peak + 1e-9; i++) ticks.push([i * step, this._fmt(i * step, digits)]);
+      // dazwischen je eine blasse Linie ohne Zahl, z. B. Zahlen alle 0,2, Linien alle 0,1
+      for (let i = 1; i * step / 2 <= peak + 1e-9; i++) ticks.push([i * step / 2, i % 2 ? "" : this._fmt(i * step / 2, digits)]);
       scale = 140 / peak;
     }
-    const grid = ticks.map(([v, l]) => `<line x1="${left}" x2="480" y1="${150 - v * scale}" y2="${150 - v * scale}" stroke="var(--bk-line)"/>
-      <text x="${left - 4}" y="${153 - v * scale}" font-size="9" text-anchor="end" fill="var(--bk-muted)">${l}</text>`).join("");
+    const grid = ticks.map(([v, l]) => `<line x1="${left}" x2="480" y1="${150 - v * scale}" y2="${150 - v * scale}" stroke="var(--bk-line)"${l ? "" : ` stroke-opacity=".45"`}/>
+      ${l ? `<text x="${left - 4}" y="${153 - v * scale}" font-size="9" text-anchor="end" fill="var(--bk-muted)">${l}</text>` : ""}`).join("");
     // je Abschnitt Balkonkraftwerk und Netz nebeneinander, Erzeugung als gelber Strich darüber, wie app/templates/_chart.html
     const cols = bars.map((h, i) => {
       const x = left + i * w;

@@ -53,9 +53,10 @@ def test_history_page(client):
 def test_chart_ticks():
     from app.main import chart
     c = chart([{"own": 3.2, "grid": 15.4, "gen": 3.4}])  # Balken nebeneinander: Höchstwert ist der größte Einzelwert
-    assert [t for t, _ in c["ticks"]] == [2, 4, 6, 8, 10, 12, 14] and c["ticks"][0][1] == "2" and c["forecast"] is None
+    assert [t for t, _ in c["ticks"]] == list(range(1, 16)) and c["forecast"] is None  # Zahlen alle 2, Linien alle 1
+    assert [label for _, label in c["ticks"][:4]] == ["", "2", "", "4"]
     small = chart([{"own": 0.12, "grid": 0.2, "gen": 0, "fc": None}, {"own": 0, "grid": 0.1, "gen": 0.1, "fc": 0.25}])
-    assert [label for _, label in small["ticks"]] == ["0,05", "0,10", "0,15", "0,20", "0,25"]
+    assert [label for _, label in small["ticks"] if label] == ["0,05", "0,10", "0,15", "0,20", "0,25"]
     assert small["forecast"] == "147.0,150.0 369.0,10.0"  # Mitte jedes Abschnitts, Prognose 0,25 kWh ganz oben
     assert chart([])["ticks"] == []
 
