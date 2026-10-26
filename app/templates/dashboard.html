@@ -21,9 +21,10 @@
 
   .flow svg { margin: 8px 0; }
   .lane { fill: none; stroke: var(--line); }
-  .pulse { fill: none; stroke: currentColor; stroke-dasharray: 8 16; animation: run 2s linear infinite; filter: drop-shadow(0 0 4px currentColor); }
-  .pulse.rev { animation-direction: reverse; }
-  @keyframes run { to { stroke-dashoffset: -24; } }
+  /* Pfeilstriche laufen per animateMotion; ruhende Striche nur bei reduzierter Bewegung */
+  .tips { fill: currentColor; filter: drop-shadow(0 0 4px currentColor); }
+  .pulse { display: none; fill: none; stroke: currentColor; stroke-dasharray: 8 16; }
+  @media (prefers-reduced-motion: reduce) { .pulse { display: inline; } .tips { display: none; } }
   .node > rect:first-child { fill: var(--card); stroke: var(--c); stroke-width: 1.5; rx: 6px; }
   .node .ico { color: var(--c); stroke-width: 1.8; }
   .node .lbl { font: 600 11px var(--mono); fill: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
@@ -94,7 +95,11 @@
 
 {% macro line(d, watts, color, reverse=false) %}{% set a = (watts or 0)|abs %}{% set width = (2 + [8, a / 80]|min)|round(1) %}
   <path class="lane" d="{{ d }}" stroke-width="{{ width }}"/>
-  {% if a >= 5 %}<path class="pulse{{ ' rev' if reverse }}" d="{{ d }}" stroke-width="{{ width }}" style="color:{{ color }};animation-duration:{{ [0.5, 2.4 - a / 400]|max|round(2) }}s"/>{% endif %}
+  {% if a >= 5 %}<path class="pulse" d="{{ d }}" stroke-width="{{ width }}" style="color:{{ color }}"/>
+  {# alle 24 Einheiten ein Pfeil: vorn spitz, hinten eingekerbt; Tempo wie früher die Striche #}
+  {% set len = d|pathlen %}{% set n = [1, (len / 24)|round|int]|max %}{% set dur = [0.5, 2.4 - a / 400]|max * len / 24 %}{% set h = width / 2 %}
+  <g class="tips" style="color:{{ color }}">{% for k in range(n) %}<path d="M-7 {{ -h }} H1 L{{ (1 + width * 0.9)|round(2) }} 0 L1 {{ h }} H-7 L{{ (-7 + width * 0.45)|round(2) }} 0 Z">
+    <animateMotion path="{{ d }}" dur="{{ dur|round(2) }}s" begin="{{ (-k * dur / n)|round(2) }}s" repeatCount="indefinite"{% if reverse %} rotate="auto-reverse" keyPoints="1;0" keyTimes="0;1" calcMode="linear"{% else %} rotate="auto"{% endif %}/></path>{% endfor %}</g>{% endif %}
 {% endmacro %}
 {% macro node(x, y, color, label, watts, icon) %}
   <g class="node" transform="translate({{ x }} {{ y }})" style="--c:{{ color }}"><rect width="120" height="56"/>

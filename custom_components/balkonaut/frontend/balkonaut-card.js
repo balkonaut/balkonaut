@@ -23,10 +23,8 @@ const STYLE = `
     text-transform: uppercase; letter-spacing: .08em; color: var(--bk-muted); }
   .flow { display: block; width: 100%; max-width: 520px; height: auto; margin: 8px auto; }  /* breit nicht riesig */
   .lane { fill: none; stroke: color-mix(in srgb, var(--bk-muted) 30%, transparent); }  /* ruhend, in hell und dunkel sichtbar */
-  .pulse { fill: none; stroke: currentColor; stroke-dasharray: 8 16; animation: run 2s linear infinite;
-    filter: drop-shadow(0 0 4px currentColor); }
-  .pulse.rev { animation-direction: reverse; }
-  @keyframes run { to { stroke-dashoffset: -24; } }
+  .tips { fill: currentColor; filter: drop-shadow(0 0 4px currentColor); }  /* Pfeilstriche per animateMotion */
+  .pulse { display: none; fill: none; stroke: currentColor; stroke-dasharray: 8 16; }
   .node > rect:first-child { fill: var(--bk-bg); stroke-width: 1.5; }
   .node .ico { fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .lbl { font: 600 11px var(--bk-mono); fill: var(--bk-muted); text-transform: uppercase; letter-spacing: .03em; }
@@ -44,7 +42,7 @@ const STYLE = `
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; padding-top: 12px;
     border-top: 1px solid var(--bk-line); }
   .stats .lab { font: 600 11px var(--bk-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--bk-muted); }
-  @media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .pulse { display: inline; } .tips { display: none; } }
 `;
 
 class BalkonautCard extends HTMLElement {
@@ -126,10 +124,22 @@ class BalkonautCard extends HTMLElement {
   _line(d, watts, color, reverse = false) {
     const a = Math.abs(watts || 0);
     const width = (2 + Math.min(8, a / 80)).toFixed(1);
-    const dur = Math.max(0.5, 2.4 - a / 400).toFixed(2);
-    return `<path class="lane" d="${d}" stroke-width="${width}"/>` + (a >= 5
-      ? `<path class="pulse${reverse ? " rev" : ""}" d="${d}" stroke-width="${width}" style="color:${color};animation-duration:${dur}s"/>`
-      : "");
+    if (a < 5) return `<path class="lane" d="${d}" stroke-width="${width}"/>`;
+    // alle 24 Einheiten ein Pfeil: vorn spitz, hinten eingekerbt; Pfade bestehen nur aus M, H und V
+    let x = 0, y = 0, len = 0;
+    for (const [, cmd, n, m] of d.matchAll(/([MHV])\s*([\d.]+)(?:\s+([\d.]+))?/g)) {
+      if (cmd === "M") { x = +n; y = +m; }
+      else if (cmd === "H") { len += Math.abs(n - x); x = +n; }
+      else { len += Math.abs(n - y); y = +n; }
+    }
+    const count = Math.max(1, Math.round(len / 24));
+    const dur = Math.max(0.5, 2.4 - a / 400) * len / 24;
+    const h = width / 2;
+    const motion = reverse ? 'rotate="auto-reverse" keyPoints="1;0" keyTimes="0;1" calcMode="linear"' : 'rotate="auto"';
+    const tips = Array.from({ length: count }, (_, k) => `<path d="M-7 ${-h} H1 L${(1 + width * 0.9).toFixed(2)} 0 L1 ${h} H-7 L${(-7 + width * 0.45).toFixed(2)} 0 Z">
+      <animateMotion path="${d}" dur="${dur.toFixed(2)}s" begin="${(-k * dur / count).toFixed(2)}s" repeatCount="indefinite" ${motion}/></path>`).join("");
+    return `<path class="lane" d="${d}" stroke-width="${width}"/><path class="pulse" d="${d}" stroke-width="${width}" style="color:${color}"/>`
+      + `<g class="tips" style="color:${color}">${tips}</g>`;
   }
 
   _node(x, y, color, label, watts, icon, extra = "") {

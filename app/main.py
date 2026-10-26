@@ -3,6 +3,7 @@ import importlib.metadata
 import json
 import logging
 import math
+import re
 import socket
 import time
 from contextlib import asynccontextmanager
@@ -31,8 +32,23 @@ def de(value, digits=1):
     return f"{value:,.{digits}f}".replace(",", " ").replace(".", ",").replace(" ", ".")
 
 
+def path_length(d):
+    """Länge eines Pfads aus M, H und V, wie ihn die Leitungen im Energiefluss nutzen."""
+    x = y = length = 0.0
+    for cmd, nums in re.findall(r"([MHV])\s*([\d.\s]+)", d):
+        v = [float(n) for n in nums.split()]
+        if cmd == "M":
+            x, y = v
+        elif cmd == "H":
+            length, x = length + abs(v[0] - x), v[0]
+        else:
+            length, y = length + abs(v[0] - y), v[0]
+    return length
+
+
 templates.env.filters.update(
     de=de,
+    pathlen=path_length,
     abs_de=lambda v, d=1: de(abs(v) if isinstance(v, (int, float)) else None, d),
     pct=lambda v: "–" if v is None else de(v * 100, 0) + " %",
     komma=lambda v: v if isinstance(v, str) else f"{v:g}".replace(".", ","),  # Eingabefelder: 50,1 statt 50.1

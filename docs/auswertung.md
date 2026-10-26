@@ -30,7 +30,7 @@ des Akkus, z. B. den Hersteller, trägt man selbst ein (Docker-App: *Einstellung
 *Konfigurieren*), weil die Geräte ihn nicht verlässlich melden; ohne Eintrag steht dort **Akku**. Ebenso für den
 zweiten Wechselrichter: Ist er in Home Assistant ein eigenes Gerät, steht dort sein Modell, sonst die eingetragene
 Bezeichnung (z. B. **EZ1-M**, wenn der Speicher ihn am Off-Grid-Port mitmisst) oder **Zusatz-WR**.
-Je mehr Leistung, desto dicker die Leitung und desto schneller laufen die Striche. Die Laufrichtung zeigt,
+Je mehr Leistung, desto dicker die Leitung und desto schneller laufen die Pfeile. Ihre Spitze zeigt,
 ob der Akku lädt oder entlädt und ob Strom aus dem Netz kommt oder eingespeist wird. Der Wert am Haus ist der
 Hausverbrauch, also Abgabe des Balkonkraftwerks plus Netzbezug.
 

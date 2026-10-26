@@ -3,13 +3,18 @@ import time
 
 from fastapi.testclient import TestClient
 
-from app.main import app, de
+from app.main import app, de, path_length
 
 
 def test_de():
     assert de(1234.5, 1) == "1.234,5"
     assert de(None) == "–"
     assert de(-0.01) == de(-0.0) == "0,0" and de(-0.06) == "-0,1"
+
+
+def test_path_length():
+    assert path_length("M300 144 V182 H210 V222") == 38 + 90 + 40
+    assert path_length("M150 242 H124") == 26
 
 
 def test_dashboard(client):
