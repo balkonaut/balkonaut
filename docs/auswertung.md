@@ -79,6 +79,12 @@ Lädt oder entlädt der Akku, steht unter dem Ladestand, wann er bei gleichbleib
 Untergrenze erreicht (beim Entladen der höhere Wert aus Minimum und Entladeschutz). Dafür braucht Balkonaut die
 Akkukapazität (`battery_capacity`). Wandlungsverluste sind nicht eingerechnet, die Angabe ist deshalb etwas optimistisch.
 
+### Autarkie heute
+
+Der äußere grüne Ring zeigt den Autarkiegrad von heute: welchen Anteil des Hausverbrauchs das Balkonkraftwerk gedeckt
+hat. Bei Balkonkraftwerken sind 30 bis 40 % schon viel. Der innere blaue Ring zeigt die Eigenverbrauchsquote: welcher
+Anteil der Abgabe ins Haus selbst verbraucht und nicht eingespeist wurde. Der Knopf **i** erklärt beides auch in der Kachel.
+
 ## Verlauf
 
 Die Seite *Verlauf* zeigt Tag (Stunden), Woche, Monat (je Tag) und Jahr (je Monat) als Balkendiagramm:
