@@ -45,6 +45,11 @@ KACHELN = {
                      "ist die Erzeugung aller Module, egal wohin sie ging: Liegt er über Grün, ging der Rest in den Akku "
                      "oder ins Netz; liegt er darunter, half der Akku aus. Die gestrichelte Linie ist die erwartete "
                      "Erzeugung laut Forecast.Solar, nur für heute.",),
+        "uhrzeit": ("Die letzten 7 Tage nach Uhrzeit zusammengefasst. Oben je Stunde der Anteil der regelbereiten Zeit, "
+                    "in der der Netzanschluss bei ±50 W lag, in %: grün ab 80 %, rot bis 50 %. Blasse Felder ohne Zahl: "
+                    "In dieser Stunde konnte der Speicher nie nachregeln (Akku leer oder Abgabe am Limit). Unten der "
+                    "vermeidbare Netzbezug je Stunde. So sieht man, wann die Regelung nicht greift, etwa wenn ein "
+                    "Zeitfenster in der App des Herstellers Vorrang hat.",),
     },
     "nulleinspeisung": {
         "regelbereit_stunden": ("Zeit, in der der Speicher mehr hätte abgeben können: Akku über der Untergrenze, Abgabe "

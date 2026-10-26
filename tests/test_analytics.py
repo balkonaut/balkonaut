@@ -108,6 +108,9 @@ def test_regulation():
     assert abs(r["einspeisung"] - 100 * 10 / 3600 / 1000) < 1e-12
     assert abs(r["vermeidbarer_netzbezug"] - (10 * 10 + 600 + 200) * 10 / 3600 / 1000) < 1e-12
     assert r["max_abgabe"] == 900 and r["anteil_ueber_limit"] == 1 / 14
+    first = r["stunden"][1]  # ts 0 bis 130 liegt in Berlin in der Stunde 1 Uhr
+    assert first["anteil_nahe_null"] == 10 / 12 and abs(first["vermeidbarer_netzbezug"] - r["vermeidbarer_netzbezug"]) < 1e-12
+    assert len(r["stunden"]) == 24 and r["stunden"][0]["anteil_nahe_null"] is None
     assert regulation({}, PRICES) is None
 
 

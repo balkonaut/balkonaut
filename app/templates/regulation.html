@@ -17,5 +17,6 @@ Die Ergebnisse hängen an einer korrekten Netzmessung.</p>
   {{ kachel("nulleinspeisung", "reaktionszeit_median", "Reaktionszeit", r.reaktionszeit_median|de(0) ~ " s", r.reaktionszeit_median, "Median bis zurück auf ±50 W") }}
   {{ kachel("nulleinspeisung", "anteil_ueber_limit", "Abgabe über Limit (" ~ r.limit|de(0) ~ " W)", r.anteil_ueber_limit|pct, r.anteil_ueber_limit, "höchster Wert " ~ r.max_abgabe|de(0) ~ " W") }}
 </div>
+{% if r.stunden %}<div class="card" style="margin-top:.75rem">{% include "_stunden.html" %}</div>{% endif %}
 {% endif %}
 {% endblock %}

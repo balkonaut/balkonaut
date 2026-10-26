@@ -204,10 +204,13 @@ Zähler (z. B. Shelly Pro 3EM) in einem Fenster „Ladevorgang zuerst“ Vorrang
 und das Haus bezieht Netzstrom. Weil der Akku dabei über der Untergrenze und die Abgabe unter dem Limit liegt, zählt
 diese Zeit als regelbereit: Der Netzbezug erscheint als *Vermeidbarer Netzbezug* und *Nahe 0 W* sinkt.
 
-Die Seite fasst alle Uhrzeiten zusammen. Sie zeigt also, *dass* nicht geregelt wurde, aber nicht *wann*. Dafür an
-einem sonnigen Tag im [Verlauf](#verlauf) oder in Home Assistant Netzleistung, Akkuleistung und Abgabe im fraglichen
-Zeitfenster vergleichen: Bleibt die Netzleistung nahe 0 W, während der Akku lädt, regelt der Zähler; lädt der Akku
-mit voller Sonnenleistung und das Haus bezieht Netzstrom, hat der Modus Vorrang.
+*Wann* nicht geregelt wurde, zeigt die Karte *Nach Uhrzeit* unter den Kacheln: oben je Stunde der Anteil nahe 0 W
+als Farbfeld (grün ab 80 %, rot bis 50 %, blass ohne regelbereite Zeit), unten der vermeidbare Netzbezug je Stunde,
+beides über die letzten 7 Tage. Liegt ein rotes Feld mit hoher Säule genau im Zeitfenster „Ladevorgang zuerst“, hat
+der Modus dort vermutlich Vorrang. Zur Bestätigung an einem sonnigen Tag im [Verlauf](#verlauf) oder in Home
+Assistant Netzleistung, Akkuleistung und Abgabe in diesem Fenster vergleichen: Bleibt die Netzleistung nahe 0 W,
+während der Akku lädt, regelt der Zähler; lädt der Akku mit voller Sonnenleistung und das Haus bezieht Netzstrom, hat
+der Modus Vorrang. Die Karte gibt es in der Docker-App, im Add-on und im Panel der Integration.
 
 ## Bewertung der Kennzahlen
 

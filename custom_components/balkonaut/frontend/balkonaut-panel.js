@@ -315,7 +315,32 @@ class BalkonautPanel extends HTMLElement {
         ${this._kachel("nulleinspeisung", "lastspruenge", "Lastsprünge über 300 W", r.lastspruenge, null, `nicht ausgeregelt in 5 min: ${r.nicht_ausgeregelt}`)}
         ${this._kachel("nulleinspeisung", "reaktionszeit_median", "Reaktionszeit", `${this._fmt(r.reaktionszeit_median, 0)} s`, r.reaktionszeit_median, "Median bis zurück auf ±50 W")}
         ${this._kachel("nulleinspeisung", "anteil_ueber_limit", `Abgabe über Limit (${this._fmt(r.limit, 0)} W)`, this._pct(r.anteil_ueber_limit), r.anteil_ueber_limit, `höchster Wert ${this._fmt(r.max_abgabe, 0)} W`)}
-      </div>`;
+      </div>${r.stunden ? `<div class="card" style="margin-top:.75rem">${this._hours(r.stunden)}</div>` : ""}`;
+  }
+
+  // Regelgüte nach Uhrzeit wie app/templates/_stunden.html: oben Anteil nahe 0 W als Farbfeld, unten vermeidbarer Netzbezug
+  _hours(hours) {
+    const left = 36, w = (480 - left) / 24, peak = Math.max(0, ...hours.map((h) => h.vermeidbarer_netzbezug));
+    const [, good, bad] = this._kacheln?.nulleinspeisung?.anteil_nahe_null || [];
+    const two = (n) => String(n).padStart(2, "0");
+    const cols = hours.map((h, i) => {
+      const x = left + i * w, a = h.anteil_nahe_null, s = a === null || good === undefined ? null : Math.min(Math.max((a - bad) / (good - bad), 0), 1);
+      const tip = `<title>${two(h.stunde)}–${two((h.stunde + 1) % 24)} Uhr: ${s === null ? "nicht regelbereit"
+        : `${this._fmt(h.regelbereit_stunden)} h regelbereit, davon ${this._pct(a)} nahe 0 W, vermeidbar ${this._fmt(h.vermeidbarer_netzbezug, 2)} kWh`}</title>`;
+      const bh = peak ? h.vermeidbarer_netzbezug * 50 / peak : 0;
+      return `<rect x="${x + 1}" y="6" width="${w - 2}" height="30" rx="3" ${s === null ? `fill="var(--bk-line)" fill-opacity=".4"` : `fill="hsl(${Math.round(s * 130)} 60% 42%)"`}>${tip}</rect>
+        ${s === null ? "" : `<text x="${x + w * 0.5}" y="25" font-size="8" text-anchor="middle" fill="var(--bk-card)" font-family="var(--bk-mono)">${Math.round(a * 100)}</text>`}
+        <rect x="${x + w * 0.2}" y="${100 - bh}" width="${w * 0.6}" height="${bh}" fill="var(--bk-sky)">${tip}</rect>
+        ${i % 3 === 0 ? `<text x="${x + w * 0.5}" y="115" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${h.stunde}</text>` : ""}`;
+    }).join("");
+    const help = this._kacheln?.diagramm?.uhrzeit?.[0];
+    return `<div class="label">Nach Uhrzeit</div>${help ? `<button class="info" type="button" aria-expanded="false" aria-controls="hilfe-uhrzeit" aria-label="Erklärung zu Nach Uhrzeit">i</button>` : ""}
+      <svg class="chart" viewBox="0 0 480 120" role="img" aria-label="Anteil nahe 0 W und vermeidbarer Netzbezug je Uhrzeit">
+      <text x="0" y="24" font-size="9" fill="var(--bk-muted)" font-family="var(--bk-mono)">±50 W</text>
+      <text x="0" y="84" font-size="9" fill="var(--bk-muted)" font-family="var(--bk-mono)">kWh</text>${cols}
+      <line x1="${left}" x2="480" y1="100" y2="100" stroke="var(--bk-muted)"/></svg>
+      <div class="legend"><span>oben: Anteil nahe 0 W in % (blass: nicht regelbereit)</span><span><i style="background:var(--bk-sky)"></i>vermeidbarer Netzbezug</span></div>
+      ${help ? `<p class="hilfe" id="hilfe-uhrzeit" hidden>${esc(help)}</p>` : ""}`;
   }
 
   _report(r) {

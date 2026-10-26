@@ -33,7 +33,8 @@ def test_regulation_page(client):
     now = int(time.time())
     for t in range(now - 600, now, 10):
         app.state.storage.add(t, {"grid_power": 20, "output_power": 300, "pv_ac_power": 0, "battery_soc": 50})
-    assert "100 %" in client.get("/nulleinspeisung").text
+    page = client.get("/nulleinspeisung").text
+    assert "100 %" in page and "Nach Uhrzeit" in page and "hilfe-uhrzeit" in page
 
 
 def test_history_page(client):

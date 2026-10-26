@@ -216,6 +216,7 @@ def regulation(series, prices, soc_min=10, limit=800):
         return max(limit - (o - ac), 0) if o - ac < limit * 0.95 else 0
 
     grids, export, avoidable, jumps = [], 0.0, 0.0, []
+    hours = [[0, 0, 0.0] for _ in range(24)]  # je Uhrzeit (Ortszeit): regelbereite Messungen, davon nahe 0, vermeidbar
     for i, (ts, g, o, ac, soc) in enumerate(pts):
         export += max(-g, 0) * kwh
         room = headroom(o, ac, soc)
@@ -223,6 +224,10 @@ def regulation(series, prices, soc_min=10, limit=800):
             continue
         grids.append(g)
         avoidable += min(max(g, 0), room) * kwh
+        h = hours[datetime.fromtimestamp(ts, TZ).hour]
+        h[0] += 1
+        h[1] += abs(g) <= NEAR_ZERO
+        h[2] += min(max(g, 0), room) * kwh
         if i and g - pts[i - 1][1] > JUMP:  # Lastsprung: Zeit bis zurück im Band, höchstens 5 min
             jumps.append(next((t2 - ts for t2, g2, *_ in pts[i + 1:i + 31] if g2 <= NEAR_ZERO), None))
     done = [s for s in jumps if s is not None]
@@ -242,6 +247,8 @@ def regulation(series, prices, soc_min=10, limit=800):
         "limit": limit,
         "max_abgabe": max(outputs, default=None),
         "anteil_ueber_limit": sum(o > limit for o in outputs) / len(outputs) if outputs else None,
+        "stunden": [{"stunde": i, "regelbereit_stunden": n * step / 3600, "anteil_nahe_null": near / n if n else None,
+                     "vermeidbarer_netzbezug": avoid} for i, (n, near, avoid) in enumerate(hours)],
     }
 
 
