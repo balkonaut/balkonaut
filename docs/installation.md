@@ -166,7 +166,7 @@ Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die E
 3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht, weil Messgrößen fehlen.
    *Speichern* schließt ab, *Zuordnung ändern* führt zurück zu Schritt 2.
 
-Pflicht ist nur eine einzige Messgröße oder ein Gerät.
+Pflicht ist nur eine einzige Messgröße oder ein Gerät. Fehlt eine, entfällt nur die Funktion, die sie braucht.
 
 !!! tip "Pro Gerät eine Quelle: Integration oder Adresse"
     Ein Gerät entweder über seine Integration in Home Assistant einbinden oder direkt über die Adresse, nicht beides.
@@ -182,12 +182,34 @@ Pflicht ist nur eine einzige Messgröße oder ein Gerät.
     Integration nötig.
 
     Die Integration lohnt sich auch, wenn man den EZHI aus Home Assistant steuern will (z. B. den Entladeschutz per
-    Automation); Balkonaut liest nur. Fehlt eine, entfällt nur die Funktion, die sie braucht.
+    Automation); Balkonaut liest nur.
 
-!!! note "Tagesprognose ist optional"
-    Für die Tagesprognose des Ertragswächters entweder die Forecast.Solar-Integration einrichten und in Schritt 2
-    unter *Prognose* zuordnen, oder später unter *Konfigurieren* eine Fläche je Wechselrichter eintragen; dann ruft
-    Balkonaut die Prognose selbst bei Forecast.Solar ab. Ohne beides fehlt nur der Ertragswächter.
+#### Tagesprognose: mit oder ohne Forecast.Solar-Integration
+
+Die Tagesprognose ist optional. Sie braucht der [Ertragswächter](auswertung.md#warnungen), außerdem zeigt sie die
+gestrichelte Linie im Diagramm und die Ausrichtung der Module im Energiefluss. Ohne Prognose fehlt nur das. Die
+Werte kommen in beiden Fällen von Forecast.Solar, es gibt zwei Wege:
+
+| | Forecast.Solar-Integration installiert | ohne diese Integration |
+|---|---|---|
+| Einrichtung | Schritt 2, Abschnitt *Prognose*: je Wechselrichter die Entität *Geschätzte Energieerzeugung – heute* des passenden Forecast.Solar-Eintrags zuordnen (nicht *Resttag heute*) | unter *Konfigurieren*: *Fläche am Speicher* und gegebenenfalls *Fläche am zweiten Wechselrichter* mit Neigung, Ausrichtung und Leistung |
+| Abruf bei Forecast.Solar | durch die Forecast.Solar-Integration, Balkonaut liest nur ihre Entität | durch Balkonaut selbst, zur vollen und halben Stunde, mit dem Standort aus Home Assistant |
+| Flächen je Wechselrichter | mehrere, so viele wie im Forecast.Solar-Eintrag angelegt | eine |
+| Linie im Diagramm, Ausrichtung im Energiefluss | aus den Flächen des Forecast.Solar-Eintrags | aus den eingetragenen Flächen |
+
+Gibt es nur einen Forecast.Solar-Eintrag und keinen zweiten Wechselrichter, schlägt Balkonaut die Entität in Schritt 2
+selbst vor. Bei den aktuellen Werten steht die Ausrichtung dabei, z. B. „Prognose Speicher: 4,2 kWh (Südost 150°)“;
+so lässt sich prüfen, ob der richtige Eintrag dem richtigen Wechselrichter zugeordnet ist.
+
+Beides gleichzeitig ist nicht nötig. Ist für einen Wechselrichter eine Prognose-Entität zugeordnet, gilt sie, und
+Balkonaut ruft für diesen Wechselrichter nicht selbst ab, auch wenn dort eine Fläche eingetragen ist. Mischen geht:
+etwa Forecast.Solar für den Speicher und eine eingetragene Fläche für den zweiten Wechselrichter.
+
+!!! note "Abrufgrenze von Forecast.Solar"
+    Ohne eigenen Schlüssel erlaubt Forecast.Solar 12 Abrufe je Stunde und öffentlicher IP-Adresse. Alle Geräte im
+    Heimnetz teilen sich diese Grenze, also auch die Forecast.Solar-Integration, die Docker-App oder das Add-on.
+    Balkonaut braucht beim eigenen Abruf 2 Abrufe je Fläche und Stunde. Laufen Docker-App und Integration beide mit
+    eingetragenen Flächen, zählt das doppelt; dann besser an einer Stelle die Forecast.Solar-Integration nutzen.
 
 Danach zeigt das Balkonaut-Panel in der Seitenleiste oben die Kachel *Einrichtung*, solange etwas Wichtiges fehlt:
 Messgrößen für Netz, Abgabe, Erzeugung und Ladestand (*⋮ → Neu konfigurieren*), eine Prognose-Entität oder eine
@@ -255,9 +277,8 @@ mehrere Balkonaut-Einträge eingerichtet sind (ohne Angabe nimmt die Karte den e
 - Unter *Konfigurieren*: das Abfrageintervall (Standard 5 Minuten), die Bezeichnung des Akkus für den Energiefluss
   (optional, z. B. der Hersteller) und des zusätzlichen Wechselrichters (optional, z. B. EZ1-M), im eigenständigen Betrieb außerdem Preise, Anschaffungskosten und Inbetriebnahme.
 - Ebenfalls unter *Konfigurieren* (eigenständig): je eine Fläche am Speicher und am zweiten Wechselrichter mit Neigung,
-  Ausrichtung und Leistung. Wer keine Forecast.Solar-Integration hat, bekommt so trotzdem die Tagesprognose für den
-  Ertragswächter: Balkonaut ruft sie zur vollen und halben Stunde selbst bei Forecast.Solar ab, mit dem Standort aus
-  Home Assistant. Ist eine Prognose-Entität zugeordnet, geht sie vor. Bisher eine Fläche je Wechselrichter.
+  Ausrichtung und Leistung, für die Tagesprognose ohne Forecast.Solar-Integration, siehe
+  [Tagesprognose](#tagesprognose-mit-oder-ohne-forecastsolar-integration).
 - Unter *⋮ → Neu konfigurieren*: im eigenständigen Betrieb die Zuordnung der Entitäten und die direkt abgefragten Geräte ändern (Schritte 2 und 3 der
   [geführten Einrichtung](#gefuhrte-einrichtung)), mit einer App deren Adresse. Eintrag und Messdaten bleiben erhalten.
   Für neu zugeordnete Entitäten übernimmt Balkonaut keinen Verlauf aus dem Recorder, sie zählen ab der Änderung.

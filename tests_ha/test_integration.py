@@ -454,3 +454,17 @@ async def test_direct_devices(hass, monkeypatch):
     issue = ir.async_get(hass).async_get_issue(DOMAIN, f"unreachable_devices_{entry.entry_id}")
     assert issue.translation_placeholders == {"hosts": "192.168.1.11"}
     assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_planes_skipped_with_forecast_entity(hass):
+    """Ist eine Prognose-Entität zugeordnet, ruft Balkonaut für diesen Wechselrichter nicht selbst ab."""
+    hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
+    plane = {"declination": 30, "azimuth": 150, "kwp": 0.87}
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", options={"plane_storage": plane, "plane_extra": plane},
+                            data={"entities": {"grid_power": "sensor.netz", "pv_forecast_today": "sensor.prognose"},
+                                  "invert": [], "backfilled": True})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert [p["inverter"] for p in entry.runtime_data.forecast.planes] == ["extra"]
+    assert await hass.config_entries.async_unload(entry.entry_id)

@@ -91,8 +91,10 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
         self.storage = storage
         self.lock = asyncio.Lock()  # SQLite-Zugriffe nacheinander, sie laufen im Executor
         self.failures = 0
-        # Prognose aus eingetragenen Flächen, falls keine Prognose-Entität zugeordnet ist
-        self.forecast = forecast.Planes({"lat": hass.config.latitude, "lon": hass.config.longitude}, planes(entry))
+        # Prognose aus eingetragenen Flächen, nur für Wechselrichter ohne zugeordnete Prognose-Entität (spart Abrufe)
+        mapped = entry.data.get(CONF_ENTITIES) or {}
+        self.forecast = forecast.Planes({"lat": hass.config.latitude, "lon": hass.config.longitude},
+                                        [p for p in planes(entry) if forecast.KEYS[p["inverter"]] not in mapped])
         self.forecasting = False
         self.devices = Devices(entry.data.get(CONF_DEVICES, []))
         self.device_values = {}  # letzte Werte der Geräte, für den Stand der Einrichtung

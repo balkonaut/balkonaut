@@ -238,10 +238,12 @@ Kachel wäre also fast immer rot, obwohl alles in Ordnung ist.
   mal Arbeitspreis. Der Zähler läuft meist seit Inbetriebnahme, damit zählen auch die Monate,
   bevor Balkonaut lief. Ohne Abgabezähler zählt nur der Messzeitraum.
 - **Ersparnis pro Jahr**: Mit eingetragenem Datum der Inbetriebnahme die bisherige Ersparnis seit diesem Datum,
-  sonst die Ersparnis der Messtage, jeweils aufs Jahr hochgerechnet. Ist die Forecast.Solar-Integration in Home
-  Assistant eingerichtet, rechnet Balkonaut mit dem **Jahresverlauf**: Aus Standort, Neigung, Ausrichtung und
-  Leistung der Flächen holt es den erwarteten Ertrag je Monat bei PVGIS (EU) und gewichtet den Zeitraum danach.
-  Zehn Oktobertage zählen so nicht wie zehn Junitage. Ohne Forecast.Solar wird gleichmäßig über das Jahr gerechnet.
+  sonst die Ersparnis der Messtage, jeweils aufs Jahr hochgerechnet. In der Docker-App und im Add-on rechnet
+  Balkonaut mit dem **Jahresverlauf**, sobald es die Flächen kennt (in den Einstellungen eingetragen oder aus der
+  Forecast.Solar-Integration in Home Assistant): Aus Standort, Neigung, Ausrichtung und Leistung der Flächen holt es
+  den erwarteten Ertrag je Monat bei PVGIS (EU) und gewichtet den Zeitraum danach. Zehn Oktobertage zählen so nicht
+  wie zehn Junitage. Ohne Flächen, und bisher immer in der Integration für Home Assistant, wird gleichmäßig über das
+  Jahr gerechnet.
 - **Amortisiert**: Monat, in dem die Anschaffungskosten voraussichtlich erreicht sind, und die Jahre bis dahin.
 - **Plausibilität**: Ist der Abgabezähler höher, als ein Wechselrichter mit 1200 W Dauerleistung seit dem eingetragenen
   Datum hätte liefern können, erscheint ein Hinweis. Dann stimmt meist das Datum nicht.
