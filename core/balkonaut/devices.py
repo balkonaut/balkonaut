@@ -64,8 +64,8 @@ def opendtu(host):
 
 def ahoydtu(host):
     """Hoymiles über AhoyDTU: Leistung aller Wechselrichter zusammen, ohne Zähler (nicht geprüft)."""
-    powers = [_num(i.get("cur_pwr")) for i in _get(host, "api/index").get("inverter") or []]
-    power = sum(p for p in powers if p is not None) if any(p is not None for p in powers) else None
+    powers = [p for i in _get(host, "api/index").get("inverter") or [] if (p := _num(i.get("cur_pwr"))) is not None]
+    power = sum(powers) if powers else None
     return {"pv_power": power, "output_power": power}
 
 

@@ -130,8 +130,9 @@ def start_measuring(app, cfg):
     for task in app.state.tasks:
         task.cancel()
     app.state.tasks = []
-    if adapter := config.adapter(cfg):
-        app.state.forecast = adapter.forecast  # Prognose je Stunde für das Diagramm
+    adapter = config.adapter(cfg)
+    app.state.forecast = adapter.forecast if adapter else None  # Prognose je Stunde für das Diagramm
+    if adapter:
         app.state.tasks = [asyncio.create_task(collector.run(adapter, app.state.storage)),
                            asyncio.create_task(load_profile(app, adapter, app.state.config_path.parent / "ertragsprofil.json")),
                            asyncio.create_task(regulation_job(app))]
@@ -248,7 +249,7 @@ def history_data(request, ansicht, datum):
 
 def hourly_forecast(app):
     """Erwartete Erzeugung je Stunde heute aus den eingetragenen Flächen, ohne Flächen leer."""
-    planes = getattr(app.state, "forecast", None)
+    planes = app.state.forecast
     return planes.current_hours() if planes else {}
 
 
