@@ -103,7 +103,8 @@
 {% endmacro %}
 {% macro node(x, y, color, label, watts, icon) %}
   <g class="node" transform="translate({{ x }} {{ y }})" style="--c:{{ color }}"><rect width="120" height="56"/>
-    <text class="lbl" x="10" y="19">{{ label }}</text><svg x="100" y="7" width="16" height="16" viewBox="0 0 24 24" class="ico"><use href="#i-{{ icon }}"/></svg>
+    {# Platz bis zum Symbol reicht für etwa 12 Zeichen, längere Namen werden gestaucht #}
+    <text class="lbl" x="10" y="19"{% if label|length > 12 %} textLength="86" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ label }}</text><svg x="100" y="7" width="16" height="16" viewBox="0 0 24 24" class="ico"><use href="#i-{{ icon }}"/></svg>
     <text class="w" x="10" y="41">{{ watts|abs_de(0) }} W</text>{{ caller() if caller }}</g>
 {% endmacro %}
 {% set batt = live.get("battery_power") %}{% set grid = live.get("grid_power") %}{% set out = live.get("output_power") %}

@@ -144,7 +144,7 @@ class BalkonautCard extends HTMLElement {
 
   _node(x, y, color, label, watts, icon, extra = "") {
     return `<g class="node" transform="translate(${x} ${y})"><rect width="120" height="56" rx="6" stroke="${color}"/>
-      <text class="lbl" x="10" y="19">${label}</text>
+      <text class="lbl" x="10" y="19"${label.length > 12 ? ' textLength="86" lengthAdjust="spacingAndGlyphs"' : ""}>${label}</text>
       <svg x="100" y="7" width="16" height="16" viewBox="0 0 24 24" class="ico" stroke="${color}">${ICONS[icon]}</svg>
       <text class="w" x="10" y="41">${this._fmt(watts === null ? null : Math.abs(watts))} W</text>${extra}</g>`;
   }
