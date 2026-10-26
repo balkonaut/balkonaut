@@ -273,6 +273,30 @@ Kachel wäre also fast immer rot, obwohl alles in Ordnung ist.
   Datum hätte liefern können, erscheint ein Hinweis. Dann stimmt meist das Datum nicht.
 - **Vollzyklen pro Jahr** (Bereich Akku): Vollzyklen seit Inbetriebnahme geteilt durch die Jahre seitdem.
 
+### Balkonaut erst später installiert?
+
+Läuft das Balkonkraftwerk schon länger als Balkonaut, stimmt die Rechnung trotzdem weitgehend, wenn zwei Angaben da sind:
+
+1. **Abgabezähler** des Wechselrichters (`output_energy`): Er zählt seit Inbetriebnahme des Geräts, nicht erst seit
+   Balkonaut. Die bisherige Ersparnis umfasst damit auch die Monate davor.
+2. **Datum der Inbetriebnahme** in den [Einstellungen](einstellungen.md): Damit wird die Ersparnis pro Jahr über die
+   ganze Laufzeit gemittelt. Ohne Datum rechnet Balkonaut sie nur aus den eigenen Messtagen hoch.
+
+Ungenau bleibt:
+
+- Die **Eigenverbrauchsquote** stammt nur aus der Zeit, in der Balkonaut misst, und gilt für die ganze Vergangenheit.
+  Misst Balkonaut zum Beispiel nur im Herbst, in dem fast alles selbst verbraucht wird, fällt die Ersparnis für den
+  Sommer zu hoch aus. Mit jedem Monat Messung wird sie genauer.
+- Gerechnet wird mit dem **heutigen Arbeitspreis**, frühere Preise kennt Balkonaut nicht.
+- Wurde der Zähler **zurückgesetzt** (etwa nach einem Gerätetausch), fehlt die Zeit davor. Ist dagegen das Datum der
+  Inbetriebnahme falsch, erscheint der Hinweis zur Plausibilität.
+- **Ohne Abgabezähler** zählt nur der Messzeitraum, die bisherige Ersparnis ist dann zu niedrig.
+
+Die Messlücke lässt sich etwas verkleinern: Die Integration übernimmt beim Einrichten von selbst den Verlauf, den
+Home Assistant noch gespeichert hat (standardmäßig zehn Tage), in der Docker-App geht das mit einem Befehl (siehe
+[Verlauf aus Home Assistant übernehmen](installation.md#verlauf-aus-home-assistant-ubernehmen)). Dann beginnt auch die
+Eigenverbrauchsquote früher.
+
 !!! note "Näherung"
     Der Jahresverlauf berücksichtigt die Sonne, aber nicht, dass im Sommer mehr Strom übrig bleibt, als der Haushalt
     braucht. Bei hohem Eigenverbrauch im Sommer fällt die Hochrechnung aus Wintertagen deshalb etwas zu hoch aus.
