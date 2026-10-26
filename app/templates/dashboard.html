@@ -171,22 +171,25 @@
     <div class="eyebrow"><span class="chip" style="background:var(--leaf-soft);color:var(--leaf)"><svg class="ico" aria-hidden="true"><use href="#i-home"/></svg></span>Autarkie heute</div>
     <button class="info" type="button" aria-expanded="false" aria-controls="hilfe-autarkie-heute" aria-label="Erklärung zu Autarkie heute">i</button>
     {% set aut, evq = heute.autarkiegrad or 0, heute.eigenverbrauchsquote or 0 %}
+    {# Innenring gleichmäßig von rot (0 %) bis grün (100 %), wie der Akku-Ring #}
+    {% set evq_c = "hsl(%d 72%% var(--soc-l))" % ([evq, 1]|min * 130) %}
     <div class="ring">
       <svg viewBox="0 0 100 100" role="img" aria-label="Autarkie {{ heute.autarkiegrad|pct }}, Eigenverbrauchsquote {{ heute.eigenverbrauchsquote|pct }}">
         <circle class="track" cx="50" cy="50" r="42"/>
         <circle cx="50" cy="50" r="42" stroke="var(--leaf)" stroke-dasharray="{{ [aut, 1]|min * 263.9 }} 264"/>
         <circle class="seg" cx="50" cy="50" r="42"/>
         <circle class="track" cx="50" cy="50" r="29" stroke-width="6"/>
-        <circle cx="50" cy="50" r="29" stroke="var(--sky)" stroke-width="6" stroke-dasharray="{{ [evq, 1]|min * 182.2 }} 183"/>
+        <circle cx="50" cy="50" r="29" stroke="{{ evq_c }}" stroke-width="6" stroke-dasharray="{{ [evq, 1]|min * 182.2 }} 183"/>
       </svg>
       <div><div class="value">{{ heute.autarkiegrad|pct|replace(" %", "") }}<span class="unit">%</span></div>
         <div class="label">selbst gedeckt</div></div>
     </div>
     <div class="lim-key"><span><i style="background:var(--leaf)"></i>Autarkie {{ heute.autarkiegrad|pct }}</span>
-      <span><i style="background:var(--sky)"></i>Eigenverbrauchsquote {{ heute.eigenverbrauchsquote|pct }}</span></div>
+      <span><i style="background:{{ evq_c }}"></i>Eigenverbrauchsquote {{ heute.eigenverbrauchsquote|pct }}</span></div>
     <p class="hilfe" id="hilfe-autarkie-heute" hidden>Grüner Ring: Anteil des heutigen Hausverbrauchs, den das Balkonkraftwerk
-      gedeckt hat. Bei Balkonkraftwerken sind 30 bis 40 % schon viel. Blauer Ring: Eigenverbrauchsquote, der
-      Anteil der Abgabe ins Haus, der selbst verbraucht und nicht eingespeist wurde.</p>
+      gedeckt hat. Bei Balkonkraftwerken sind 30 bis 40 % schon viel. Innerer Ring: Eigenverbrauchsquote, der
+      Anteil der Abgabe ins Haus, der selbst verbraucht und nicht eingespeist wurde.
+      Seine Farbe geht gleichmäßig von Rot (0 %) bis Grün (100 %).</p>
   </section>
 </div>
 

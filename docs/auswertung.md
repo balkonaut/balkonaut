@@ -82,8 +82,13 @@ Akkukapazität (`battery_capacity`). Wandlungsverluste sind nicht eingerechnet, 
 ### Autarkie heute
 
 Der äußere grüne Ring zeigt den Autarkiegrad von heute: welchen Anteil des Hausverbrauchs das Balkonkraftwerk gedeckt
-hat. Bei Balkonkraftwerken sind 30 bis 40 % schon viel. Der innere blaue Ring zeigt die Eigenverbrauchsquote: welcher
+hat. Bei Balkonkraftwerken sind 30 bis 40 % schon viel. Der innere Ring zeigt die Eigenverbrauchsquote: welcher
 Anteil der Abgabe ins Haus selbst verbraucht und nicht eingespeist wurde. Der Knopf **i** erklärt beides auch in der Kachel.
+
+Die Farbe des inneren Rings geht gleichmäßig von Rot bei 0 % über Orange und Gelb bis Grün bei 100 %, in denselben
+Farben wie der Akku-Ring. Sie zeigt also nur, wie voll der Ring ist, und bewertet nicht. Die Kachel *Eigenverbrauchsquote* in der
+Bilanz bewertet dagegen mit eigenen Grenzen: Erst ab 90 % gilt die Quote als gut, bei 60 % und weniger als schwach.
+Ein gelber Ring bei etwa 50 % ist deshalb dort schon „schwach“.
 
 ## Verlauf
 
