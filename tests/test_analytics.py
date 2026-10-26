@@ -67,6 +67,8 @@ def test_battery():
     assert abs(b["wirkungsgrad"] - (4 + (10 - 95) / 100 * 5) / 1) < 1e-9
     assert (b["stunden_voll"], b["einspeisung_bei_vollem_akku"]) == (1, 0.3)
     assert (b["stunden_leer"], b["netzbezug_bei_leerem_akku"]) == (1, 0.8)
+    # zusätzliches Modul 2,5 kWh, nutzbar 2,5 × 0,85 × 0,9 ≈ 1,9 kWh: deckt die 0,8 kWh nach dem vollen Akku
+    assert (b["zusatz_kapazitaet"], b["groesserer_akku"]) == (2.5, 0.8)
     assert (b["geladen"], b["entladen"], b["entladen_ins_haus"]) == (1.0, 4.0, None)  # ohne Leistungen kein Weg
     assert battery([], 0, PRICES)["zyklen"] is None  # ohne Daten
 
@@ -205,4 +207,4 @@ def test_guete():
     assert guete("nulleinspeisung", "anteil_nahe_null", 0.8) == 1 and guete("nulleinspeisung", "anteil_nahe_null", 0.3) == 0
     assert guete("nulleinspeisung", "reaktionszeit_median", 37.5) == 0.5  # kleiner ist besser
     assert guete("bilanz", "autarkiegrad", 0.5) is None and guete("akku", "wirkungsgrad", None) is None
-    assert all(len(e) in (1, 5) for b in KACHELN.values() for e in b.values())
+    assert all(len(e) in (1, 5, 6) for b in KACHELN.values() for e in b.values())  # 6: eigene Wörter für die Bewertung

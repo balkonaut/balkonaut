@@ -164,14 +164,23 @@ def battery(rows, start, prices, commissioned=None, collected=None):
     soc_max, soc_min = latest("battery_soc_max") or 100, latest("battery_soc_min") or 0
     full = empty = 0
     export_full = import_empty = 0.0
+    # Größerer Akku: Nach Stunden mit vollem Akku hätte ein zusätzliches Modul (halbe Kapazität, nutzbar zwischen den
+    # Grenzen, 90 % Wirkungsgrad) den Netzbezug der folgenden leeren Stunden bis zu seinem Inhalt decken können.
+    # ponytail: nur Obergrenze, der abgeregelte Überschuss ist nicht gemessen; genau rechnet später der Simulator.
+    extra = cap / 2 if cap else None
+    usable = extra * (soc_max - soc_min) / 100 * 0.9 if extra else 0.0
+    shifted = left = 0.0
     for hour, (soc, *_) in hours.get("battery_soc", {}).items():
         _, pos, neg, _ = hours["grid_power"].get(hour, (0, 0, 0, None))
         if soc >= soc_max - 2:
             full += 1
             export_full -= neg / 1000
+            left = usable
         elif soc <= soc_min + 2:
             empty += 1
             import_empty += pos / 1000
+            take = min(pos / 1000, left)
+            shifted, left = shifted + take, left - take
     return {
         "zyklen": discharge / cap if cap and discharge is not None else None,
         "zyklen_gesamt": latest("battery_discharge_energy") / cap if cap and latest("battery_discharge_energy") else None,
@@ -186,6 +195,12 @@ def battery(rows, start, prices, commissioned=None, collected=None):
         "stunden_leer": empty,
         "netzbezug_bei_leerem_akku": import_empty,
         "kosten_bei_leerem_akku": import_empty * prices["energy"],
+        "zusatz_kapazitaet": extra,
+        "groesserer_akku": shifted if extra else None,
+        "groesserer_akku_euro": shifted * prices["energy"] if extra else None,
+        # aufs Jahr hochgerechnet über die Stunden mit Ladestand; ponytail: linear, ohne Jahreszeiten
+        "groesserer_akku_jahr": shifted * prices["energy"] * 8760 / len(hours["battery_soc"])
+        if extra and hours.get("battery_soc") else None,
         "geladen": charge if charge is not None else wh["battery_power+"] / 1000,
         "entladen": discharge if discharge is not None else wh["battery_power-"] / 1000,
         "entladen_ins_haus": to_house,

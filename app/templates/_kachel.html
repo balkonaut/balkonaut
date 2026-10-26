@@ -1,15 +1,16 @@
 {# Kachel mit Erklärung (Knopf i) und, wo es eine Bewertung gibt, Skala von rot (links) bis grün (rechts) #}
-{% macro kachel(bereich, key, label, shown, raw=none, sub=none) %}
+{% macro kachel(bereich, key, label, shown, raw=none, sub=none, wide=false) %}
 {% set entry = kacheln[bereich][key] %}{% set s = guete(bereich, key, raw) %}{% set id = bereich ~ "-" ~ key %}
-<div class="card">
+{% set words = entry[5] if entry|length > 5 else ("gut", "mittel", "schwach") %}{% set ends = (words[2], words[0]) if entry|length > 5 else ("schlecht", "gut") %}
+<div class="card{{ ' wide' if wide }}">
   <div class="label">{{ label }}</div>
   <button class="info" type="button" aria-expanded="false" aria-controls="hilfe-{{ id }}" aria-label="Erklärung zu {{ label }}">i</button>
   <div class="k-body">
   <div class="value">{{ shown }}</div>
-  {% if s is not none %}<div><span class="q-badge" style="--q:hsl({{ (s * 130)|round|int }} 60% var(--soc-l))">{{ "gut" if s >= 0.67 else "mittel" if s >= 0.34 else "schwach" }}</span></div>{% endif %}
+  {% if s is not none %}<div><span class="q-badge" style="--q:hsl({{ (s * 130)|round|int }} 60% var(--soc-l))">{{ words[0] if s >= 0.67 else words[1] if s >= 0.34 else words[2] }}</span></div>{% endif %}
   {% if sub %}<div class="label">{{ sub }}</div>{% endif %}
   {% if s is not none %}<div class="q-wrap" aria-hidden="true"><div class="q-scale"><i style="left:{{ (s * 100)|round(1) }}%"></i></div>
-  <div class="q-ends"><span>schlecht<br>{{ entry[4]|replace(" ", " ") }}</span><span>gut<br>{{ entry[3]|replace(" ", " ") }}</span></div></div>{% endif %}
+  <div class="q-ends"><span>{{ ends[0] }}<br>{{ entry[4]|replace(" ", " ") }}</span><span>{{ ends[1] }}<br>{{ entry[3]|replace(" ", " ") }}</span></div></div>{% endif %}
   <p class="hilfe" id="hilfe-{{ id }}" hidden>{{ entry[0] }}</p>
   </div>
 </div>

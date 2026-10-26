@@ -38,6 +38,11 @@ KACHELN = {
                          "Akku könnte ihn speichern.",),
         "stunden_leer": ("Stunden mit Ladestand nahe der Untergrenze. Der Netzbezug dabei ist die Obergrenze dessen, was "
                          "ein größerer Akku hätte abdecken können.",),
+        "groesserer_akku": ("Was ein zusätzliches Akku-Modul (halbe heutige Kapazität) höchstens gebracht hätte: Netzbezug "
+                            "in Stunden mit leerem Akku, nachdem er vorher voll war, bis zum nutzbaren Inhalt des Moduls, "
+                            "aufs Jahr hochgerechnet. Obergrenze, weil der abgeregelte Überschuss nicht gemessen wird. Im "
+                            "Herbst und Winter fast immer „lohnt nicht“, aussagekräftig erst über Frühjahr und Sommer.",
+                            100, 30, "≥ 100 € im Jahr", "≤ 30 € im Jahr", ("lohnt sich", "eher nicht", "lohnt nicht")),
     },
     "diagramm": {
         "herkunft": ("Je Zeitabschnitt zwei Balken: grün, was das Balkonkraftwerk ins Haus abgegeben hat (direkt von der "

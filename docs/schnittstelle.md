@@ -23,7 +23,8 @@ Eine technische Übersicht aller Abfragen liefert `http://<adresse>:8000/docs`.
   `hausverbrauch` (kWh), `eigenverbrauchsquote`, `autarkiegrad` (Anteil 0 bis 1), `ersparnis` (€)
 - `akku.tag|monat|jahr|gesamt`: `zyklen`, `zyklen_gesamt`, `zyklen_pro_jahr`, `gesundheit` (%), `kapazitaet` (kWh),
   `wirkungsgrad`, `verluste_wechselrichter` (Anteil 0 bis 1), `stunden_voll`, `einspeisung_bei_vollem_akku`,
-  `stunden_leer`, `netzbezug_bei_leerem_akku` (kWh), `kosten_bei_leerem_akku` (€)
+  `stunden_leer`, `netzbezug_bei_leerem_akku` (kWh), `kosten_bei_leerem_akku` (€), `zusatz_kapazitaet`,
+  `groesserer_akku` (kWh), `groesserer_akku_euro`, `groesserer_akku_jahr` (€, aufs Jahr hochgerechnet)
 - `amortisation`: `kosten`, `bisher_gespart`, `ersparnis_pro_jahr`, `rest` (€), `basis` (`inbetriebnahme` oder
   `messtage`), `jahre_bis_amortisation`, `amortisiert_am` (Datum), `zaehler_plausibel`, `messtage`
 

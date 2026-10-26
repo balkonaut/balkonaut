@@ -27,6 +27,7 @@ const PANEL_STYLE = `
   nav .spacer { flex: 1; }
   h2 { font: 600 13px var(--bk-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--bk-muted); margin: 28px 0 12px; }
   .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+  @media (min-width: 40rem) { .grid > .wide { grid-column: span 2; } }
   .card { background: var(--bk-card); border: 1px solid var(--bk-line); border-radius: 6px; padding: 16px 20px; min-width: 0; }
   .label { color: var(--bk-muted); font-size: 14px; }
   .card > .label:first-child { font: 600 12px var(--bk-mono); text-transform: uppercase; letter-spacing: .08em; }
@@ -124,15 +125,23 @@ class BalkonautPanel extends HTMLElement {
     return v === null || v === undefined ? "–" : `${this._fmt(v * 100, 0)} %`;
   }
 
+  // Abschätzung für ein zusätzliches Akku-Modul, wie in app/templates/dashboard.html
+  _bigger(k) {
+    return k.groesserer_akku_jahr != null ? this._kachel("akku", "groesserer_akku", "Weiteres Akku-Modul",
+      `bis ${this._fmt(k.groesserer_akku_jahr, 0)} € im Jahr`, k.groesserer_akku_jahr,
+      `mit ${this._fmt(k.zusatz_kapazitaet, 2)} kWh mehr; im Zeitraum bis ${this._fmt(k.groesserer_akku)} kWh`).replace('class="card"', 'class="card wide"') : "";
+  }
+
   // Kachel mit Erklärung (Knopf i) und, wo es eine Bewertung gibt, Skala von rot (links) bis grün, wie app/templates/_kachel.html
   _kachel(bereich, key, label, value, raw = null, sub = "") {
-    const [text, good, bad, goodText, badText] = this._kacheln?.[bereich]?.[key] || [""];
+    const [text, good, bad, goodText, badText, words] = this._kacheln?.[bereich]?.[key] || [""];
+    const [w, ends] = words ? [words, [words[2], words[0]]] : [["gut", "mittel", "schwach"], ["schlecht", "gut"]];
     const s = good === undefined || typeof raw !== "number" ? null : Math.min(Math.max((raw - bad) / (good - bad), 0), 1);
     const id = `hilfe-${bereich}-${key}`, nb = (t) => esc(t).replaceAll(" ", "&nbsp;");
     const badge = s === null ? "" : `<div><span class="q-badge" style="--q:hsl(${Math.round(s * 130)} 60% 42%)">${
-      s >= 0.67 ? "gut" : s >= 0.34 ? "mittel" : "schwach"}</span></div>`;
+      s >= 0.67 ? w[0] : s >= 0.34 ? w[1] : w[2]}</span></div>`;
     const scale = s === null ? "" : `<div class="q-wrap" aria-hidden="true"><div class="q-scale"><i style="left:${(s * 100).toFixed(1)}%"></i></div>
-      <div class="q-ends"><span>schlecht<br>${nb(badText)}</span><span>gut<br>${nb(goodText)}</span></div></div>`;
+      <div class="q-ends"><span>${ends[0]}<br>${nb(badText)}</span><span>${ends[1]}<br>${nb(goodText)}</span></div></div>`;
     return `<div class="card"><div class="label">${esc(label)}</div>${text ? `<button class="info" type="button" aria-expanded="false"
       aria-controls="${id}" aria-label="Erklärung zu ${esc(label)}">i</button>` : ""}<div class="k-body"><div class="value">${esc(value)}</div>${badge}
       ${sub ? `<div class="label">${esc(sub)}</div>` : ""}${scale}${text ? `<p class="hilfe" id="${id}" hidden>${esc(text)}</p>` : ""}</div></div>`;
@@ -286,7 +295,8 @@ class BalkonautPanel extends HTMLElement {
         ${this._kachel("akku", "wirkungsgrad", "Wirkungsgrad Akku", this._pct(k.wirkungsgrad), k.wirkungsgrad)}
         ${this._kachel("akku", "verluste_wechselrichter", "Verluste Speicher-Wechselrichter", this._pct(k.verluste_wechselrichter), k.verluste_wechselrichter)}
         ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", k.stunden_voll ?? "–", null, `dabei eingespeist ${this._fmt(k.einspeisung_bei_vollem_akku)} kWh`)}
-        ${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", k.stunden_leer ?? "–", null, `dabei Netzbezug ${this._fmt(k.netzbezug_bei_leerem_akku)} kWh (${this._fmt(k.kosten_bei_leerem_akku, 2)} €)`)}</div>
+        ${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", k.stunden_leer ?? "–", null, `dabei Netzbezug ${this._fmt(k.netzbezug_bei_leerem_akku)} kWh (${this._fmt(k.kosten_bei_leerem_akku, 2)} €)`)}
+        ${this._bigger(k)}</div>
       <h2>Woher kommt dein Strom heute?</h2><div class="card">${this._chart(today.balken)}</div>
       <h2>Amortisation</h2><div class="card">
         <div class="label">Bisher gespart ${this._fmt(a.bisher_gespart, 0)} € von ${this._fmt(a.kosten, 0)} €</div>
@@ -367,7 +377,7 @@ class BalkonautPanel extends HTMLElement {
       <h2>Tageswerte</h2><div class="card">${this._chart(r.tage, true)}<p class="label noprint">Ein Klick auf einen Tag öffnet ihn im Verlauf.</p></div>
       <h2>Akku</h2><div class="grid">
         ${this._kachel("akku", "zyklen", "Vollzyklen", this._fmt(r.akku.zyklen))}${this._kachel("akku", "wirkungsgrad", "Wirkungsgrad", this._pct(r.akku.wirkungsgrad), r.akku.wirkungsgrad)}
-        ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", r.akku.stunden_voll ?? "–")}${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", r.akku.stunden_leer ?? "–")}
+        ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", r.akku.stunden_voll ?? "–")}${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", r.akku.stunden_leer ?? "–")}${this._bigger(r.akku)}
         ${this._kachel("akku", "gesundheit", "Gesundheit (SoH)", `${this._fmt(r.akku.gesundheit, 0)} %`)}</div>
       ${n ? `<h2>Nulleinspeisung</h2><div class="grid">
         ${this._kachel("nulleinspeisung", "regelbereit_stunden", "Regelbereit", `${this._fmt(n.regelbereit_stunden, 0)} h`, null, `an ${n.tage} Tagen`)}

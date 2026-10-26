@@ -157,20 +157,36 @@ verschiedenen Zählern stammen, ergeben die drei Wege der Sonne zusammen nicht i
 | Verluste Speicher-Wechselrichter | Anteil der Energie, die im Speicher-Wechselrichter verloren geht: Eingänge (PV, weitere Wechselrichter, Netzladung, Entladen) gegen Ausgänge (Abgabe, Laden) |
 | Stunden mit vollem Akku | Stunden mit Ladestand nahe der eingestellten Obergrenze. Bei Nulleinspeisung wird überschüssige PV-Leistung dann meist abgeregelt, ein größerer Akku könnte sie speichern |
 | Stunden mit leerem Akku | Stunden mit Ladestand nahe der Untergrenze. Der Netzbezug in diesen Stunden ist die Obergrenze dessen, was ein größerer Akku hätte abdecken können, sofern genug Überschuss da gewesen wäre |
+| Weiteres Akku-Modul | Was ein zusätzliches Modul (halbe Kapazität) höchstens im Jahr sparen würde, mit Bewertung von „lohnt nicht“ bis „lohnt sich“, siehe [unten](#lohnt-sich-ein-groerer-akku) |
 
 Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Messgrößen
 `battery_capacity`, `battery_soh`, `battery_soc_min` und `battery_soc_max` (siehe [Einstellungen](einstellungen.md)).
 
 ### Lohnt sich ein größerer Akku?
 
-Eine genaue Rechnung dafür ist [geplant](geplant.md). Bis dahin geben die beiden Stunden-Kennzahlen einen guten
-Anhaltspunkt, am besten über einen Monat oder länger betrachtet:
+Die Kachel **Weiteres Akku-Modul** schätzt das ab. Sie nimmt ein zusätzliches Modul mit der halben heutigen
+Kapazität an (bei zwei Modulen also ein drittes) und rechnet Stunde für Stunde: Nach Stunden mit vollem Akku hätte
+das Modul Überschuss speichern können. In den folgenden Stunden mit leerem Akku deckt es den Netzbezug, bis sein
+nutzbarer Inhalt aufgebraucht ist (zwischen Unter- und Obergrenze, 90 % Wirkungsgrad). Das Ergebnis steht in Euro,
+aufs Jahr hochgerechnet, mit Bewertung:
 
-- Viele **Stunden mit vollem Akku**: Tagsüber bleibt Überschuss übrig, den ein größerer Akku speichern könnte.
-- Viele **Stunden mit leerem Akku**: Abends oder nachts fehlt Energie, die ein größerer Akku liefern könnte.
+| Etikett | aufs Jahr gerechnet | bedeutet |
+|---|---|---|
+| **lohnt sich** (grün) | ab 100 € | ein Modul für 600 bis 700 € hätte sich nach etwa 6 bis 7 Jahren bezahlt gemacht |
+| **eher nicht** (gelb) | 30 bis 100 € | bezahlt sich erst spät, wenn überhaupt |
+| **lohnt nicht** (rot) | bis 30 € | bezahlt sich innerhalb der Lebensdauer kaum |
 
-Ein weiterer Akku lohnt sich erst, wenn beides häufig vorkommt: Nur dann gibt es Überschuss zum Laden *und* Bedarf
-zum Entladen. Ist der Akku nur oft voll, fehlt der Bedarf; ist er nur oft leer, fehlt der Überschuss.
+Darunter stehen die angenommene zusätzliche Kapazität und die Kilowattstunden im gewählten Zeitraum.
+
+Die Abschätzung ist eine **Obergrenze**: Wie viel Überschuss bei vollem Akku abgeregelt wurde, misst niemand; war es
+weniger als der Inhalt des Moduls, hätte es auch weniger gebracht. Die Hochrechnung aufs Jahr ist linear: Ein
+Sommermonat übertreibt, im Herbst und Winter steht fast immer „lohnt nicht“. Am aussagekräftigsten ist der Zeitraum
+*Gesamt*, sobald ein ganzes Jahr gemessen ist. Für *Heute* fehlt die Kachel, solange die Kapazität des Tages noch
+nicht gemeldet ist.
+
+Die Kachel beruht auf den beiden Stunden-Kennzahlen: Ein weiterer Akku lohnt sich nur, wenn der Akku oft voll *und*
+danach oft leer ist. Ist er nur oft voll, fehlt der Bedarf; ist er nur oft leer, fehlt der Überschuss. Eine genaue
+Rechnung mit dem Hausverbrauch ist [geplant](geplant.md).
 
 ## Monatsbericht
 

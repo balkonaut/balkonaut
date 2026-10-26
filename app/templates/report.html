@@ -39,6 +39,7 @@
   {{ kachel("akku", "wirkungsgrad", "Wirkungsgrad", r.akku.wirkungsgrad|pct, r.akku.wirkungsgrad) }}
   {{ kachel("akku", "stunden_voll", "Stunden mit vollem Akku", r.akku.stunden_voll) }}
   {{ kachel("akku", "stunden_leer", "Stunden mit leerem Akku", r.akku.stunden_leer) }}
+  {% if r.akku.groesserer_akku_jahr is not none %}{{ kachel("akku", "groesserer_akku", "Weiteres Akku-Modul", "bis " ~ r.akku.groesserer_akku_jahr|de(0) ~ " € im Jahr", r.akku.groesserer_akku_jahr, sub="mit " ~ r.akku.zusatz_kapazitaet|de(2) ~ " kWh mehr; im Zeitraum bis " ~ r.akku.groesserer_akku|de(1) ~ " kWh", wide=true) }}{% endif %}
   {{ kachel("akku", "gesundheit", "Gesundheit (SoH)", r.akku.gesundheit|de(0) ~ " %") }}
 </div>
 {% set n = r.nulleinspeisung %}

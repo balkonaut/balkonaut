@@ -53,6 +53,7 @@
   @media (hover: hover) { .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); background: var(--card-hover); } }
   footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); font: 13px var(--mono); color: var(--muted); }
   .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+  @media (min-width: 40rem) { .grid > .wide { grid-column: span 2; } }  /* doppelt breit, sobald zwei Spalten passen */
   .label { color: var(--muted); font-size: 14px; }
   .card > .label:first-child, .eyebrow { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   .value { font: 600 28px var(--mono); letter-spacing: -.04em; font-variant-numeric: tabular-nums; margin: 4px 0; }
