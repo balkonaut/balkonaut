@@ -17,6 +17,10 @@ Der **Stand** sagt, woher das Wissen kommt:
 - **nicht geprüft**: aus dem Code und der Dokumentation der Integration abgeleitet, noch an keinem echten Gerät
   getestet
 
+Die Spalte **Direkt per Adresse** sagt, ob Balkonaut das Gerät auch ohne diese Integration selbst abfragen kann
+(siehe [Geräte direkt im Heimnetz](#gerate-direkt-im-heimnetz)). Bei *nein* ist die Integration nötig, bei
+*gleichwertig* bringt sie Balkonaut keine weiteren Werte.
+
 Die Spalte **Vorzeichen** sagt, ob die Richtung (Akku lädt oder entlädt, Netz Bezug oder Einspeisung) belegt ist.
 *Belegt* heißt, Balkonaut dreht das Vorzeichen bei Bedarf selbst. *Prüfen* heißt, die Integration dokumentiert es
 nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung prüfen](#richtung-prufen).
@@ -24,31 +28,31 @@ nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung p
 
 ## Speicher und Wechselrichter
 
-| Gerät | Integration in Home Assistant | Messgrößen | Vorzeichen | Stand |
-|---|---|---|---|---|
-| APsystems EZHI | APsystems EZHI Local API (HACS) | PV, Akku mit Zählern, Kapazität und Ladegrenzen, Abgabe ins Haus, Off-Grid-Port, Abgabelimit | belegt | bestätigt |
-| APsystems EZ1-M | APsystems | PV-Leistung, PV-Zähler, Abgabelimit | — | bestätigt |
-| Deye (Hybrid und Mikrowechselrichter) | Solarman (HACS), Varianten von davidrapan und StephanJoubert | PV, Akku mit Zählern, Netz, Abgabe | Akku belegt, Netz prüfen | nicht geprüft |
-| Huawei SUN2000 mit LUNA2000 | Huawei Solar (HACS) | PV-Leistung, Akku mit Zählern, Kapazität und Ladegrenzen, Netz über Power Meter, Abgabe | belegt | nicht geprüft |
-| Hoymiles HM, HMS | OpenDTU oder AhoyDTU (MQTT), Hoymiles WiFi (HACS) | PV-Leistung, PV-Zähler (nicht bei Hoymiles WiFi) | — | nicht geprüft |
-| Anker Solix Solarbank | Anker Solix (HACS) | PV-Leistung, Akku, Abgabe ins Haus, Netz | Akku belegt, Netz prüfen | nicht geprüft |
-| Zendure SolarFlow, Hyper, AIO | Zendure (HACS) | PV mit Zähler, Akku mit Zählern, Kapazität und Ladegrenzen, Abgabe mit Zähler, Abgabelimit | belegt | nicht geprüft |
-| EcoFlow PowerStream, STREAM | EcoFlow Cloud (HACS) | Akku mit Ladegrenzen, Abgabe ins Haus; STREAM auch PV, Akku-Zähler und Netz | prüfen | nicht geprüft |
-| Growatt MIN, MIC, MOD, SPH | Growatt Server | PV mit Zähler, Ladestand, Akku-Zähler, Abgabe | — | nicht geprüft |
-| Victron GX (MultiPlus, Quattro, MPPT) | Victron GX, Victron MQTT (HACS) oder Victron Modbus (HACS) | PV und Akku mit Zählern, Netz; über Modbus nur Akku | GX und MQTT belegt, Modbus prüfen | nicht geprüft |
-| Fox ESS H1, H3, KH, EVO | FoxESS Modbus oder FoxESS Cloud (HACS) | PV mit Zähler, Akku mit Zählern und Ladegrenzen, Netz, Abgabe; Cloud nur PV und Akku | Modbus belegt, Cloud prüfen | nicht geprüft |
-| Marstek Venus C, D, E | Marstek Local API oder Marstek Modbus (HACS) | PV, Akku; über Modbus auch Zähler, Ladegrenzen und Abgabe | Local API belegt, Modbus prüfen | nicht geprüft |
-| Sungrow SH*RT, SH*K | Modbus-Vorlage von mkaiser (YAML) | PV und Akku mit Zählern, Kapazität und Ladegrenzen, Netz, Abgabe | belegt | nicht geprüft |
-| SolaX X1, X3 | SolaX Modbus (HACS) | PV mit Zähler, Akku mit Zählern, Netz, Abgabe | belegt | nicht geprüft |
+| Gerät | Integration in Home Assistant | Messgrößen | Vorzeichen | Direkt per Adresse | Stand |
+|---|---|---|---|---|---|
+| APsystems EZHI | APsystems EZHI Local API (HACS) | PV, Akku mit Zählern, Kapazität und Ladegrenzen, Abgabe ins Haus, Off-Grid-Port, Abgabelimit | belegt | ja, ohne Kapazität, Ladegrenzen, Entladeschutz und Abgabelimit | bestätigt |
+| APsystems EZ1-M | APsystems | PV-Leistung, PV-Zähler, Abgabelimit | — | nein | bestätigt |
+| Deye (Hybrid und Mikrowechselrichter) | Solarman (HACS), Varianten von davidrapan und StephanJoubert | PV, Akku mit Zählern, Netz, Abgabe | Akku belegt, Netz prüfen | nein | nicht geprüft |
+| Huawei SUN2000 mit LUNA2000 | Huawei Solar (HACS) | PV-Leistung, Akku mit Zählern, Kapazität und Ladegrenzen, Netz über Power Meter, Abgabe | belegt | nein | nicht geprüft |
+| Hoymiles HM, HMS | OpenDTU oder AhoyDTU (MQTT), Hoymiles WiFi (HACS) | PV-Leistung, PV-Zähler (nicht bei Hoymiles WiFi) | — | ja über OpenDTU (gleichwertig) und AhoyDTU (ohne Zähler), nicht über Hoymiles WiFi | nicht geprüft |
+| Anker Solix Solarbank | Anker Solix (HACS) | PV-Leistung, Akku, Abgabe ins Haus, Netz | Akku belegt, Netz prüfen | nein | nicht geprüft |
+| Zendure SolarFlow, Hyper, AIO | Zendure (HACS) | PV mit Zähler, Akku mit Zählern, Kapazität und Ladegrenzen, Abgabe mit Zähler, Abgabelimit | belegt | nein | nicht geprüft |
+| EcoFlow PowerStream, STREAM | EcoFlow Cloud (HACS) | Akku mit Ladegrenzen, Abgabe ins Haus; STREAM auch PV, Akku-Zähler und Netz | prüfen | nein | nicht geprüft |
+| Growatt MIN, MIC, MOD, SPH | Growatt Server | PV mit Zähler, Ladestand, Akku-Zähler, Abgabe | — | nein | nicht geprüft |
+| Victron GX (MultiPlus, Quattro, MPPT) | Victron GX, Victron MQTT (HACS) oder Victron Modbus (HACS) | PV und Akku mit Zählern, Netz; über Modbus nur Akku | GX und MQTT belegt, Modbus prüfen | nein | nicht geprüft |
+| Fox ESS H1, H3, KH, EVO | FoxESS Modbus oder FoxESS Cloud (HACS) | PV mit Zähler, Akku mit Zählern und Ladegrenzen, Netz, Abgabe; Cloud nur PV und Akku | Modbus belegt, Cloud prüfen | nein | nicht geprüft |
+| Marstek Venus C, D, E | Marstek Local API oder Marstek Modbus (HACS) | PV, Akku; über Modbus auch Zähler, Ladegrenzen und Abgabe | Local API belegt, Modbus prüfen | nein | nicht geprüft |
+| Sungrow SH*RT, SH*K | Modbus-Vorlage von mkaiser (YAML) | PV und Akku mit Zählern, Kapazität und Ladegrenzen, Netz, Abgabe | belegt | nein | nicht geprüft |
+| SolaX X1, X3 | SolaX Modbus (HACS) | PV mit Zähler, Akku mit Zählern, Netz, Abgabe | belegt | nein | nicht geprüft |
 
 ## Netzmessung und Einspeisepunkt
 
-| Gerät | Integration in Home Assistant | Messgrößen | Vorzeichen | Stand |
-|---|---|---|---|---|
-| Shelly Pro 3EM | Shelly | Netzleistung über alle Phasen saldiert | belegt | bestätigt |
-| Shelly Plug (Gen2, Gen3) | Shelly | Abgabe ins Haus, Zähler am Einspeisepunkt | prüfen (je nach Anschluss) | bestätigt |
-| Shelly Pro EM, EM Gen3 | Shelly | Netzleistung an Kanal 0 | prüfen | nicht geprüft |
-| Tibber Pulse | Tibber | Netzbezug | — | nicht geprüft |
+| Gerät | Integration in Home Assistant | Messgrößen | Vorzeichen | Direkt per Adresse | Stand |
+|---|---|---|---|---|---|
+| Shelly Pro 3EM | Shelly | Netzleistung über alle Phasen saldiert | belegt | ja, gleichwertig | bestätigt |
+| Shelly Plug (Gen2, Gen3) | Shelly | Abgabe ins Haus, Zähler am Einspeisepunkt | prüfen (je nach Anschluss) | ja, gleichwertig | bestätigt |
+| Shelly Pro EM, EM Gen3 | Shelly | Netzleistung an Kanal 0 | prüfen | ja, gleichwertig | nicht geprüft |
+| Tibber Pulse | Tibber | Netzbezug | — | nein | nicht geprüft |
 
 ## Prognose
 

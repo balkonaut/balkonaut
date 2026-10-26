@@ -177,6 +177,10 @@ Pflicht ist nur eine einzige Messgröße oder ein Gerät.
     | Integration „APsystems EZHI Local API“ installiert | Schritt 1: EZHI als *Speicher oder Wechselrichter* wählen, keine Adresse eintragen | alle Messgrößen samt Akkukapazität, Ladegrenzen, Entladeschutz und Abgabelimit |
     | ohne diese Integration | Schritt 2: Adresse unter *Geräte direkt abfragen* | PV, Akku mit Zählern, Abgabe ins Haus, Off-Grid-Port; ohne Akkukapazität, Ladegrenzen, Entladeschutz und Abgabelimit, damit ohne Marken am Akku-Ring |
 
+    Bei anderen Geräten steht in der Spalte *Direkt per Adresse* unter [Unterstützte Geräte](geraete.md), ob die
+    Adresse reicht: bei Shelly und Hoymiles über OpenDTU gleichwertig, bei den meisten anderen Herstellern ist die
+    Integration nötig.
+
     Die Integration lohnt sich auch, wenn man den EZHI aus Home Assistant steuern will (z. B. den Entladeschutz per
     Automation); Balkonaut liest nur. Fehlt eine, entfällt nur die Funktion, die sie braucht.
 
