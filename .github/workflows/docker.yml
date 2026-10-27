@@ -1,11 +1,13 @@
-# Docker-Image für den Betrieb ohne Home Assistant: bei Änderungen an App, Kern oder Handbuch als latest und
-# sha-<commit> für amd64 und arm64 nach ghcr.io. Die Tags des Add-ons (Version aus addon/config.yaml) bleiben unberührt.
+# Docker-Image für amd64 und arm64 nach ghcr.io: bei Änderungen an App, Kern oder Handbuch als latest und
+# sha-<commit>, bei einem Release (ohne Vorabversionen) zusätzlich mit der Version als Tag, z. B. 1.0.2.
 name: Docker
 
 on:
   push:
     branches: [main]
     paths: [app/**, core/**, docs/**, Dockerfile, mkdocs.yml, pyproject.toml]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -13,11 +15,12 @@ permissions:
   packages: write
 
 concurrency:
-  group: docker
+  group: docker-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
   tests:
+    if: github.event_name != 'release' || !github.event.release.prerelease
     uses: ./.github/workflows/tests.yml
   image:
     needs: tests
@@ -25,7 +28,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - id: v
-        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        run: |
+          image=ghcr.io/${GITHUB_REPOSITORY,,}
+          if [ "$GITHUB_EVENT_NAME" = release ]; then
+            echo "tags=$image:${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tags=$image:latest,$image:sha-$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          fi
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -38,5 +47,5 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.v.outputs.image }}:latest,${{ steps.v.outputs.image }}:sha-${{ github.sha }}
+          tags: ${{ steps.v.outputs.tags }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}

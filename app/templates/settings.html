@@ -33,7 +33,6 @@
 <h1>Einstellungen</h1>
 {% if request.query_params.get("gespeichert") %}<p class="note ok" role="status">Gespeichert.</p>{% endif %}
 
-{% if not addon %}
 <h2 id="geraete">Geräte</h2>
 <div class="card">
   {% if cfg.devices %}
@@ -76,14 +75,11 @@
   Wünsche für weitere Geräte gern als <a href="https://github.com/balkonaut/balkonaut/issues" target="_blank" rel="noopener">GitHub-Issue</a>.
   Am besten den Geräten im Router feste Adressen geben.</p>
 </div>
-{% endif %}
 
 <h2 id="flaechen">Standort und Flächen</h2>
 <form method="post" action="einstellungen" class="card"><input type="hidden" name="bereich" value="flaechen">
   <p class="intro">Für die Tagesprognose (Forecast.Solar, Ertragswächter) und die Hochrechnung der Amortisation nach
-  Jahresverlauf (PVGIS, langjähriges Mittel).{% if addon %}
-  Nur nötig, wenn im Add-on keine Prognose-Entität zugeordnet ist. Ohne Breiten- und Längengrad gilt der Standort
-  aus Home Assistant.{% endif %}</p>
+  Jahresverlauf (PVGIS, langjähriges Mittel).</p>
   {% set src = entered or cfg %}
   {% if planes_error %}<div class="field-error" role="alert"><p style="margin:0">Nicht gespeichert, bitte korrigieren:</p>
     <ul style="margin:.25rem 0 0">{% for e in planes_error %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
@@ -97,8 +93,8 @@
   <p class="label" id="ort" role="status">Die Suche fragt OpenStreetMap (Nominatim), dabei geht die Adresse an diesen Dienst.
   Gespeichert werden nur Breiten- und Längengrad.</p>
   <div class="pair">
-    <div><label for="lat">Breitengrad</label><input id="lat" name="lat" inputmode="decimal" value="{{ src.location.lat|komma if src.location else '' }}" placeholder="{{ 'aus Home Assistant' if addon else 'z. B. 50,11' }}"></div>
-    <div><label for="lon">Längengrad</label><input id="lon" name="lon" inputmode="decimal" value="{{ src.location.lon|komma if src.location else '' }}" placeholder="{{ 'aus Home Assistant' if addon else 'z. B. 8,68' }}"></div>
+    <div><label for="lat">Breitengrad</label><input id="lat" name="lat" inputmode="decimal" value="{{ src.location.lat|komma if src.location else '' }}" placeholder="z. B. 50,11"></div>
+    <div><label for="lon">Längengrad</label><input id="lon" name="lon" inputmode="decimal" value="{{ src.location.lon|komma if src.location else '' }}" placeholder="z. B. 8,68"></div>
   </div>
   {% for p in (src.planes or []) + [{}] * (1 if src.planes else 2) %}
   <fieldset class="planes">
@@ -164,6 +160,5 @@
   Damit rechnet die Amortisation mit dem echten Durchschnitt statt einer Hochrechnung.</p>
   <button class="save">Speichern</button>
 </form>
-{% if integration_url() %}<p class="label">Adresse für die Home-Assistant-Integration: <code>{{ integration_url() }}</code></p>{% endif %}
 </div>
 {% endblock %}

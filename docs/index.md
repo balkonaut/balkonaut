@@ -11,4 +11,4 @@ Wann hat sich die Anlage bezahlt gemacht? Lohnt sich ein weiterer Akku?
 
 Balkonaut ist kostenlos und quelloffen. Wer die Entwicklung unterstützen möchte, kann auf
 [buymeacoffee.com/balkonaut](https://buymeacoffee.com/balkonaut) einen Kaffee spendieren. Genauso hilfreich sind
-Rückmeldungen zu Geräten, siehe [Gerät melden](installation.md#gerat-melden).
+Rückmeldungen zu Geräten, siehe [Gerät melden](integration.md#gerat-melden).

@@ -1,4 +1,7 @@
-# Einstellungen
+# Einstellungen der Docker-App
+
+Diese Seite gilt für die [Docker-App](docker.md). Die Integration stellt man unter *Konfigurieren* ein, siehe
+[Home-Assistant-Integration](integration.md#einstellungen-diagnose-storungen).
 
 ## Preise und Anlagenkosten
 
@@ -13,7 +16,8 @@ Kommazahlen gehen mit Komma oder Punkt.
 
 ## Geräte direkt, ohne Home Assistant
 
-Der Container kann die Geräte auch direkt im Heimnetz lesen, ganz ohne Home Assistant und ohne Anmeldung.
+Die Docker-App liest die Geräte direkt im Heimnetz, ohne Home Assistant und ohne Anmeldung. Geräte, die sie nicht
+direkt liest, kommen über die [Verbindung zu Home Assistant](#verbindung-zu-home-assistant).
 
 **Im Browser:** *Einstellungen → Geräte*, die IP-Adresse eintragen und *Hinzufügen*. Balkonaut erkennt den Typ
 selbst und zeigt danach die aktuellen Werte mit Richtung, z. B. „Netz 312 W (Bezug)“ oder „Abgabe 21 W (Bezug,
@@ -51,8 +55,7 @@ Abgabe-Leistung, vom Plug zählt nur der Zähler (siehe
 [Messquellen](messquellen.md)). Meldet ein Gerät eine Richtung umgekehrt, die Messgröße unter `invert` eintragen,
 z. B. `invert: [output_power]`. Ladegrenzen, Entladeschutz und Abgabelimit des EZHI gibt es nur über die
 APsystems-Cloud; ohne sie rechnet Balkonaut mit den zuletzt bekannten Werten (etwa aus einem früheren Betrieb über
-Home Assistant), sonst mit 0 und 100 %. Der Import des Verlaufs (`app.backfill`) geht nur
-über Home Assistant.
+Home Assistant), sonst mit 0 und 100 %. Der Import des Verlaufs (`app.backfill`) geht nur über Home Assistant.
 
 Für Prognose (Ertragswächter) und Jahresverlauf ohne Home Assistant Standort und Flächen eintragen (im Browser
 unter *Standort und Flächen* oder in der Datei):
@@ -90,23 +93,7 @@ Die Verbindung steht in `data/config.yaml` im Abschnitt `home_assistant`:
 - `entities`: welche Home-Assistant-Entität welche Messgröße liefert, jeweils mit einem Faktor.
   Ein Faktor von `-1` dreht das Vorzeichen um, wenn ein Gerät eine Richtung anders herum meldet.
 
-| Messgröße | Bedeutung | Vorzeichen |
-|---|---|---|
-| `grid_power` | Leistung am Netzanschluss, über alle Phasen | + Bezug, − Einspeisung |
-| `pv_power` | PV-Leistung am Speicher-Wechselrichter | |
-| `pv_ac_power` | weitere Erzeugung, z. B. ein Mikrowechselrichter am Speicher | |
-| `battery_power` | Akkuleistung | + Laden, − Entladen |
-| `battery_soc` | Ladestand in % | |
-| `output_power` | Abgabe des Balkonkraftwerks ins Hausnetz | + Abgabe |
-| `output_energy` | Zähler der Abgabe ins Hausnetz | |
-| `pv_energy` | Zähler der PV-Erzeugung | |
-| `battery_charge_energy`, `battery_discharge_energy` | Zähler Akku laden und entladen | |
-| `battery_capacity` | nutzbare Akkukapazität in kWh (optional) | |
-| `battery_soh` | Akku-Gesundheit in % (optional) | |
-| `battery_soc_min`, `battery_soc_max` | eingestellte Lade-Untergrenze und -Obergrenze in % (optional) | |
-| `battery_discharge_protection` | eingestellter Entladeschutz in % (optional), erscheint als Marke im Akku-Ring | |
-| `output_power_limit` | eingestelltes Abgabelimit des Speichers in W (optional, sonst 800 W) | |
-| `pv_forecast_today`, `pv_ac_forecast_today` | Prognose „Erzeugung heute“ in kWh für die Fläche am Speicher bzw. am zweiten Wechselrichter, z. B. aus Forecast.Solar (optional) | |
-
-Welche Quelle für welche Größe am besten geeignet ist, steht unter [Messquellen](messquellen.md).
-Nach einer Änderung an `config.yaml` den Container neu starten.
+Welche Messgrößen es gibt und welches Vorzeichen sie haben, steht unter [Messgrößen](messquellen.md#messgroen),
+welche Quelle für welche Größe am besten geeignet ist unter [Messquellen](messquellen.md).
+Nach einer Änderung an `config.yaml` den Container neu starten. Den Verlauf, den Home Assistant noch gespeichert hat,
+übernimmt Balkonaut auf Wunsch einmalig, siehe [Verlauf aus Home Assistant übernehmen](docker.md#verlauf-aus-home-assistant-ubernehmen).

@@ -4,7 +4,6 @@ import json
 import logging
 import math
 import re
-import socket
 import time
 from contextlib import asynccontextmanager
 from datetime import date, datetime
@@ -12,7 +11,7 @@ from pathlib import Path
 from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -56,10 +55,7 @@ templates.env.filters.update(
 )
 templates.env.globals["version"] = importlib.metadata.version("balkonaut")
 templates.env.globals.update(kacheln=views.KACHELN, guete=views.guete)
-# Adresse, unter der die Integration das Add-on erreicht (Hostname des Add-on-Containers im HA-Netz)
-templates.env.globals["integration_url"] = lambda: f"http://{socket.gethostname()}:8000" if config.addon() else None
 PERIODS = [("tag", "Heute"), ("monat", "Monat"), ("jahr", "Jahr"), ("gesamt", "Gesamt")]
-SUPERVISOR_IP = "172.30.32.2"  # Absender von Ingress-Anfragen im Add-on
 
 
 def chart(bars):
@@ -158,14 +154,6 @@ def start_measuring(app, cfg):
 app = FastAPI(title="Balkonaut", lifespan=lifespan)
 
 
-@app.middleware("http")
-async def addon_writes_via_ingress(request: Request, call_next):
-    """Im Add-on ändern nur Anfragen über Ingress (vom Supervisor) die Einstellungen; lesen dürfen auch
-    andere Container im HA-Netz, z. B. die Integration."""
-    sender = request.client and request.client.host
-    if config.addon() and request.method not in ("GET", "HEAD") and sender != SUPERVISOR_IP:
-        return PlainTextResponse("Einstellungen nur über Home Assistant änderbar", status_code=403)
-    return await call_next(request)
 # Gebautes Handbuch (MkDocs), im Container unter /srv/handbuch
 app.mount("/handbuch", StaticFiles(directory=Path(__file__).parent.parent / "handbuch", html=True, check_dir=False))
 
@@ -233,13 +221,11 @@ def dashboard(request: Request, zeitraum: str = "tag"):
                              analytics.buckets("tag", today)[1], cfg["prices"], hourly_forecast(request.app))
     a = st["amortisation"]
     entities = (cfg.get("home_assistant") or {}).get("entities") or {}
-    # Einrichtung: (Schritt, Hinweis, erledigt, Link, optional); im Add-on kommen Geräte und Prognose aus dessen Konfiguration
-    in_ha = "In Home Assistant: Add-on Balkonaut, Reiter Konfiguration" if config.addon() else None
-    setup = [("Geräte eintragen", in_ha or "Per IP-Adresse im Heimnetz, ohne Anmeldung",
-              bool(cfg.get("devices") or entities), None if in_ha else "einstellungen#geraete", False),
-             ("Standort und Flächen", "Optional: Flächen eintragen oder im Reiter Konfiguration des Add-ons eine "
-              "Prognose-Entität zuordnen" if in_ha else "Optional: für Tagesprognose und Jahresverlauf",
-              bool((cfg.get("location") or in_ha) and cfg.get("planes")) or "pv_forecast_today" in entities,
+    # Einrichtung: (Schritt, Hinweis, erledigt, Link, optional)
+    setup = [("Geräte eintragen", "Per IP-Adresse im Heimnetz, ohne Anmeldung",
+              bool(cfg.get("devices") or entities), "einstellungen#geraete", False),
+             ("Standort und Flächen", "Optional: für Tagesprognose und Jahresverlauf",
+              bool(cfg.get("location") and cfg.get("planes")) or "pv_forecast_today" in entities,
               "einstellungen#flaechen", True),
              ("Preise und Anlage", "Ohne Preise stehen Euro-Beträge auf 0",
               cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0, "einstellungen#preise", False)]
@@ -341,7 +327,7 @@ def device_values(dev):
 async def settings_page(request, cfg, status_code=200, **errors):
     live = await asyncio.to_thread(lambda: [device_values(d) for d in cfg.get("devices") or []])
     return templates.TemplateResponse(request, "settings.html", {
-        "cfg": cfg, "live": live, "names": DEVICE_NAMES, "invertible": INVERTIBLE, "addon": config.addon(), **errors},
+        "cfg": cfg, "live": live, "names": DEVICE_NAMES, "invertible": INVERTIBLE, **errors},
         status_code=status_code)
 
 
@@ -357,7 +343,7 @@ async def form_data(request):
 def save_and_restart(request, cfg, anchor):
     config.save(request.app.state.config_path, cfg)
     start_measuring(request.app, cfg)
-    return RedirectResponse(f"einstellungen?gespeichert=1#{anchor}", status_code=303)  # relativ wegen Ingress
+    return RedirectResponse(f"einstellungen?gespeichert=1#{anchor}", status_code=303)  # relativ, falls die App unter einem Unterpfad läuft
 
 
 async def save_devices(request, cfg, form):
@@ -416,7 +402,7 @@ async def save_planes(request, cfg, form):
                            "inverter": "extra" if row["inverter"] == "extra" else "storage"})
         except ValueError as e:
             errors.append(str(e))
-    if rows and not (lat or lon) and not config.addon():  # im Add-on gilt dann der Standort von Home Assistant
+    if rows and not (lat or lon):
         errors.append("Für die Flächen fehlt der Standort: Breiten- und Längengrad eintragen")
     if errors:
         return await settings_page(request, cfg, 400, planes_error=errors,
@@ -435,8 +421,6 @@ async def save_settings(request: Request):
     cfg = config.load(request.app.state.config_path)
     bereich = (multi.get("bereich") or [""])[0]
     if bereich in ("geraete", "flaechen"):
-        if bereich == "geraete" and config.addon():  # das Add-on liest die Geräte über Home Assistant
-            return PlainTextResponse("Im Add-on nicht verfügbar", status_code=404)
         return await (save_devices if bereich == "geraete" else save_planes)(request, cfg, multi)
     form = {k: v[0] for k, v in multi.items()}
     try:
@@ -450,4 +434,4 @@ async def save_settings(request: Request):
     cfg["system"].update(cost=values["cost"], commissioned=day, battery_name=form.get("battery_name", "").strip() or None,
                          extra_name=form.get("extra_name", "").strip() or None)
     config.save(request.app.state.config_path, cfg)
-    return RedirectResponse("einstellungen?gespeichert=1", status_code=303)  # relativ wegen Ingress
+    return RedirectResponse("einstellungen?gespeichert=1", status_code=303)  # relativ, falls die App unter einem Unterpfad läuft

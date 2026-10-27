@@ -1,6 +1,6 @@
 # Unterstützte Geräte
 
-Bei der [geführten Einrichtung](installation.md#gefuhrte-einrichtung) wählt man Geräte, nicht Entitäten. Für die
+Bei der [geführten Einrichtung](integration.md#gefuhrte-einrichtung) wählt man Geräte, nicht Entitäten. Für die
 Geräte auf dieser Seite kennt Balkonaut die Entitäten der jeweiligen Integration in Home Assistant und belegt die
 Messgrößen vor, wo es feststeht auch mit dem richtigen Vorzeichen.
 
@@ -9,7 +9,7 @@ Messgrößen vor, wo es feststeht auch mit dem richtigen Vorzeichen.
     geprüft**: Ihre Zuordnung ist aus dem Quellcode und der Dokumentation der jeweiligen Integration abgeleitet,
     ohne Gerät. Sie kann unvollständig oder falsch sein. Die Vorschläge in der Einrichtung daher mit den aktuellen
     Werten vergleichen und bei Bedarf korrigieren. Wer ein solches Gerät hat, hilft sehr mit einer Rückmeldung über
-    [Gerät melden](installation.md#gerat-melden), auch wenn alles passt.
+    [Gerät melden](integration.md#gerat-melden), auch wenn alles passt.
 
 Der **Stand** sagt, woher das Wissen kommt:
 
@@ -64,7 +64,7 @@ nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung p
 
 Diese Geräte liest Balkonaut selbst über deren lokale Schnittstelle, ohne Integration des Herstellers: die Docker-App
 (*Einstellungen → Geräte*) und die Integration für Home Assistant (*Geräte direkt abfragen* in Schritt 2 der
-[geführten Einrichtung](installation.md#gefuhrte-einrichtung)). Es genügt die IP-Adresse; Balkonaut fragt die Adresse
+[geführten Einrichtung](integration.md#gefuhrte-einrichtung)). Es genügt die IP-Adresse; Balkonaut fragt die Adresse
 an und erkennt an der Antwort, welches Gerät dort läuft. Unbekannte Geräte meldet die Einrichtung.
 
 Direkt abgefragt liefert der EZHI weniger als über seine Integration: Ladegrenzen, Entladeschutz und Abgabelimit
@@ -113,11 +113,10 @@ liefert keinen Zähler, Balkonaut summiert die Leistung dann selbst auf.
 
 Geräte mit Modbus (z. B. Sungrow, Huawei, Fox ESS, Deye) oder nur mit Cloud-Zugang (z. B. Anker Solix,
 EcoFlow, Zendure, Growatt, Tibber) liest Balkonaut nicht selbst. Dafür gibt es zwei Wege: die
-[Integration für Home Assistant](installation.md) mit der Integration des Herstellers, deren Entitäten Balkonaut für
-viele dieser Geräte kennt (Tabellen oben), oder die Docker-App
-mit dem Abschnitt `home_assistant` in der `config.yaml`, dann kommen die Werte aus Home Assistant
-(siehe [Einstellungen](einstellungen.md)). Weitere Geräte kommen dazu, wenn jemand sie über
-[Gerät melden](installation.md#gerat-melden) beisteuert.
+[Integration für Home Assistant](integration.md) mit der Integration des Herstellers, deren Entitäten Balkonaut für
+viele dieser Geräte kennt (Tabellen oben), oder die Docker-App mit der
+[Verbindung zu Home Assistant](einstellungen.md#verbindung-zu-home-assistant), dann kommen die Werte aus Home Assistant. Weitere Geräte kommen dazu, wenn jemand sie über
+[Gerät melden](integration.md#gerat-melden) beisteuert.
 
 ## Lücken und Auswege
 

@@ -25,7 +25,7 @@ lokal nur den aktuellen Stand und Zähler seit der Inbetriebnahme, keinen Verlau
 
 - **Integration für Home Assistant:** Home Assistant hebt für Leistung und Zähler Stundenwerte ohne Ablaufdatum
   auf (Langzeitstatistik). Die Integration übernimmt sie, zurück bis zu dem Tag, an dem die Integration des
-  Herstellers eingerichtet wurde. Bisher reicht der [Import](installation.md) nur so weit, wie Home Assistant die
+  Herstellers eingerichtet wurde. Bisher reicht der [Import](integration.md) nur so weit, wie Home Assistant die
   Rohdaten aufhebt, meist 10 Tage.
 - **Docker-App:** wahlweise aus der Cloud des Herstellers, zuerst APsystems. Das ist eine Option, die man
   ausdrücklich einschaltet; ohne sie liest die Docker-App weiter nur im Heimnetz.

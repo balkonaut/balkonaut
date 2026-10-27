@@ -6,8 +6,11 @@ validation:
 nav:
   - index.md
   - installation.md
+  - Docker-App:
+    - docker.md
+    - einstellungen.md
+  - Home-Assistant-Integration: integration.md
   - geraete.md
-  - einstellungen.md
   - auswertung.md
   - messquellen.md
   - schnittstelle.md

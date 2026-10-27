@@ -1,14 +1,6 @@
 {
   "config": {
     "step": {
-      "user": {
-        "title": "Balkonaut",
-        "description": "How should Balkonaut work?",
-        "menu_options": {
-          "standalone": "Standalone in Home Assistant",
-          "app": "With a Balkonaut app (Docker or add-on)"
-        }
-      },
       "standalone": {
         "title": "Choose devices",
         "description": "Which devices belong to your system? Balkonaut then suggests the matching entities, you check them in the next step. Leave empty what you don't have. If your devices are not set up in Home Assistant, leave everything empty and continue with OK: in the next step you enter their addresses under “Query devices directly”.",
@@ -23,13 +15,6 @@
           "storage_device": "The main device, e.g. APsystems EZHI with battery or an inverter without battery",
           "extra_device": "A second inverter, e.g. an EZ1-M on the off-grid port of the storage",
           "output_device": "Plug that measures the output into the house, e.g. Shelly Plug"
-        }
-      },
-      "app": {
-        "title": "Connect Balkonaut app",
-        "description": "Address of the Balkonaut app, e.g. http://192.168.1.10:8000",
-        "data": {
-          "url": "Address"
         }
       },
       "entities": {
@@ -101,12 +86,11 @@
       }
     },
     "error": {
-      "cannot_connect": "Balkonaut cannot be reached at this address.",
       "no_entities": "Please select at least one entity or enter a device.",
       "unknown_device": "No known device answers at one of the addresses."
     },
     "abort": {
-      "already_configured": "This Balkonaut app is already configured.",
+      "already_configured": "Balkonaut is already configured.",
       "reconfigure_successful": "The settings have been updated."
     }
   },
@@ -243,9 +227,9 @@
     }
   },
   "issues": {
-    "unreachable": {
-      "title": "Balkonaut unreachable",
-      "description": "Home Assistant has not reached the Balkonaut app at {url} for several polls. Is the container running and is the address still correct? This notice disappears once the app responds again."
+    "app_mode_removed": {
+      "title": "Balkonaut: operating mode removed",
+      "description": "The mode “With a Balkonaut app” no longer exists. The integration now measures in Home Assistant itself, the Docker app runs separately. Delete this entry under [Balkonaut](/config/integrations/integration/balkonaut) and add Balkonaut again. Afterwards the measurements of the Docker app can be imported with the action *Import history from Balkonaut app*. The web interface of the Docker app can still be added as a webpage dashboard."
     },
     "missing_entities": {
       "title": "Balkonaut: entity missing",
@@ -270,7 +254,7 @@
   "services": {
     "import_from_app": {
       "name": "Import history from Balkonaut app",
-      "description": "Imports the stored measurements of a Balkonaut app (Docker or add-on) into the standalone entry. Hours before its first own measurement are replaced by the app's more precise values, own measurements are kept.",
+      "description": "Imports the stored measurements of a Balkonaut app (Docker) into the standalone entry. Hours before its first own measurement are replaced by the app's more precise values, own measurements are kept.",
       "fields": {
         "url": {
           "name": "App address",

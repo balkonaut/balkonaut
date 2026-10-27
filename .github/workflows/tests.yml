@@ -1,12 +1,12 @@
 # Tests von App und Kern sowie der Home-Assistant-Integration, wie in den Teststufen des Dockerfile.
-# docker.yml, addon.yml und release.yml rufen diesen Workflow auf und bauen nur, wenn er bestanden ist.
+# docker.yml und release.yml rufen diesen Workflow auf und bauen nur, wenn er bestanden ist.
 name: Tests
 
 on:
   push:
-    # Diese Pfade testen docker.yml und addon.yml vor dem Bauen selbst, sonst liefen die Tests doppelt.
+    # Diese Pfade testet docker.yml vor dem Bauen selbst, sonst liefen die Tests doppelt.
     # Ändert ein Push auch andere Dateien (z. B. die Integration), laufen sie hier trotzdem. Liste wie dort halten.
-    paths-ignore: [app/**, core/**, docs/**, Dockerfile, mkdocs.yml, pyproject.toml, addon/config.yaml]
+    paths-ignore: [app/**, core/**, docs/**, Dockerfile, mkdocs.yml, pyproject.toml]
   pull_request:
   workflow_dispatch:
   workflow_call:

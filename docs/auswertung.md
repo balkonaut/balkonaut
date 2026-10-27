@@ -319,9 +319,9 @@ Ungenau bleibt:
 - **Ohne Abgabezähler** zählt nur der Messzeitraum, die bisherige Ersparnis ist dann zu niedrig.
 
 Die Messlücke lässt sich etwas verkleinern: Die Integration übernimmt beim Einrichten von selbst den Verlauf, den
-Home Assistant noch gespeichert hat (standardmäßig zehn Tage), in der Docker-App geht das mit einem Befehl (siehe
-[Verlauf aus Home Assistant übernehmen](installation.md#verlauf-aus-home-assistant-ubernehmen)). Dann beginnt auch die
-Eigenverbrauchsquote früher.
+Home Assistant noch gespeichert hat (standardmäßig zehn Tage), in der Docker-App mit Verbindung zu Home Assistant geht
+das mit einem Befehl (siehe [Verlauf aus Home Assistant übernehmen](docker.md#verlauf-aus-home-assistant-ubernehmen)).
+Dann beginnt auch die Eigenverbrauchsquote früher.
 
 !!! note "Näherung"
     Der Jahresverlauf berücksichtigt die Sonne, aber nicht, dass im Sommer mehr Strom übrig bleibt, als der Haushalt

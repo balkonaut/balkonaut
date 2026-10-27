@@ -114,12 +114,12 @@ type: custom:balkonaut-card
 - Amortisation: bisher gespart, Rest, Ersparnis pro Jahr, amortisiert am
 - Akku: Vollzyklen, Gesundheit, Wirkungsgrad
 - Problem-Sensor *Warnungen* und Ereignis *Warnung* für Benachrichtigungen, Beispiel-Automation im
-  [Handbuch](https://balkonaut.github.io/balkonaut/installation/#benachrichtigung-bei-warnungen)
+  [Handbuch](https://balkonaut.github.io/balkonaut/integration/#benachrichtigung-bei-warnungen)
 - Hinweis unter *Reparaturen*, wenn eine zugeordnete Entität verschwindet, z. B. nach einer Umbenennung
 
-## Ohne Home Assistant oder mit der Docker-App
+## Ohne Home Assistant: die Docker-App
 
-Balkonaut läuft auch ganz ohne Home Assistant als Docker-Container, etwa auf einer NAS oder einem Raspberry Pi,
+Balkonaut gibt es auch als eigenständige Docker-App, getrennt von der Integration, ohne Home Assistant, etwa auf einer NAS oder einem Raspberry Pi,
 mit eigener Web-Oberfläche. Er liest APsystems EZHI, Shelly-Zähler und Shelly Plug, Hoymiles über OpenDTU oder
 AhoyDTU sowie Victron GX (MQTT, Modbus TCP) direkt im Heimnetz und holt Prognose und Jahresverlauf aus Standort und Flächen. Andere Geräte liest die
 Docker-App über Home Assistant, oder man nutzt gleich die Integration, die viele Hersteller kennt
@@ -137,20 +137,20 @@ services:
 ```
 
 `docker compose up -d`, dann `http://<adresse>:8000/` öffnen und unter *Einstellungen* die Geräte per IP-Adresse
-hinzufügen. Wer Home Assistant hat, kann die Integration im Modus *Mit einer Balkonaut-App* auf den Container zeigen
-lassen oder dessen Messdaten mit der Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen* übernehmen.
-Details im [Handbuch](https://balkonaut.github.io/balkonaut/installation/).
+hinzufügen. Die Weboberfläche lässt sich in Home Assistant als Webseiten-Dashboard einbinden. Wer später zur
+Integration wechselt, übernimmt die Messdaten mit der Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen*.
+Details im [Handbuch](https://balkonaut.github.io/balkonaut/docker/).
 
 ## Handbuch
 
-Das ausführliche [Handbuch](https://balkonaut.github.io/balkonaut/) auf Deutsch: Installation, Einstellungen, Auswertung, Messquellen und
+Das ausführliche [Handbuch](https://balkonaut.github.io/balkonaut/) auf Deutsch: Installation von Integration und Docker-App, Einstellungen, Auswertung, Messquellen und
 Schnittstelle.
 
 ## Unterstützen
 
 Balkonaut ist kostenlos und quelloffen. Wer die Entwicklung unterstützen möchte, kann auf
 [buymeacoffee.com/balkonaut](https://buymeacoffee.com/balkonaut) einen Kaffee spendieren. Genauso hilfreich sind
-Rückmeldungen zu Geräten über [Gerät melden](https://balkonaut.github.io/balkonaut/installation/#gerat-melden).
+Rückmeldungen zu Geräten über [Gerät melden](https://balkonaut.github.io/balkonaut/integration/#gerat-melden).
 
 ## Lizenz
 

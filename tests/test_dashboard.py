@@ -30,7 +30,7 @@ def test_dashboard(client):
     assert "40 %" in r.text and "Jetzt eintragen" in r.text
     assert "davon im Haus angekommen</span><b>0,2 kWh" in r.text  # Energiewege: 2 h Entladung mit 100 W
     assert client.get("/?zeitraum=unsinn").status_code == 200
-    assert 'href="verlauf"' in r.text and 'href="/' not in r.text  # relativ, für Ingress
+    assert 'href="verlauf"' in r.text and 'href="/' not in r.text  # relativ, für Unterpfade
 
 
 def test_regulation_page(client):

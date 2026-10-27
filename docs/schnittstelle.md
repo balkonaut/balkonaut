@@ -18,7 +18,7 @@ Eine technische Übersicht aller Abfragen liefert `http://<adresse>:8000/docs`.
 - `warnungen`: Liste mit `code` (`keine_messwerte`, `ertrag_niedrig`, `ungleich`), `text` und ggf. `wechselrichter`
 - `ertrag.speicher|ac`: `ertrag` und `prognose` (kWh) der letzten 7 vollen Tage, `quote` (Anteil), `tage`
 - `stand`: Zeitpunkt des letzten Messwerts
-- `live`: letzter Wert je Messgröße (Namen wie in den [Einstellungen](einstellungen.md), Leistung in W)
+- `live`: letzter Wert je Messgröße (Namen wie unter [Messgrößen](messquellen.md#messgroen), Leistung in W)
 - `bilanz.tag|monat|jahr|gesamt`: `erzeugung`, `abgabe`, `netzbezug`, `einspeisung`, `eigenverbrauch`,
   `hausverbrauch` (kWh), `eigenverbrauchsquote`, `autarkiegrad` (Anteil 0 bis 1), `ersparnis` (€)
 - `akku.tag|monat|jahr|gesamt`: `zyklen`, `zyklen_gesamt`, `zyklen_pro_jahr`, `gesundheit` (%), `kapazitaet` (kWh),
@@ -32,7 +32,7 @@ Fehlt ein Wert (z. B. ohne Akku-Messgrößen), steht dort `null`.
 
 ## Werte als Sensoren in Home Assistant
 
-Einfacher geht es mit der [Home-Assistant-Integration](installation.md#home-assistant-integration). Die REST-Sensoren
+Einfacher geht es mit der [Home-Assistant-Integration](integration.md). Die REST-Sensoren
 unten sind die Alternative ohne zusätzliche Dateien in Home Assistant.
 
 Mit der REST-Integration von Home Assistant werden Werte zu Sensoren. Beispiel für die `configuration.yaml`:

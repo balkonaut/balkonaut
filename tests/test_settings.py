@@ -22,31 +22,6 @@ def test_settings_commissioned(client):
     assert client.get("/").status_code == 200
 
 
-def test_addon(client, tmp_path, monkeypatch):
-    import json
-    from app import config
-    monkeypatch.setenv("SUPERVISOR_TOKEN", "abc")
-    form = {"energy": "0.3", "feed_in": "0", "cost": "1450"}
-    assert client.post("/einstellungen", data=form).status_code == 403  # nicht über Ingress
-    assert ":8000</code>" in client.get("/einstellungen").text  # Adresse für die Integration
-    (tmp_path / "options.json").write_text(json.dumps({"entities": {"grid_power": "sensor.netz", "pv_power": ""},
-                                                        "invert": ["grid_power"]}))
-    cfg = config.load(tmp_path / "config.yaml")
-    assert cfg["home_assistant"] == {"url": "http://supervisor/core", "token": "abc",
-                                     "entities": {"grid_power": ["sensor.netz", -1]}}
-    config.save(tmp_path / "config.yaml", cfg)
-    assert "home_assistant" not in yaml.safe_load((tmp_path / "config.yaml").read_text())
-    page = client.get("/").text  # Einrichtung im Add-on: Geräte aus den Optionen, Prognose fehlt
-    assert "1 von 2 erledigt" in page and "Reiter Konfiguration" in page and "einstellungen#geraete" not in page
-    from app import main
-    monkeypatch.setattr(main, "SUPERVISOR_IP", "testclient")  # wie über Ingress
-    form = {"bereich": "flaechen", "lat": "", "lon": "", "declination": "30", "azimuth": "150", "kwp": "0,87", "inverter": "storage"}
-    assert client.post("/einstellungen", data=form).status_code == 200  # ohne Standort gilt der von Home Assistant
-    assert yaml.safe_load((tmp_path / "config.yaml").read_text())["planes"][0]["azimuth"] == 150
-    page = client.get("/").text  # Flächen sind optional: zählen nicht mit, gelten aber als erledigt
-    assert "1 von 2 erledigt" in page and "Optional: Flächen" not in page
-
-
 def test_devices_and_planes(client, tmp_path, monkeypatch):
     """Gerät per IP hinzufügen (Typ erkannt), Richtung drehen, entfernen; Standort und Flächen speichern."""
     from balkonaut import devices

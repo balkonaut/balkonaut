@@ -1,10 +1,8 @@
-"""Einrichtung der Balkonaut-Integration: eigenständig mit Entitäten und/oder Geräten per Adresse oder mit der
-Adresse einer Balkonaut-App."""
+"""Einrichtung der Balkonaut-Integration mit Entitäten und/oder Geräten per Adresse."""
 from datetime import date
 import re
 from typing import Any
 
-import aiohttp
 import voluptuous as vol
 
 from homeassistant.config_entries import (
@@ -14,11 +12,10 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlowWithReload,
 )
-from homeassistant.const import CONF_SCAN_INTERVAL, CONF_URL
+from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     DateSelector,
     DeviceSelector,
@@ -34,8 +31,7 @@ from homeassistant.helpers.selector import (
 )
 from homeassistant.helpers.translation import async_get_translations
 
-from . import (CONF_DEVICES, CONF_ENTITIES, CONF_INVERT, DEFAULT_SCAN_INTERVAL, DOMAIN, KEYS, PLANES, SIGNED_KEYS,
-               fetch_status)
+from . import CONF_DEVICES, CONF_ENTITIES, CONF_INVERT, DEFAULT_SCAN_INTERVAL, DOMAIN, KEYS, PLANES, SIGNED_KEYS
 from .core.devices import Devices, detect
 from .core.homeassistant import normalize
 from .core.profiles import PROFILES, direction, suggest
@@ -70,7 +66,7 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_show_menu(step_id="user", menu_options=["standalone", "app"])
+        return await self.async_step_standalone(user_input)
 
     async def async_step_standalone(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Eigenständig, Schritt 1: Geräte wählen, aus ihnen schlägt Balkonaut die Entitäten vor."""
@@ -134,10 +130,8 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(title="Balkonaut", data=data)
 
     async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Zuordnung oder Adresse ändern, ohne den Eintrag und seine Messdaten zu löschen."""
+        """Zuordnung oder Adressen ändern, ohne den Eintrag und seine Messdaten zu löschen."""
         entry = self._get_reconfigure_entry()
-        if CONF_ENTITIES not in entry.data:
-            return await self.async_step_app()
         self._entities, self._invert = dict(entry.data[CONF_ENTITIES]), list(entry.data.get(CONF_INVERT, []))
         self._devices = list(entry.data.get(CONF_DEVICES, []))
         self._device_values = (await self.hass.async_add_executor_job(Devices(self._devices).read)
@@ -218,29 +212,6 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         if key in SIGNS and round(value) and (word := SIGNS[key][value < 0]):
             text += f" ({word})"
         return text
-
-    async def async_step_app(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Mit einer laufenden Balkonaut-App (Docker oder Add-on) über deren Adresse."""
-        errors = {}
-        if user_input is not None:
-            url = user_input[CONF_URL].strip().rstrip("/")
-            reconfigure = self.source == SOURCE_RECONFIGURE
-            if not reconfigure:
-                self._async_abort_entries_match({CONF_URL: url})
-            try:
-                await fetch_status(async_get_clientsession(self.hass), url)
-            except (aiohttp.ClientError, TimeoutError, ValueError):
-                errors["base"] = "cannot_connect"
-            else:
-                if reconfigure:
-                    return self.async_update_reload_and_abort(self._get_reconfigure_entry(), data_updates={CONF_URL: url})
-                return self.async_create_entry(title="Balkonaut", data={CONF_URL: url})
-        url = self._get_reconfigure_entry().data[CONF_URL] if self.source == SOURCE_RECONFIGURE else "http://"
-        return self.async_show_form(
-            step_id="app",
-            data_schema=vol.Schema({vol.Required(CONF_URL, default=url): str}),
-            errors=errors,
-        )
 
     @staticmethod
     @callback

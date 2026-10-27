@@ -1,14 +1,6 @@
 {
   "config": {
     "step": {
-      "user": {
-        "title": "Balkonaut",
-        "description": "Wie soll Balkonaut arbeiten?",
-        "menu_options": {
-          "standalone": "Eigenständig in Home Assistant",
-          "app": "Mit einer Balkonaut-App (Docker oder Add-on)"
-        }
-      },
       "standalone": {
         "title": "Geräte wählen",
         "description": "Welche Geräte gehören zu deiner Anlage? Balkonaut schlägt danach die passenden Entitäten vor, du prüfst sie im nächsten Schritt. Was du nicht hast, leer lassen. Sind deine Geräte nicht in Home Assistant eingebunden, alles leer lassen und mit OK weiter: Im nächsten Schritt trägst du ihre Adressen unter „Geräte direkt abfragen“ ein.",
@@ -23,13 +15,6 @@
           "storage_device": "Das Hauptgerät, z. B. APsystems EZHI mit Akku oder ein Wechselrichter ohne Akku",
           "extra_device": "Ein zweiter Wechselrichter, z. B. ein EZ1-M am Off-Grid-Port des Speichers",
           "output_device": "Zwischenstecker, der die Abgabe ins Haus misst, z. B. Shelly Plug"
-        }
-      },
-      "app": {
-        "title": "Balkonaut-App verbinden",
-        "description": "Adresse der Balkonaut-App, z. B. http://192.168.1.10:8000",
-        "data": {
-          "url": "Adresse"
         }
       },
       "entities": {
@@ -101,12 +86,11 @@
       }
     },
     "error": {
-      "cannot_connect": "Balkonaut ist unter dieser Adresse nicht erreichbar.",
       "no_entities": "Bitte mindestens eine Entität oder ein Gerät angeben.",
       "unknown_device": "Unter einer der Adressen antwortet kein bekanntes Gerät."
     },
     "abort": {
-      "already_configured": "Diese Balkonaut-App ist bereits eingerichtet.",
+      "already_configured": "Balkonaut ist bereits eingerichtet.",
       "reconfigure_successful": "Die Einstellungen wurden übernommen."
     }
   },
@@ -243,9 +227,9 @@
     }
   },
   "issues": {
-    "unreachable": {
-      "title": "Balkonaut nicht erreichbar",
-      "description": "Home Assistant erreicht die Balkonaut-App unter {url} seit mehreren Abfragen nicht. Läuft der Container? Ist die Adresse noch richtig? Der Hinweis verschwindet, sobald die App wieder antwortet."
+    "app_mode_removed": {
+      "title": "Balkonaut: Betriebsart entfällt",
+      "description": "Die Betriebsart „Mit einer Balkonaut-App“ gibt es nicht mehr. Die Integration misst jetzt selbst in Home Assistant, die Docker-App läuft getrennt davon. Diesen Eintrag unter [Balkonaut](/config/integrations/integration/balkonaut) löschen und Balkonaut neu hinzufügen. Die Messdaten der Docker-App lassen sich danach mit der Aktion *Historie aus Balkonaut-App übernehmen* übernehmen. Die Weboberfläche der Docker-App lässt sich weiterhin als Webseiten-Dashboard einbinden."
     },
     "missing_entities": {
       "title": "Balkonaut: Entität fehlt",
@@ -270,7 +254,7 @@
   "services": {
     "import_from_app": {
       "name": "Historie aus Balkonaut-App übernehmen",
-      "description": "Übernimmt die gespeicherten Messdaten einer Balkonaut-App (Docker oder Add-on) in den eigenständigen Eintrag. Stunden vor dessen erster eigener Messung werden durch die genaueren Werte der App ersetzt, eigene Messungen bleiben.",
+      "description": "Übernimmt die gespeicherten Messdaten einer Balkonaut-App (Docker) in den eigenständigen Eintrag. Stunden vor dessen erster eigener Messung werden durch die genaueren Werte der App ersetzt, eigene Messungen bleiben.",
       "fields": {
         "url": {
           "name": "Adresse der App",

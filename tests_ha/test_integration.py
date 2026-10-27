@@ -22,34 +22,24 @@ STATUS = {
 }
 
 
-async def start_flow(hass, step):
-    """Einrichtung starten und im Menü die Betriebsart wählen."""
-    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
-    assert result["type"] is FlowResultType.MENU
-    return await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": step})
+async def start_flow(hass):
+    """Einrichtung starten, sie beginnt gleich mit der Geräteauswahl."""
+    return await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
 
 
-async def test_config_flow(hass, aioclient_mock):
-    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
-    result = await start_flow(hass, "app")
-    assert result["type"] is FlowResultType.FORM
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_URL: f" {URL}/ "})
-    assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"] == {CONF_URL: URL}
-
-
-async def test_config_flow_cannot_connect(hass, aioclient_mock):
-    aioclient_mock.get(f"{URL}/api/v1/status", status=500)
-    result = await start_flow(hass, "app")
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_URL: URL})
-    assert result["type"] is FlowResultType.FORM and result["errors"] == {"base": "cannot_connect"}
-
-
-async def test_sensors_and_options(hass, aioclient_mock):
-    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
-    entry = MockConfigEntry(domain=DOMAIN, data={CONF_URL: URL})
+async def setup_entry(hass):
+    entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone",
+                            data={"entities": {"grid_power": "sensor.netz"}, "invert": [], "backfilled": True})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    return entry
+
+
+async def test_sensors_options_and_diagnostics(hass):
+    from custom_components.balkonaut.diagnostics import async_get_config_entry_diagnostics
+    entry = await setup_entry(hass)
+    entry.runtime_data.async_set_updated_data(STATUS)
     await hass.async_block_till_done()
     registry = er.async_get(hass)
 
@@ -62,21 +52,21 @@ async def test_sensors_and_options(hass, aioclient_mock):
     assert state("vollzyklen") == "154.1"
     assert state("akku_wirkungsgrad") == "98.0"
     assert len(hass.states.async_entity_ids("sensor")) == 22
+    diag = await async_get_config_entry_diagnostics(hass, entry)
+    assert diag["entry"]["data"]["entities"] == {"grid_power": "sensor.netz"} and diag["status"] == STATUS
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(result["flow_id"], {CONF_SCAN_INTERVAL: 10})
-    assert result["type"] is FlowResultType.CREATE_ENTRY and entry.options[CONF_SCAN_INTERVAL] == 10
+    assert result["type"] is FlowResultType.FORM
+    assert await hass.config_entries.async_unload(entry.entry_id)
 
 
-async def test_warnings(hass, aioclient_mock):
-    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
-    entry = MockConfigEntry(domain=DOMAIN, data={CONF_URL: URL})
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+async def test_warnings(hass):
+    entry = await setup_entry(hass)
     registry = er.async_get(hass)
     problem = registry.async_get_entity_id("binary_sensor", DOMAIN, f"{entry.entry_id}_warnungen")
     event = registry.async_get_entity_id("event", DOMAIN, f"{entry.entry_id}_warnung")
+    entry.runtime_data.async_set_updated_data(STATUS)
+    await hass.async_block_till_done()
     assert hass.states.get(problem).state == "off"
     assert hass.states.get(event).state == "unknown"
 
@@ -91,32 +81,18 @@ async def test_warnings(hass, aioclient_mock):
     entry.runtime_data.async_set_updated_data(STATUS | {"warnungen": [warning]})  # gleiche Warnung: kein neues Ereignis
     await hass.async_block_till_done()
     assert hass.states.get(event).state == fired.state
+    assert await hass.config_entries.async_unload(entry.entry_id)
 
 
-async def test_unreachable_issue_and_diagnostics(hass, aioclient_mock):
+async def test_app_mode_removed(hass):
+    """Ein Eintrag der früheren Betriebsart „Mit einer Balkonaut-App“ lädt nicht und zeigt einen Reparaturhinweis."""
+    from homeassistant.config_entries import ConfigEntryState
     from homeassistant.helpers import issue_registry as ir
-    from custom_components.balkonaut.diagnostics import async_get_config_entry_diagnostics
-    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
     entry = MockConfigEntry(domain=DOMAIN, data={CONF_URL: URL})
     entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    coordinator = entry.runtime_data
-    issues = ir.async_get(hass)
-    issue_id = f"unreachable_{entry.entry_id}"
-
-    aioclient_mock.clear_requests()
-    aioclient_mock.get(f"{URL}/api/v1/status", status=500)
-    for _ in range(3):
-        await coordinator.async_refresh()
-    assert issues.async_get_issue(DOMAIN, issue_id) is not None
-
-    aioclient_mock.clear_requests()
-    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
-    await coordinator.async_refresh()
-    assert issues.async_get_issue(DOMAIN, issue_id) is None
-
-    diag = await async_get_config_entry_diagnostics(hass, entry)
-    assert diag["entry"]["data"][CONF_URL] == "**REDACTED**" and diag["status"]["bilanz"]["tag"]["ersparnis"] == 1.25
+    assert not await hass.config_entries.async_setup(entry.entry_id)
+    assert entry.state is ConfigEntryState.SETUP_ERROR
+    assert ir.async_get(hass).async_get_issue(DOMAIN, f"app_mode_removed_{entry.entry_id}") is not None
 
 
 def device(hass, platform, name, entities, model=None):
@@ -147,7 +123,7 @@ async def test_standalone(hass):
     solar.add_to_hass(hass)
     er.async_get(hass).async_get_or_create("sensor", "forecast_solar", f"{solar.entry_id}_energy_production_today",
                                            suggested_object_id="prognose", config_entry=solar)
-    result = await start_flow(hass, "standalone")
+    result = await start_flow(hass)
     assert result["step_id"] == "standalone"
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {"storage_device": ezhi, "grid_device": em})
     assert result["step_id"] == "entities"
@@ -174,7 +150,7 @@ async def test_standalone(hass):
                                            "output_power": "sensor.abgabe", "pv_forecast_today": "sensor.prognose"},
                               "invert": ["output_power"]}
     await hass.async_block_till_done()
-    assert (await start_flow(hass, "standalone"))["reason"] == "already_configured"  # nur eine eigene Datenbank
+    assert (await start_flow(hass))["reason"] == "already_configured"  # nur eine eigene Datenbank
 
     entry = hass.config_entries.async_entries(DOMAIN)[0]
     coordinator = entry.runtime_data
@@ -234,14 +210,14 @@ async def test_standalone_without_device(hass):
     for unique_id, entity_id in (("sg_battery_level", "sensor.battery_level"), ("my_power", "sensor.my_power")):
         er.async_get(hass).async_get_or_create("sensor", "modbus", unique_id, suggested_object_id=entity_id[7:])
         hass.states.async_set(entity_id, "50", {"device_class": "power", "unit_of_measurement": "W"})
-    result = await start_flow(hass, "standalone")
+    result = await start_flow(hass)
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
     schema = result["data_schema"].schema
     assert {k.schema: k.description["suggested_value"] for sec in ("grid", "battery")
             for k in schema[sec].schema.schema if k.description} == {"battery_soc": "sensor.battery_level"}
 
 
-async def test_reconfigure(hass, aioclient_mock):
+async def test_reconfigure(hass):
     """Neu konfigurieren ändert Zuordnung oder Adresse, Eintrag und Messdaten bleiben."""
     hass.states.async_set("sensor.soc", "50", {"unit_of_measurement": "%"})
     hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
@@ -264,14 +240,6 @@ async def test_reconfigure(hass, aioclient_mock):
     assert hass.config_entries.async_entries(DOMAIN) == [entry] and Path(db).exists()
     assert await hass.config_entries.async_unload(entry.entry_id)
 
-    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
-    aioclient_mock.get("http://neu:8000/api/v1/status", json=STATUS)
-    app = MockConfigEntry(domain=DOMAIN, data={CONF_URL: URL})
-    app.add_to_hass(hass)
-    result = await app.start_reconfigure_flow(hass)
-    assert result["step_id"] == "app"
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_URL: "http://neu:8000/"})
-    assert result["reason"] == "reconfigure_successful" and app.data == {CONF_URL: "http://neu:8000"}
 
 
 async def test_missing_entity_issue(hass):
@@ -353,22 +321,6 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     assert await hass.config_entries.async_unload(entry.entry_id)
 
 
-async def test_views_from_app(hass, hass_ws_client, aioclient_mock):
-    aioclient_mock.get(f"{URL}/api/v1/status", json=STATUS)
-    aioclient_mock.get(f"{URL}/api/v1/verlauf?ansicht=woche&datum=", json={"balken": [], "titel": "KW 43"})
-    aioclient_mock.get(f"{URL}/api/v1/nulleinspeisung", status=500)
-    entry = MockConfigEntry(domain=DOMAIN, data={CONF_URL: URL})
-    entry.add_to_hass(hass)
-    assert await hass.config_entries.async_setup(entry.entry_id)
-    ws = await hass_ws_client(hass)
-    await ws.send_json({"id": 1, "type": "balkonaut/status"})
-    assert (await ws.receive_json())["result"]["setup"] is None  # die App hat ihre eigene Einrichtung
-    await ws.send_json({"id": 2, "type": "balkonaut/verlauf", "ansicht": "woche"})
-    assert (await ws.receive_json())["result"]["titel"] == "KW 43"  # von der App durchgereicht
-    await ws.send_json({"id": 3, "type": "balkonaut/nulleinspeisung"})
-    assert (await ws.receive_json())["error"]["code"] == "unreachable"
-
-
 async def test_import_from_app(hass, aioclient_mock, hass_read_only_user):
     hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
     entry = MockConfigEntry(domain=DOMAIN, unique_id="standalone", data={"entities": {"grid_power": "sensor.netz"}, "invert": []})
@@ -430,7 +382,7 @@ async def test_direct_devices(hass, monkeypatch):
     monkeypatch.setattr(config_flow, "detect", lambda host: "apsystems_ezhi" if host == "192.168.1.11" else
                         (_ for _ in ()).throw(ValueError("unbekannt")))
     hass.states.async_set("sensor.netz", "300", {"unit_of_measurement": "W"})
-    result = await start_flow(hass, "standalone")
+    result = await start_flow(hass)
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
     form = {"grid": {"grid_power": "sensor.netz"}, "generation": {}, "battery": {}, "output": {}, "forecast": {},
             "invert": []}

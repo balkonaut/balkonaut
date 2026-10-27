@@ -1,8 +1,7 @@
 """Balkonaut: Bilanz, Amortisation und Akku-Auswertung als Sensoren.
 
-Zwei Betriebsarten: Werte von einer laufenden Balkonaut-App abholen (Adresse) oder eigenständig in Home Assistant
-messen, speichern und rechnen (Entitäten, Geräte direkt per Adresse oder beides). Die Rechenlogik kommt in beiden
-Fällen aus core/ (balkonaut-Paket).
+Misst, speichert und rechnet in Home Assistant (Entitäten, Geräte direkt per Adresse oder beides). Die Rechenlogik
+kommt aus core/ (balkonaut-Paket), wie in der Docker-App.
 """
 import asyncio
 from datetime import UTC, date, datetime, timedelta
@@ -26,7 +25,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.helpers.typing import ConfigType
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.loader import async_get_integration
 
 from .core import analytics, forecast, views
@@ -63,23 +62,13 @@ type BalkonautConfigEntry = ConfigEntry[BalkonautCoordinator]
 def device_info(entry: ConfigEntry) -> DeviceInfo:
     """Gemeinsames Gerät aller Balkonaut-Entitäten."""
     return DeviceInfo(identifiers={(DOMAIN, entry.entry_id)}, name="Balkonaut", manufacturer="Balkonaut",
-                      entry_type=DeviceEntryType.SERVICE, configuration_url=entry.data.get(CONF_URL))
-
-
-async def fetch_status(session: aiohttp.ClientSession, url: str) -> dict:
-    """Status der Balkonaut-App abrufen (/api/v1/status)."""
-    async with session.get(f"{url}/api/v1/status", timeout=aiohttp.ClientTimeout(total=30)) as resp:
-        resp.raise_for_status()
-        data = await resp.json()
-    if "bilanz" not in data:
-        raise ValueError("keine Balkonaut-Antwort")
-    return data
+                      entry_type=DeviceEntryType.SERVICE)
 
 
 class BalkonautCoordinator(DataUpdateCoordinator[dict]):
-    """Fragt /api/v1/status der Balkonaut-App ab oder rechnet ihn eigenständig aus der eigenen Datenbank."""
+    """Rechnet den Status (wie /api/v1/status der Docker-App) aus der eigenen Datenbank."""
 
-    def __init__(self, hass: HomeAssistant, entry: BalkonautConfigEntry, storage: Storage | None = None) -> None:
+    def __init__(self, hass: HomeAssistant, entry: BalkonautConfigEntry, storage: Storage) -> None:
         super().__init__(
             hass,
             _LOGGER,
@@ -87,10 +76,8 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
             name=DOMAIN,
             update_interval=timedelta(minutes=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)),
         )
-        self.url = entry.data.get(CONF_URL)
         self.storage = storage
         self.lock = asyncio.Lock()  # SQLite-Zugriffe nacheinander, sie laufen im Executor
-        self.failures = 0
         # Prognose aus eingetragenen Flächen, nur für Wechselrichter ohne zugeordnete Prognose-Entität (spart Abrufe)
         mapped = entry.data.get(CONF_ENTITIES) or {}
         self.forecast = forecast.Planes({"lat": hass.config.latitude, "lon": hass.config.longitude},
@@ -102,22 +89,8 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
         self.closed = False  # Datenbank beim Entladen geschlossen
 
     async def _async_update_data(self) -> dict:
-        if self.storage:
-            self._check_entities()
-            return await self._local_status()
-        issue_id = f"unreachable_{self.config_entry.entry_id}"
-        try:
-            data = await fetch_status(async_get_clientsession(self.hass), self.url)
-        except (aiohttp.ClientError, TimeoutError, ValueError) as err:
-            self.failures += 1
-            if self.failures == FAILURES_BEFORE_ISSUE:
-                ir.async_create_issue(self.hass, DOMAIN, issue_id, is_fixable=False, severity=ir.IssueSeverity.WARNING,
-                                      translation_key="unreachable", translation_placeholders={"url": self.url})
-            raise UpdateFailed(f"Balkonaut unter {self.url} nicht erreichbar: {err}") from err
-        if self.failures >= FAILURES_BEFORE_ISSUE:
-            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
-        self.failures = 0
-        return data
+        self._check_entities()
+        return await self._local_status()
 
     def _check_entities(self) -> None:
         """Reparaturhinweis für zugeordnete Entitäten, die es nicht mehr gibt, z. B. weil die Hersteller-Integration
@@ -269,10 +242,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         websocket_api.async_register_command(hass, command)
 
     async def import_from_app(call: ServiceCall) -> ServiceResponse:
-        """Historie einer Balkonaut-App (Docker oder Add-on) in den eigenständigen Eintrag übernehmen."""
+        """Historie einer Balkonaut-App (Docker) in den eigenständigen Eintrag übernehmen."""
         entry = _entry(hass, None)
-        if entry is None or not entry.runtime_data.storage:
-            raise HomeAssistantError("Kein eigenständiger Balkonaut-Eintrag eingerichtet")
+        if entry is None:
+            raise HomeAssistantError("Kein Balkonaut-Eintrag eingerichtet")
         url = call.data[CONF_URL].strip().rstrip("/")
         try:
             async with async_get_clientsession(hass).get(f"{url}/api/v1/export",
@@ -303,8 +276,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 def _entry(hass: HomeAssistant, entry_id: str | None) -> ConfigEntry | None:
-    """Geladener Eintrag mit entry_id, ohne Angabe der eigenständige, sonst der erste."""
-    entries = sorted(hass.config_entries.async_loaded_entries(DOMAIN), key=lambda e: CONF_ENTITIES not in e.data)
+    """Geladener Eintrag mit entry_id, ohne Angabe der erste."""
+    entries = hass.config_entries.async_loaded_entries(DOMAIN)
     return next((e for e in entries if e.entry_id == (entry_id or e.entry_id)), None)
 
 
@@ -321,10 +294,8 @@ async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnect
         "names": _names(hass, entry)})
 
 
-def _setup(entry: ConfigEntry) -> dict | None:
-    """Stand der Einrichtung für die Kachel im Panel; None mit Balkonaut-App, die hat ihre eigene."""
-    if entry.data.get(CONF_URL):
-        return None
+def _setup(entry: ConfigEntry) -> dict:
+    """Stand der Einrichtung für die Kachel im Panel."""
     entities, opts = entry.data.get(CONF_ENTITIES) or {}, entry.options
     keys = entities.keys() | {k for k, v in entry.runtime_data.device_values.items() if v is not None}
     return {
@@ -362,22 +333,13 @@ def _names(hass: HomeAssistant, entry: ConfigEntry) -> dict:
             "fields": dict(LABELS)}  # Namen der Laderegler (Victron-MPPT), wenn Geräte direkt abgefragt werden
 
 
-async def _view(hass, connection, msg, path: str, params: dict, compute) -> None:
-    """Ansicht eigenständig aus der eigenen Datenbank rechnen oder von der Balkonaut-App holen (/api/v1/<path>)."""
+async def _view(hass, connection, msg, compute) -> None:
+    """Ansicht aus der eigenen Datenbank rechnen."""
     if (entry := _entry(hass, msg.get("entry_id"))) is None:
         connection.send_error(msg["id"], "not_found", "Kein Balkonaut-Eintrag geladen")
         return
     coordinator = entry.runtime_data
-    if coordinator.storage:
-        connection.send_result(msg["id"], await coordinator.async_compute(compute, coordinator, time.time()))
-        return
-    try:
-        async with async_get_clientsession(hass).get(f"{coordinator.url}/api/v1/{path}", params=params,
-                                                     timeout=aiohttp.ClientTimeout(total=30)) as resp:
-            resp.raise_for_status()
-            connection.send_result(msg["id"], await resp.json())
-    except (aiohttp.ClientError, TimeoutError) as err:
-        connection.send_error(msg["id"], "unreachable", f"Balkonaut-App nicht erreichbar: {err}")
+    connection.send_result(msg["id"], await coordinator.async_compute(compute, coordinator, time.time()))
 
 
 @websocket_api.websocket_command({vol.Required("type"): "balkonaut/verlauf", vol.Optional("entry_id"): str,
@@ -385,9 +347,8 @@ async def _view(hass, connection, msg, path: str, params: dict, compute) -> None
 @websocket_api.async_response
 async def ws_history(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
     entry = _entry(hass, msg.get("entry_id"))
-    hours = await _hourly_forecast(hass, entry) if entry and entry.runtime_data.storage else {}
-    await _view(hass, connection, msg, "verlauf", {"ansicht": msg["ansicht"], "datum": msg["datum"]},
-                lambda storage, c, now: views.history(storage, msg["ansicht"], msg["datum"], c.prices, now, hours))
+    hours = await _hourly_forecast(hass, entry) if entry else {}
+    await _view(hass, connection, msg, lambda storage, c, now: views.history(storage, msg["ansicht"], msg["datum"], c.prices, now, hours))
 
 
 async def _hourly_forecast(hass: HomeAssistant, entry: ConfigEntry) -> dict:
@@ -412,8 +373,7 @@ async def _hourly_forecast(hass: HomeAssistant, entry: ConfigEntry) -> dict:
                                   vol.Optional("monat", default=""): str})
 @websocket_api.async_response
 async def ws_report(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
-    await _view(hass, connection, msg, "bericht", {"monat": msg["monat"]},
-                lambda storage, c, now: views.report(storage, msg["monat"], c.prices, now, c.commissioned))
+    await _view(hass, connection, msg, lambda storage, c, now: views.report(storage, msg["monat"], c.prices, now, c.commissioned))
 
 
 @websocket_api.websocket_command({vol.Required("type"): "balkonaut/kacheln"})
@@ -426,28 +386,27 @@ def ws_tiles(hass: HomeAssistant, connection: websocket_api.ActiveConnection, ms
 @websocket_api.websocket_command({vol.Required("type"): "balkonaut/nulleinspeisung", vol.Optional("entry_id"): str})
 @websocket_api.async_response
 async def ws_regulation(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
-    await _view(hass, connection, msg, "nulleinspeisung", {},
-                lambda storage, c, now: views.regulation_week(storage, c.prices, now))
+    await _view(hass, connection, msg, lambda storage, c, now: views.regulation_week(storage, c.prices, now))
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) -> bool:
-    storage = None
-    if CONF_ENTITIES in entry.data:
-        storage = await hass.async_add_executor_job(_open_storage, Path(hass.config.path(DOMAIN, "balkonaut.db")))
+    if CONF_ENTITIES not in entry.data:  # frühere Betriebsart „Mit einer Balkonaut-App“
+        ir.async_create_issue(hass, DOMAIN, f"app_mode_removed_{entry.entry_id}", is_fixable=False,
+                              severity=ir.IssueSeverity.ERROR, translation_key="app_mode_removed")
+        return False
+    storage = await hass.async_add_executor_job(_open_storage, Path(hass.config.path(DOMAIN, "balkonaut.db")))
     coordinator = BalkonautCoordinator(hass, entry, storage)
-    if storage:
-        await coordinator.async_sample()
-        entry.async_on_unload(async_track_time_interval(hass, coordinator.async_sample, SAMPLE_INTERVAL))
-        entry.async_on_unload(async_track_time_interval(hass, coordinator.async_store_regulation, timedelta(hours=1)))
+    await coordinator.async_sample()
+    entry.async_on_unload(async_track_time_interval(hass, coordinator.async_sample, SAMPLE_INTERVAL))
+    entry.async_on_unload(async_track_time_interval(hass, coordinator.async_store_regulation, timedelta(hours=1)))
     try:
         await coordinator.async_config_entry_first_refresh()
     except Exception:
-        if storage:  # bei erneutem Versuch öffnet HA eine neue Verbindung, diese nicht offen lassen
-            await coordinator.async_close()
+        await coordinator.async_close()  # bei erneutem Versuch öffnet HA eine neue Verbindung, diese nicht offen lassen
         raise
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    if storage and not entry.data.get(BACKFILLED) and "recorder" in hass.config.components:
+    if not entry.data.get(BACKFILLED) and "recorder" in hass.config.components:
         entry.async_create_background_task(hass, coordinator.async_backfill(), "balkonaut_backfill")
     if "frontend" in hass.config.components:
         from homeassistant.components import panel_custom
@@ -467,6 +426,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) -
         from homeassistant.components.frontend import async_remove_panel
 
         async_remove_panel(hass, PANEL)  # letzter Eintrag weg: Panel aus der Seitenleiste nehmen
-    if unloaded and entry.runtime_data.storage:
+    if unloaded:
         await entry.runtime_data.async_close()
     return unloaded

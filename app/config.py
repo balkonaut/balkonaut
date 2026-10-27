@@ -1,5 +1,4 @@
 """Konfiguration aus config.yaml im Datenverzeichnis."""
-import json
 import os
 from datetime import date
 from pathlib import Path
@@ -15,28 +14,14 @@ DEFAULTS = {
 }
 
 
-def addon():
-    """Läuft als Home-Assistant-Add-on: der Supervisor setzt SUPERVISOR_TOKEN."""
-    return bool(os.environ.get("SUPERVISOR_TOKEN"))
-
-
 def load(path):
     cfg = (yaml.safe_load(path.read_text()) if path.exists() else None) or {}
     for section, values in DEFAULTS.items():
         cfg[section] = {**values, **(cfg.get(section) or {})}
-    options = path.parent / "options.json"  # Add-on-Optionen, vom Supervisor vor jedem Start geschrieben
-    if addon() and options.exists():
-        opts = json.loads(options.read_text())
-        invert = set(opts.get("invert") or [])
-        cfg["home_assistant"] = {"url": "http://supervisor/core", "token": os.environ["SUPERVISOR_TOKEN"],
-                                 "entities": {k: [v, -1 if k in invert else 1]
-                                              for k, v in (opts.get("entities") or {}).items() if v}}
     return cfg
 
 
 def save(path, cfg):
-    if addon():  # Verbindung kommt aus den Add-on-Optionen, Token nicht in config.yaml ablegen
-        cfg = {k: v for k, v in cfg.items() if k != "home_assistant"}
     # Vereinfachung: safe_dump verwirft Kommentare in config.yaml; ruamel.yaml, falls das stört
     path.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False))
 
