@@ -146,7 +146,7 @@ def start_measuring(app, cfg):
     adapter = config.adapter(cfg)
     app.state.forecast = adapter.forecast if adapter else None  # Prognose je Stunde für das Diagramm
     if adapter:
-        app.state.tasks = [asyncio.create_task(collector.run(adapter, app.state.storage)),
+        app.state.tasks = [asyncio.create_task(collector.run(adapter, app.state.storage, manual=cfg.get("battery"))),
                            asyncio.create_task(load_profile(app, adapter, app.state.config_path.parent / "ertragsprofil.json")),
                            asyncio.create_task(regulation_job(app))]
 
@@ -327,7 +327,7 @@ def device_values(dev):
 async def settings_page(request, cfg, status_code=200, **errors):
     live = await asyncio.to_thread(lambda: [device_values(d) for d in cfg.get("devices") or []])
     return templates.TemplateResponse(request, "settings.html", {
-        "cfg": cfg, "live": live, "names": DEVICE_NAMES, "invertible": INVERTIBLE, **errors},
+        "cfg": cfg, "live": live, "names": DEVICE_NAMES, "invertible": INVERTIBLE, "battery_fields": BATTERY_FIELDS, **errors},
         status_code=status_code)
 
 
@@ -373,17 +373,48 @@ async def save_devices(request, cfg, form):
     return save_and_restart(request, cfg, "geraete")
 
 
+def num(text, low, high, what):
+    """Zahl aus einem Eingabefeld (Komma oder Punkt), ValueError mit Feldname und erlaubtem Bereich."""
+    try:
+        value = float(text.replace("°", "").replace(",", ".").strip())
+    except ValueError:
+        raise ValueError(f"{what}: bitte eine Zahl eingeben") from None
+    if not low <= value <= high:
+        raise ValueError(f"{what}: {de(low, 0)} bis {de(high, 0)}")
+    return value
+
+
+# Akku-Werte, die man von Hand eintragen kann: Feld = Messgröße, (Bezeichnung, Minimum, Maximum)
+BATTERY_FIELDS = {"battery_soc_min": ("Untergrenze", 0, 100), "battery_soc_max": ("Obergrenze", 0, 100),
+                  "battery_discharge_protection": ("Entladeschutz", 0, 100),
+                  "output_power_limit": ("Abgabelimit", 0, 10000)}
+
+
+async def save_battery(request, cfg, form):
+    """Bezeichnung und Grenzwerte des Akkus; leere Felder entfernen den Wert, gemessene Werte gehen ohnehin vor."""
+    form = {k: v[0].strip() for k, v in form.items()}
+    errors, values = [], {}
+    for key, (what, low, high) in BATTERY_FIELDS.items():
+        if form.get(key):
+            try:
+                values[key] = num(form[key], low, high, what)
+            except ValueError as e:
+                errors.append(str(e))
+    if values.get("battery_soc_min", 0) >= values.get("battery_soc_max", 100):
+        errors.append("Die Untergrenze muss unter der Obergrenze liegen")
+    if errors:
+        return await settings_page(request, cfg, 400, battery_error=errors, entered_battery=form)
+    cfg["system"]["battery_name"] = form.get("battery_name", "")[:20] or None
+    if values:
+        cfg["battery"] = values
+    else:
+        cfg.pop("battery", None)
+    return save_and_restart(request, cfg, "akku")
+
+
 async def save_planes(request, cfg, form):
     """Standort und Flächen; leere Zeilen fallen weg, so lässt sich eine Fläche auch entfernen. Bei Fehlern bleiben
     die Eingaben stehen und die Meldung nennt das Feld."""
-    def num(text, low, high, what):
-        try:
-            value = float(text.replace("°", "").replace(",", ".").strip())
-        except ValueError:
-            raise ValueError(f"{what}: bitte eine Zahl eingeben") from None
-        if not low <= value <= high:
-            raise ValueError(f"{what}: {de(low, 0)} bis {de(high, 0)}")
-        return value
     lat, lon = (form.get(k, [""])[0].strip() for k in ("lat", "lon"))
     rows = [{"declination": d, "azimuth": a, "kwp": k, "inverter": i} for d, a, k, i in zip(
         form.get("declination", []), form.get("azimuth", []), form.get("kwp", []), form.get("inverter", []))
@@ -420,8 +451,8 @@ async def save_settings(request: Request):
     multi = await form_data(request)
     cfg = config.load(request.app.state.config_path)
     bereich = (multi.get("bereich") or [""])[0]
-    if bereich in ("geraete", "flaechen"):
-        return await (save_devices if bereich == "geraete" else save_planes)(request, cfg, multi)
+    if bereich in ("geraete", "flaechen", "akku"):
+        return await {"geraete": save_devices, "flaechen": save_planes, "akku": save_battery}[bereich](request, cfg, multi)
     form = {k: v[0] for k, v in multi.items()}
     try:
         values = {k: float(form[k].replace(",", ".")) for k in ("energy", "feed_in", "cost")}
@@ -431,7 +462,6 @@ async def save_settings(request: Request):
     except (KeyError, ValueError):
         return await settings_page(request, cfg, 400, error=True)
     cfg["prices"].update(energy=values["energy"], feed_in=values["feed_in"])
-    cfg["system"].update(cost=values["cost"], commissioned=day, battery_name=form.get("battery_name", "").strip() or None,
-                         extra_name=form.get("extra_name", "").strip() or None)
+    cfg["system"].update(cost=values["cost"], commissioned=day, extra_name=form.get("extra_name", "").strip() or None)
     config.save(request.app.state.config_path, cfg)
     return RedirectResponse("einstellungen?gespeichert=1", status_code=303)  # relativ, falls die App unter einem Unterpfad läuft

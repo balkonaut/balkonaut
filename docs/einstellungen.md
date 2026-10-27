@@ -12,6 +12,21 @@ Unter `http://<adresse>:8000/einstellungen` trägst du ein:
 - **Anschaffungskosten** der Anlage in €, inklusive Speicher.
 - **Inbetriebnahme** (optional): Datum, ab dem der Abgabezähler am Einspeisepunkt zählt, meist die Inbetriebnahme. Verbessert die Amortisationsrechnung.
 
+## Akku
+
+Unter *Einstellungen → Akku*, alles optional:
+
+- **Bezeichnung des Akkus**: erscheint im Energiefluss statt „Akku“, z. B. der Hersteller.
+- **Untergrenze** und **Obergrenze** in %: die in der App des Herstellers eingestellten Ladegrenzen. Sie bestimmen
+  Farbe und Marken des Akku-Rings, die Restzeit und die Akku-Auswertung.
+- **Entladeschutz** in %: erscheint als Marke im Akku-Ring.
+- **Abgabelimit** in W: eingestelltes Limit des Speichers, für die Regelgüte der Nulleinspeisung (ohne Angabe 800 W).
+
+Die Grenzwerte braucht es nur, wenn das Gerät sie nicht meldet, etwa der direkt abgefragte APsystems EZHI. Meldet das
+Gerät einen Wert, gilt der gemessene. Ein leeres Feld entfernt den eingetragenen Wert. Ändert man die Grenzen in der
+App des Herstellers, hier ebenfalls anpassen. In `data/config.yaml` stehen sie im Abschnitt `battery`, z. B.
+`battery: {battery_soc_min: 10, battery_soc_max: 100, battery_discharge_protection: 20, output_power_limit: 800}`.
+
 Kommazahlen gehen mit Komma oder Punkt.
 
 ## Geräte direkt, ohne Home Assistant
@@ -54,8 +69,8 @@ Welche IP-Adresse bei Hoymiles einzutragen ist und was die Docker-App nicht dire
 Abgabe-Leistung, vom Plug zählt nur der Zähler (siehe
 [Messquellen](messquellen.md)). Meldet ein Gerät eine Richtung umgekehrt, die Messgröße unter `invert` eintragen,
 z. B. `invert: [output_power]`. Ladegrenzen, Entladeschutz und Abgabelimit des EZHI gibt es nur über die
-APsystems-Cloud; ohne sie rechnet Balkonaut mit den zuletzt bekannten Werten (etwa aus einem früheren Betrieb über
-Home Assistant), sonst mit 0 und 100 %. Der Import des Verlaufs (`app.backfill`) geht nur über Home Assistant.
+APsystems-Cloud; dafür die Werte unter [Akku](#akku) eintragen. Ohne sie rechnet Balkonaut mit den zuletzt bekannten
+Werten (etwa aus einem früheren Betrieb über Home Assistant), sonst mit 0 und 100 %. Der Import des Verlaufs (`app.backfill`) geht nur über Home Assistant.
 
 Für Prognose (Ertragswächter) und Jahresverlauf ohne Home Assistant Standort und Flächen eintragen (im Browser
 unter *Standort und Flächen* oder in der Datei):

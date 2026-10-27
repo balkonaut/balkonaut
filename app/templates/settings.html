@@ -139,6 +139,26 @@
   if (window.isSecureContext && navigator.geolocation) document.getElementById("geo").hidden = false;
 </script>
 
+<h2 id="akku">Akku</h2>
+<form method="post" action="einstellungen" class="card"><input type="hidden" name="bereich" value="akku">
+  {% if battery_error %}<div class="field-error" role="alert"><p style="margin:0">Nicht gespeichert, bitte korrigieren:</p>
+    <ul style="margin:.25rem 0 0">{% for e in battery_error %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+  {% set bat = entered_battery or dict(cfg.battery or {}, battery_name=cfg.system.battery_name) %}
+  <label for="battery_name" style="margin-top:0">Bezeichnung des Akkus (optional)</label>
+  <input id="battery_name" name="battery_name" maxlength="20" value="{{ bat.battery_name or '' }}" placeholder="z. B. Phylion">
+  <p class="label">Erscheint im Energiefluss statt „Akku“, z. B. der Hersteller. Die Geräte melden ihn nicht verlässlich.</p>
+  <p class="intro" style="margin-top:1rem">Grenzwerte (optional): nur nötig, wenn das Gerät sie nicht meldet, etwa der direkt abgefragte
+  APsystems EZHI. Meldet das Gerät einen Wert, gilt der gemessene.</p>
+  <div class="add">
+  {% for key, (what, low, high) in battery_fields.items() %}
+    <div><label for="{{ key }}">{{ what }} ({{ "W" if key == "output_power_limit" else "%" }})</label>
+    <input id="{{ key }}" name="{{ key }}" inputmode="decimal" value="{{ bat.get(key)|komma if bat.get(key) not in (none, '') else '' }}"
+      placeholder="{{ 'z. B. 800' if key == 'output_power_limit' else 'z. B. ' ~ {'battery_soc_min': 10, 'battery_soc_max': 100, 'battery_discharge_protection': 20}[key] }}"></div>
+  {% endfor %}
+  </div>
+  <button class="save">Speichern</button>
+</form>
+
 <h2 id="preise">Preise und Anlage</h2>
 <form method="post" action="einstellungen" class="card">
   {% if error %}<p class="field-error" role="alert">Bitte nur Zahlen ab 0 und kein Datum in der Zukunft eingeben.</p>{% endif %}
@@ -148,9 +168,6 @@
   <input id="feed_in" name="feed_in" inputmode="decimal" required value="{{ cfg.prices.feed_in }}">
   <label for="cost">Anschaffungskosten der Anlage (€)</label>
   <input id="cost" name="cost" inputmode="decimal" required value="{{ cfg.system.cost }}">
-  <label for="battery_name">Bezeichnung des Akkus (optional)</label>
-  <input id="battery_name" name="battery_name" maxlength="20" value="{{ cfg.system.battery_name or '' }}" placeholder="z. B. Phylion">
-  <p class="label">Erscheint im Energiefluss statt „Akku“, z. B. der Hersteller. Die Geräte melden ihn nicht verlässlich.</p>
   <label for="extra_name">Bezeichnung des zusätzlichen Wechselrichters (optional)</label>
   <input id="extra_name" name="extra_name" maxlength="20" value="{{ cfg.system.extra_name or '' }}" placeholder="z. B. EZ1-M">
   <p class="label">Erscheint im Energiefluss statt „Zusatz-WR“, falls ein zweiter Wechselrichter am Speicher hängt.</p>

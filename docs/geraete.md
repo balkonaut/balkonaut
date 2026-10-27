@@ -68,7 +68,8 @@ Diese Geräte liest Balkonaut selbst über deren lokale Schnittstelle, ohne Inte
 an und erkennt an der Antwort, welches Gerät dort läuft. Unbekannte Geräte meldet die Einrichtung.
 
 Direkt abgefragt liefert der EZHI weniger als über seine Integration: Ladegrenzen, Entladeschutz und Abgabelimit
-(nur über die APsystems-Cloud) fehlen, damit auch die Marken am Akku-Ring. Wer die Integration „APsystems EZHI Local API“ hat, ordnet
+(nur über die APsystems-Cloud) fehlen, damit auch die Marken am Akku-Ring. In der Docker-App lassen sie sich unter
+[Einstellungen → Akku](einstellungen.md#akku) von Hand eintragen. Wer die Integration „APsystems EZHI Local API“ hat, ordnet
 besser deren Entitäten zu.
 
 | Gerät | IP-Adresse von | Messgrößen | Stand |

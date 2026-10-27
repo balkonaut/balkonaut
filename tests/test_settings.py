@@ -11,7 +11,7 @@ def test_settings_roundtrip(client, tmp_path):
     assert client.post("/einstellungen", data={"energy": "-1", "feed_in": "0", "cost": "0"}).status_code == 400
     assert "Gespeichert" in client.get("/einstellungen?gespeichert=1").text
     cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
-    assert cfg == {"prices": {"energy": 0.32, "feed_in": 0.0}, "system": {"cost": 1499.0, "commissioned": None, "battery_name": None, "extra_name": None}}
+    assert cfg == {"prices": {"energy": 0.32, "feed_in": 0.0}, "system": {"cost": 1499.0, "commissioned": None, "extra_name": None}}
 
 
 def test_settings_commissioned(client):
@@ -54,3 +54,21 @@ def test_devices_and_planes(client, tmp_path, monkeypatch):
 
     client.post("/einstellungen", data={"bereich": "geraete", "aktion": "entfernen", "host": "10.0.0.38"})
     assert "devices" not in yaml.safe_load((tmp_path / "config.yaml").read_text())
+
+
+def test_battery(client, tmp_path):
+    """Akku: Bezeichnung und Grenzwerte von Hand, leere Felder entfernen sie, Fehler nennen das Feld."""
+    form = {"bereich": "akku", "battery_name": "Phylion", "battery_soc_min": "10", "battery_soc_max": "95",
+            "battery_discharge_protection": "20,5", "output_power_limit": ""}
+    assert "Gespeichert" in client.post("/einstellungen", data=form).text  # weitergeleitet nach #akku
+    cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
+    assert cfg["system"]["battery_name"] == "Phylion"
+    assert cfg["battery"] == {"battery_soc_min": 10.0, "battery_soc_max": 95.0, "battery_discharge_protection": 20.5}
+    assert 'value="20,5"' in client.get("/einstellungen").text
+    r = client.post("/einstellungen", data=form | {"battery_soc_min": "96"})
+    assert r.status_code == 400 and "Untergrenze muss unter der Obergrenze" in r.text and 'value="96"' in r.text
+    assert "Abgabelimit: 0 bis 10.000" in client.post("/einstellungen", data=form | {"output_power_limit": "20000"}).text
+    client.post("/einstellungen", data={"bereich": "akku", "battery_name": ""})
+    cfg = yaml.safe_load((tmp_path / "config.yaml").read_text())
+    assert "battery" not in cfg and cfg["system"]["battery_name"] is None
+
