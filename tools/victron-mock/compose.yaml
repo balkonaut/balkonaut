@@ -1,10 +1,16 @@
-# Victron-GX-Mock: MQTT auf Port 1883 (Broker wie auf dem GX), Modbus TCP auf Port 502, dazu eine eigene
-# Balkonaut-Test-Instanz auf Port 8001 (Daten in ./test-data, getrennt von der echten Anlage).
-#   docker compose run --rm balkonaut-test python /srv/gx.py history   # einmalig: 40 Tage Verlauf (DAYS)
-#   docker compose up -d --build                                       # Mock und Test-Instanz starten
+# Victron-GX-Mock als vollständiger Stack, z. B. in Dockhand (Compose einfügen, keine weiteren Dateien nötig):
+# - mosquitto: MQTT-Broker wie auf dem GX, Port 1883
+# - gx: nachgebauter GX (MQTT und Modbus TCP Port 502) mit simulierter Anlage
+# - history: füllt beim ersten Start 40 Tage Verlauf in die Test-Datenbank, danach ohne Wirkung
+# - balkonaut-test: eigene Balkonaut-Instanz auf Port 8001, getrennt von der echten Anlage
+# Der Code des Mocks kommt von GitHub, fest auf einen Commit (MOCK_REF), damit nie ungeprüfter Code läuft.
 # Eine andere Balkonaut-Instanz liest den Mock über die IP-Adresse dieses Rechners.
 # Nur zum Testen im Heimnetz: Broker und Modbus ohne Anmeldung, nicht ins Internet freigeben.
-# Andere Ports: MQTT_PORT und MODBUS_PORT in .env, dann in Balkonaut <IP>:<Port> und den Typ in config.yaml setzen.
+# Anpassbar über Umgebungsvariablen bzw. .env: MQTT_PORT, MODBUS_PORT, TEST_PORT, SPEED, WEATHER, DAYS, TZ, MOCK_REF.
+x-mock: &mock
+  MOCK_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-24b21d7b7d0b57d0b77742e2f63b0e5459021bea}/tools/victron-mock/gx.py
+  TZ: ${TZ:-Europe/Berlin}
+
 services:
   mosquitto:
     image: eclipse-mosquitto:2.0.22
@@ -12,28 +18,50 @@ services:
     ports:
       - "${MQTT_PORT:-1883}:1883"
     restart: unless-stopped
+
   gx:
-    build: .
+    image: python:3.12-slim
     environment:
+      <<: *mock
       PORTAL_ID: ${PORTAL_ID:-c0619ab00000}
       SPEED: ${SPEED:-1}          # 1 = Echtzeit, 60 = eine Stunde je Minute
       WEATHER: ${WEATHER:-auto}   # auto, sonnig, wechselhaft, bedeckt
-      TZ: ${TZ:-Europe/Berlin}
+    command: >
+      sh -c "pip install --quiet --no-cache-dir --root-user-action=ignore paho-mqtt==2.1.0
+      && python -c \"import os, urllib.request; urllib.request.urlretrieve(os.environ['MOCK_URL'], '/gx.py')\"
+      && exec python -u /gx.py"
     ports:
       - "${MODBUS_PORT:-502}:502"
     depends_on:
       - mosquitto
     restart: unless-stopped
+
+  history:
+    image: ghcr.io/balkonaut/balkonaut:latest
+    environment:
+      <<: *mock
+      DAYS: ${DAYS:-40}
+    command: >
+      sh -c "python -c \"import os, urllib.request; urllib.request.urlretrieve(os.environ['MOCK_URL'], '/srv/gx.py')\"
+      && python /srv/gx.py history"
+    volumes:
+      - test-data:/data
+    restart: "no"
+
   balkonaut-test:
     image: ghcr.io/balkonaut/balkonaut:latest
     environment:
-      DAYS: ${DAYS:-40}
       TZ: ${TZ:-Europe/Berlin}
     ports:
       - "${TEST_PORT:-8001}:8000"
     volumes:
-      - ./test-data:/data
-      - ./gx.py:/srv/gx.py:ro
+      - test-data:/data
     depends_on:
-      - gx
+      history:
+        condition: service_completed_successfully
+      gx:
+        condition: service_started
     restart: unless-stopped
+
+volumes:
+  test-data:
