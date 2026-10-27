@@ -41,7 +41,7 @@
         },
         "data_description": {
           "invert": "Measurements whose entity reports the opposite sign, e.g. output to the house on the APsystems EZHI",
-          "hosts": "Addresses of devices Balkonaut queries itself on the local network, without the manufacturer's integration, separated by commas, e.g. 192.168.1.11, 192.168.1.20. Detected: APsystems EZHI, Shelly Pro 3EM, single-phase Shelly (EM1), Shelly Plug, OpenDTU and AhoyDTU. An entity mapped below takes precedence over the device."
+          "hosts": "Addresses of devices Balkonaut queries itself on the local network, without the manufacturer's integration, separated by commas, e.g. 192.168.1.11, 192.168.1.20. Detected: APsystems EZHI, Shelly Pro 3EM, single-phase Shelly (EM1), Shelly Plug, OpenDTU, AhoyDTU and Victron GX (MQTT or Modbus TCP). An entity mapped below takes precedence over the device."
         },
         "sections": {
           "grid": {

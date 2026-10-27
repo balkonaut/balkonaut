@@ -43,6 +43,12 @@ Werte je Modul liefern. Die Modulfelder tragen die Ausrichtung der Flächen (z. 
 Einstellungen, in der Integration aus den Forecast.Solar-Einträgen, die der Prognose des jeweiligen Wechselrichters
 zugeordnet sind. Ohne Flächen heißen sie **Module**.
 
+Bei einem **Victron GX** über MQTT hängt jedes Solarfeld an einem eigenen Laderegler (MPPT). Das Bild zeigt dann ein
+Feld je Laderegler mit dessen Namen am GX (*Custom Name*, sonst das Modell) und eigener Leitung, abwechselnd links und
+rechts, bis zu drei je Seite; eine AC-gekoppelte Anlage kommt als **Zusatz-WR** dazu. Bei mehr als sechs Feldern
+stehen die kleinsten zusammen unter **weitere**. Über Modbus TCP gibt der GX die Laderegler nur unter wechselnden
+Unit-IDs heraus, dort zeigt das Bild die Summe wie sonst.
+
 ### Woher kommt dein Strom heute?
 
 Das Diagramm zeigt je Stunde zwei Balken nebeneinander: **grün**, was das Balkonkraftwerk ins Haus abgegeben hat

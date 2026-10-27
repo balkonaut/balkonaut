@@ -256,7 +256,20 @@ def dashboard(request: Request, zeitraum: str = "tag"):
         "extra_name": (cfg["system"].get("extra_name") or "Zusatz-WR")[:14],
         "modules": {inv: " + ".join(direction(p["azimuth"]).split()[0] for p in cfg.get("planes") or []
                                      if p.get("inverter", "storage") == inv) for inv in ("storage", "extra")},
+        "fields": pv_fields(live, (cfg["system"].get("extra_name") or "Zusatz-WR")[:14]),
     })
+
+
+def pv_fields(live, extra_name):
+    """Solarfelder je Laderegler (Victron-MPPT) für den Energiefluss: [(Name, W, Symbol)], höchstens 6, sonst die
+    kleinsten zusammen als „weitere“; AC-gekoppelte PV als eigenes Feld. Leer ohne Laderegler."""
+    mppt = sorted(((devices.LABELS.get(k) or "Laderegler " + k.split("_")[2], v or 0, "panel")
+                   for k, v in live.items() if k.startswith("pv_mppt_")), key=lambda f: -f[1])
+    if not mppt:
+        return []
+    if live.get("pv_ac_power") is not None:
+        mppt.append((extra_name, live["pv_ac_power"], "sun"))
+    return mppt if len(mppt) <= 6 else mppt[:5] + [("weitere", sum(f[1] for f in mppt[5:]), "panel")]
 
 
 def history_data(request, ansicht, datum):
@@ -301,7 +314,8 @@ def zero_feed_in(request: Request):
 
 
 DEVICE_NAMES = {"apsystems_ezhi": "APsystems EZHI", "shelly_em": "Shelly 3EM", "shelly_em1": "Shelly EM (eine Phase)",
-                "shelly_plug": "Shelly Plug", "opendtu": "Hoymiles über OpenDTU", "ahoydtu": "Hoymiles über AhoyDTU"}
+                "shelly_plug": "Shelly Plug", "opendtu": "Hoymiles über OpenDTU", "ahoydtu": "Hoymiles über AhoyDTU",
+                "victron_mqtt": "Victron GX über MQTT", "victron_modbus": "Victron GX über Modbus TCP"}
 INVERTIBLE = {"shelly_plug": "output_power", "shelly_em": "grid_power", "shelly_em1": "grid_power"}  # Richtung je nach Anschluss
 # Anzeige der aktuellen Werte: Messgröße, Name, Einheit, Richtung bei + und -
 LIVE = [("grid_power", "Netz", "W", ("Bezug", "Einspeisung")), ("pv_power", "PV", "W", None),
@@ -360,8 +374,8 @@ async def save_devices(request, cfg, form):
         except ValueError:
             return await settings_page(request, cfg, 400, device_error=(
                 f"Unter {host} antwortet kein bekanntes Gerät. Adresse prüfen; unterstützt sind APsystems EZHI "
-                "(lokaler Modus in der APsystems-App), Shelly-Zähler, Shelly Plug und Hoymiles über OpenDTU oder "
-                "AhoyDTU (IP-Adresse der DTU)."))
+                "(lokaler Modus in der APsystems-App), Shelly-Zähler, Shelly Plug, Hoymiles über OpenDTU oder "
+                "AhoyDTU (IP-Adresse der DTU) und Victron GX (MQTT oder Modbus TCP am GX einschalten)."))
     elif form.get("aktion") == "entfernen":
         cfg["devices"] = [d for d in devs if d["host"] != host]
     elif form.get("aktion") == "drehen":

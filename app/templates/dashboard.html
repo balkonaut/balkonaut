@@ -107,6 +107,12 @@
     <text class="lbl" x="10" y="19"{% if label|length > 12 %} textLength="86" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ label }}</text><svg x="100" y="7" width="16" height="16" viewBox="0 0 24 24" class="ico"><use href="#i-{{ icon }}"/></svg>
     <text class="w" x="10" y="41">{{ watts|abs_de(0) }} W</text>{{ caller() if caller }}</g>
 {% endmacro %}
+{% macro ladder(fields) %}{# je Laderegler ein Feld, abwechselnd links und rechts, bis 3 je Seite, ohne Kreuzungen #}
+  {% if fields|length == 1 %}{{ line("M200 66 V222", fields[0][1], "var(--sun)") }}{{ node(140, 10, "var(--sun)", fields[0][0], fields[0][1], fields[0][2]) }}
+  {% else %}{% for name, watts, icon in fields %}{% set row = loop.index0 // 2 %}{% set y = 10 + row * 68 %}
+    {% if loop.index0 % 2 %}{{ line("M276 " ~ (y + 28) ~ " H" ~ (208 + row * 7) ~ " V222", watts, "var(--sun)") }}{{ node(276, y, "var(--sun)", name, watts, icon) }}
+    {% else %}{{ line("M124 " ~ (y + 28) ~ " H" ~ (192 - row * 7) ~ " V222", watts, "var(--sun)") }}{{ node(4, y, "var(--sun)", name, watts, icon) }}{% endif %}{% endfor %}{% endif %}
+{% endmacro %}
 {% set batt = live.get("battery_power") %}{% set grid = live.get("grid_power") %}{% set out = live.get("output_power") %}
 {% set house = out + grid if out is not none and grid is not none else none %}
 
@@ -126,7 +132,8 @@
     <svg viewBox="0 0 400 407" role="img" aria-label="Sonne {{ live.pv|de(0) }} W, Akku {{ batt|de(0) }} W, Haus {{ house|de(0) }} W, Netz {{ grid|de(0) }} W">
       {% set pv_ac = live.get("pv_ac_power") %}
       {# Module oben, je Wechselrichter ein Feld mit gemeinsamer Leistung (Werte je Modul liefern die Geräte nicht) #}
-      {% if pv_ac is none %}{{ line("M200 66 V222", live.pv, "var(--sun)") }}{{ node(140, 10, "var(--sun)", modules.storage or "Module", live.pv, "panel") }}
+      {% if fields %}{{ ladder(fields) }}
+      {% elif pv_ac is none %}{{ line("M200 66 V222", live.pv, "var(--sun)") }}{{ node(140, 10, "var(--sun)", modules.storage or "Module", live.pv, "panel") }}
       {% else %}{{ line("M100 66 V182 H190 V222", live.get("pv_power"), "var(--sun)") }}{{ line("M300 66 V88", pv_ac, "var(--sun)") }}
         {{ line("M300 144 V182 H210 V222", pv_ac, "var(--sun)") }}
         {{ node(40, 10, "var(--sun)", modules.storage or "Module", live.get("pv_power"), "panel") }}{{ node(240, 10, "var(--sun)", modules.extra or "Module", pv_ac, "panel") }}

@@ -1,0 +1,38 @@
+# Victron-GX-Mock: MQTT auf Port 1883 (Broker wie auf dem GX), Modbus TCP auf Port 502, dazu eine eigene
+# Balkonaut-Test-Instanz auf Port 8001 (Daten in ./test-data, getrennt von der echten Anlage).
+#   docker compose run --rm balkonaut-test python /srv/gx.py history   # einmalig: 40 Tage Verlauf (DAYS)
+#   docker compose up -d --build                                       # Mock und Test-Instanz starten
+# Eine andere Balkonaut-Instanz liest den Mock über die IP-Adresse dieses Rechners.
+# Andere Ports: MQTT_PORT und MODBUS_PORT in .env, dann in Balkonaut <IP>:<Port> und den Typ in config.yaml setzen.
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.22
+    command: mosquitto -c /mosquitto-no-auth.conf
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+    restart: unless-stopped
+  gx:
+    build: .
+    environment:
+      PORTAL_ID: ${PORTAL_ID:-c0619ab00000}
+      SPEED: ${SPEED:-1}          # 1 = Echtzeit, 60 = eine Stunde je Minute
+      WEATHER: ${WEATHER:-auto}   # auto, sonnig, wechselhaft, bedeckt
+      TZ: ${TZ:-Europe/Berlin}
+    ports:
+      - "${MODBUS_PORT:-502}:502"
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+  balkonaut-test:
+    image: ghcr.io/balkonaut/balkonaut:latest
+    environment:
+      DAYS: ${DAYS:-40}
+      TZ: ${TZ:-Europe/Berlin}
+    ports:
+      - "${TEST_PORT:-8001}:8000"
+    volumes:
+      - ./test-data:/data
+      - ./gx.py:/srv/gx.py:ro
+    depends_on:
+      - gx
+    restart: unless-stopped

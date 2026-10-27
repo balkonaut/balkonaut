@@ -99,7 +99,7 @@ def test_forecast_retry(monkeypatch):
 
 
 def test_detect(monkeypatch):
-    """Erkennung an der Antwort; HTTP-Fehler heißt nächste Probe, keine Antwort beendet die Suche."""
+    """Erkennung an der Antwort; HTTP-Fehler heißt nächste Probe, ohne Webserver geht es mit Victron weiter."""
     import urllib.error
     answers = {("pro3em", "shelly"): {"app": "Pro3EM"}, ("pro3em", "rpc/EM.GetStatus?id=0"): EM,
                ("plug", "shelly"): {"app": "OutdoorPlugSG3"},
@@ -115,6 +115,7 @@ def test_detect(monkeypatch):
             raise urllib.error.HTTPError(path, 404, "Not Found", {}, None)
         return answers[host, path]
     monkeypatch.setattr(devices, "_get", get)
+    monkeypatch.setattr(devices, "_connect", lambda *a, **k: (_ for _ in ()).throw(ConnectionRefusedError()))  # kein Victron
     found = {h: devices.detect(h) for h in ("pro3em", "plug", "proem", "ezhi", "opendtu", "ahoy")}
     assert found == {"pro3em": "shelly_em", "plug": "shelly_plug", "proem": "shelly_em1", "ezhi": "apsystems_ezhi",
                      "opendtu": "opendtu", "ahoy": "ahoydtu"}
@@ -162,3 +163,57 @@ def test_estimate(monkeypatch):
     at = lambda h: datetime(2026, 10, 25, h, tzinfo=TZ).timestamp()
     assert day == 2.25 and urls == ["https://api.forecast.solar/estimate/52.0/11.3/30/-30/0.87"]
     assert hours == {at(7): 0.04, at(8): 0.21, at(16): 0.035}
+
+
+def test_victron(monkeypatch):
+    """Victron GX über Modbus TCP und MQTT: gleiche Messgrößen, Netz über alle Phasen, AC-gekoppelte PV getrennt.
+    Fake-Gerät mit Antworten wie tools/victron-mock (Register laut Liste 3.81, Nachrichten wie dbus-flashmq)."""
+    import json
+    import struct
+    devices._portal_id.cache_clear()
+    regs = {842: -368, 843: 50, 850: 120, 811: 40, 817: 700, 818: 80, 819: 33, 820: 300, 821: -20, 822: 5}
+    msgs = {"/Dc/Battery/Power": -368, "/Dc/Battery/Soc": 50, "/Dc/Pv/Power": 120, "/Ac/PvOnGrid/L1/Power": 40,
+            "/Ac/Consumption/L1/Power": 700, "/Ac/Consumption/L2/Power": 80, "/Ac/Consumption/L3/Power": 33,
+            "/Ac/Grid/L1/Power": 300, "/Ac/Grid/L2/Power": -20, "/Ac/Grid/L3/Power": 5, "/Ac/Genset/L1/Power": None,
+            "/Serial": "x" * 200}  # lange Nachricht: Restlänge über zwei Bytes
+
+    def pub(topic, payload):
+        return devices._packet(0x30, devices._str(topic) + payload)
+
+    class GX:
+        def __init__(self, port):
+            self.port, self.out = port, b""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def recv(self, n):
+            chunk, self.out = self.out[:n], self.out[n:]
+            return chunk
+
+        def sendall(self, data):
+            if self.port == 502:
+                tid, _, _, unit, _, start, count = struct.unpack(">HHHBBHH", data)
+                body = bytes([3, 2 * count]) + b"".join(struct.pack(">h", regs.get(a, 0)) for a in range(start, start + count))
+                self.out += struct.pack(">HHHB", tid, 0, len(body) + 1, unit) + body
+            elif data[0] == 0x82:  # SUBSCRIBE: SUBACK, bei der Suche gleich die Serial-Meldung
+                self.out += b"\x90\x03\x00\x01\x00" + (pub("N/c0619a/system/0/Serial", b'{"value": "c0619a"}')
+                                                       if b"N/+/" in data else b"")
+            elif data[0] == 0x30:  # Keepalive: alles, ein verschwundenes Gerät leer, dann Abschluss
+                self.out += b"".join(pub(f"N/c0619a/system/0{p}", json.dumps({"value": v}).encode()) for p, v in msgs.items())
+                self.out += pub("N/c0619a/solarcharger/278/Yield/Power", b'{"value": 80}')
+                self.out += pub("N/c0619a/solarcharger/278/CustomName", b'{"value": "MPPT Ost"}')
+                self.out += pub("N/c0619a/solarcharger/279/Yield/Power", b'{"value": 40}')
+                self.out += pub("N/c0619a/solarcharger/279/ProductName", b'{"value": "SmartSolar MPPT 75/15"}')
+                self.out += pub("N/c0619a/vebus/276/Ac/Out/L1/P", b"") + pub("N/c0619a/full_publish_completed", b'{"value": 1}')
+
+    monkeypatch.setattr(devices, "_connect", lambda host, port, timeout=5: GX(port))
+    expected = {"pv_power": 120, "pv_ac_power": 40, "battery_power": -368, "battery_soc": 50, "grid_power": 285,
+                "output_power": 528}  # Verbrauch 813 W minus Netzbezug 285 W
+    assert devices.victron_modbus("gx") == expected
+    assert devices.victron_mqtt("gx") == expected | {"pv_mppt_278_power": 80, "pv_mppt_279_power": 40}  # je Laderegler
+    assert devices.LABELS["pv_mppt_278_power"] == "MPPT Ost" and devices.LABELS["pv_mppt_279_power"] == "SmartSolar MPPT 75/15"
+    assert devices._portal_id("gx") == "c0619a"

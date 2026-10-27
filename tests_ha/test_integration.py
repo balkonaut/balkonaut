@@ -325,7 +325,7 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     assert msg["success"] and "tag" in msg["result"]["status"]["bilanz"]
     assert msg["result"]["setup"] == {"messgroessen": False, "prognose": False, "preise": False, "inbetriebnahme": False}
     assert msg["result"]["names"] == {"hub": "EZHI", "battery": "Phylion", "extra": "EZ1-M",  # Modell aus dem Register
-                                      "modules": {"storage": None, "extra": None}}
+                                      "modules": {"storage": None, "extra": None}, "fields": {}}
     await ws.send_json({"id": 2, "type": "balkonaut/kacheln"})
     assert (await ws.receive_json())["result"]["nulleinspeisung"]["anteil_nahe_null"][1] == 0.8
     await ws.send_json({"id": 3, "type": "balkonaut/status", "entry_id": "gibt-es-nicht"})

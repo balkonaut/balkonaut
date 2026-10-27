@@ -57,7 +57,7 @@ Voraussetzung: Home Assistant 2026.10 oder neuer.
    Richtung, z. B. „Netzleistung: 312 W (Bezug)“. Stimmt eine Richtung nicht, die Messgröße unter
    *Vorzeichen drehen* wählen. Geräte ohne Integration in Home Assistant fragt Balkonaut auch selbst ab: ihre
    Adressen unter *Geräte direkt abfragen* eintragen (APsystems EZHI, Shelly Pro 3EM, Shelly mit einer Phase,
-   Shelly Plug, OpenDTU, AhoyDTU).
+   Shelly Plug, OpenDTU, AhoyDTU, Victron GX).
 3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht.
 
 Danach unter *Konfigurieren* Arbeitspreis, Einspeisevergütung, Anschaffungskosten und Inbetriebnahme eintragen.
@@ -120,8 +120,8 @@ type: custom:balkonaut-card
 ## Ohne Home Assistant oder mit der Docker-App
 
 Balkonaut läuft auch ganz ohne Home Assistant als Docker-Container, etwa auf einer NAS oder einem Raspberry Pi,
-mit eigener Web-Oberfläche. Er liest APsystems EZHI, Shelly-Zähler und Shelly Plug sowie Hoymiles über OpenDTU oder
-AhoyDTU direkt im Heimnetz und holt Prognose und Jahresverlauf aus Standort und Flächen. Andere Geräte liest die
+mit eigener Web-Oberfläche. Er liest APsystems EZHI, Shelly-Zähler und Shelly Plug, Hoymiles über OpenDTU oder
+AhoyDTU sowie Victron GX (MQTT, Modbus TCP) direkt im Heimnetz und holt Prognose und Jahresverlauf aus Standort und Flächen. Andere Geräte liest die
 Docker-App über Home Assistant, oder man nutzt gleich die Integration, die viele Hersteller kennt
 ([Unterstützte Geräte](https://balkonaut.github.io/balkonaut/geraete/)):
 

@@ -39,7 +39,7 @@ nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung p
 | Zendure SolarFlow, Hyper, AIO | Zendure (HACS) | PV mit Zähler, Akku mit Zählern, Kapazität und Ladegrenzen, Abgabe mit Zähler, Abgabelimit | belegt | nein | nicht geprüft |
 | EcoFlow PowerStream, STREAM | EcoFlow Cloud (HACS) | Akku mit Ladegrenzen, Abgabe ins Haus; STREAM auch PV, Akku-Zähler und Netz | prüfen | nein | nicht geprüft |
 | Growatt MIN, MIC, MOD, SPH | Growatt Server | PV mit Zähler, Ladestand, Akku-Zähler, Abgabe | — | nein | nicht geprüft |
-| Victron GX (MultiPlus, Quattro, MPPT) | Victron GX, Victron MQTT (HACS) oder Victron Modbus (HACS) | PV und Akku mit Zählern, Netz; über Modbus nur Akku | GX und MQTT belegt, Modbus prüfen | nein | nicht geprüft |
+| Victron GX (MultiPlus, Quattro, MPPT) | Victron GX, Victron MQTT (HACS) oder Victron Modbus (HACS) | PV und Akku mit Zählern, Netz; über Modbus nur Akku | GX und MQTT belegt, Modbus prüfen | ja über MQTT oder Modbus TCP am GX (ohne Zähler) | nicht geprüft |
 | Fox ESS H1, H3, KH, EVO | FoxESS Modbus oder FoxESS Cloud (HACS) | PV mit Zähler, Akku mit Zählern und Ladegrenzen, Netz, Abgabe; Cloud nur PV und Akku | Modbus belegt, Cloud prüfen | nein | nicht geprüft |
 | Marstek Venus C, D, E | Marstek Local API oder Marstek Modbus (HACS) | PV, Akku; über Modbus auch Zähler, Ladegrenzen und Abgabe | Local API belegt, Modbus prüfen | nein | nicht geprüft |
 | Sungrow SH*RT, SH*K | Modbus-Vorlage von mkaiser (YAML) | PV und Akku mit Zählern, Kapazität und Ladegrenzen, Netz, Abgabe | belegt | nein | nicht geprüft |
@@ -79,6 +79,18 @@ besser deren Entitäten zu.
 | Shelly Pro EM, EM Gen3 (eine Phase je Kanal) | Shelly | Netzleistung am ersten Kanal | nicht geprüft |
 | Hoymiles über OpenDTU | OpenDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, mit Zähler | nicht geprüft |
 | Hoymiles über AhoyDTU | AhoyDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, ohne Zähler | nicht geprüft |
+| Victron GX (Cerbo GX, Venus GX, Ekrano GX) | GX (am GX unter *Einstellungen → Dienste* MQTT oder Modbus TCP einschalten) | PV am Laderegler, AC-gekoppelte PV als zusätzlicher Wechselrichter, Akku mit Ladestand, Netz über alle Phasen, Abgabe ins Haus, ohne Zähler | nicht geprüft, nur gegen einen Nachbau |
+
+### Victron GX
+
+Balkonaut liest beim GX die Systemwerte (`com.victronenergy.system`), dieselben, die die Übersicht am GX zeigt.
+Über **Modbus TCP** (Port 502, Unit-ID 100) antwortet der GX sofort, das erkennt Balkonaut zuerst. Über **MQTT**
+(Port 1883) fragt Balkonaut jedes Mal mit einem Keepalive alle Werte ab; die VRM-Portal-ID findet es selbst. Ist
+beides eingeschaltet, genügt eines. Akku positiv beim Laden, Netz positiv beim Bezug, wie bei Victron. Die Abgabe ins Haus (PV und Akku zusammen)
+ist der Verbrauch, den der GX misst, minus dem Netzbezug; daraus ergibt sich der Hausverbrauch. Zähler liefert
+der GX für das System nicht, Balkonaut summiert die Leistung dann selbst auf. Über MQTT liest Balkonaut zusätzlich jeden
+Laderegler (MPPT) einzeln, der Energiefluss zeigt dann ein Feld je Solarfeld. Ein Shelly als Netzmessung geht dem
+Netzwert des GX vor.
 
 ### Hoymiles: welche IP-Adresse?
 
@@ -99,7 +111,7 @@ liefert keinen Zähler, Balkonaut summiert die Leistung dann selbst auf.
 
 ### Was nicht direkt geht
 
-Geräte mit Modbus (z. B. Sungrow, Huawei, Victron, Fox ESS, Deye) oder nur mit Cloud-Zugang (z. B. Anker Solix,
+Geräte mit Modbus (z. B. Sungrow, Huawei, Fox ESS, Deye) oder nur mit Cloud-Zugang (z. B. Anker Solix,
 EcoFlow, Zendure, Growatt, Tibber) liest Balkonaut nicht selbst. Dafür gibt es zwei Wege: die
 [Integration für Home Assistant](installation.md) mit der Integration des Herstellers, deren Entitäten Balkonaut für
 viele dieser Geräte kennt (Tabellen oben), oder die Docker-App

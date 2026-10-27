@@ -30,7 +30,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.loader import async_get_integration
 
 from .core import analytics, forecast, views
-from .core.devices import HUB_NAMES, Devices
+from .core.devices import HUB_NAMES, LABELS, Devices
 from .core.homeassistant import normalize
 from .core.profiles import direction
 from .core.storage import Storage
@@ -358,7 +358,8 @@ def _names(hass: HomeAssistant, entry: ConfigEntry) -> dict:
     direct = next((HUB_NAMES[d["type"]] for d in entry.data.get(CONF_DEVICES, []) if d["type"] in HUB_NAMES), None)
     return {"hub": hub.model if hub and hub.model else direct, "battery": entry.options.get("battery_name") or None,
             "extra": own_extra or entry.options.get("extra_name") or None,
-            "modules": {"storage": modules("pv_forecast_today", "storage"), "extra": modules("pv_ac_forecast_today", "extra")}}
+            "modules": {"storage": modules("pv_forecast_today", "storage"), "extra": modules("pv_ac_forecast_today", "extra")},
+            "fields": dict(LABELS)}  # Namen der Laderegler (Victron-MPPT), wenn Geräte direkt abgefragt werden
 
 
 async def _view(hass, connection, msg, path: str, params: dict, compute) -> None:

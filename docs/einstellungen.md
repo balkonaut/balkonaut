@@ -44,6 +44,8 @@ devices:
 | `opendtu` | Hoymiles über OpenDTU (nicht geprüft) | Erzeugung und Abgabe aller Wechselrichter, mit Zähler |
 | `ahoydtu` | Hoymiles über AhoyDTU (nicht geprüft) | Erzeugung und Abgabe aller Wechselrichter, ohne Zähler |
 | `shelly_plug` | Shelly Plug Gen2 oder Gen3 am Einspeisepunkt | Abgabe ins Haus mit Zähler |
+| `victron_mqtt` | Victron GX über MQTT (nicht geprüft) | PV (DC und AC-gekoppelt), Akku mit Ladestand, Netz über alle Phasen, Abgabe ins Haus, ohne Zähler |
+| `victron_modbus` | Victron GX über Modbus TCP, Unit-ID 100 (nicht geprüft) | wie `victron_mqtt` |
 
 Welche IP-Adresse bei Hoymiles einzutragen ist und was die Docker-App nicht direkt liest, steht unter
 [Unterstützte Geräte](geraete.md#gerate-direkt-im-heimnetz). Hat das System einen Speicher, gilt dessen

@@ -115,7 +115,8 @@ class BalkonautCard extends HTMLElement {
     const keys = ["pv_power", "pv_ac_power", "battery_power", "battery_soc", "output_power", "grid_power",
       "battery_soc_min", "battery_soc_max", "battery_discharge_protection", "battery_capacity"];
     const v = Object.fromEntries(keys.map((k) => [k, this._value(k)]));
-    const sig = JSON.stringify([v, this._data.status?.bilanz?.tag]);
+    const mppt = Object.entries(this._data.status?.live || {}).filter(([k]) => k.startsWith("pv_mppt_"));
+    const sig = JSON.stringify([v, mppt, this._data.status?.bilanz?.tag]);
     if (sig === this._last) return; // nur neu zeichnen, wenn sich ein Wert geändert hat
     this._last = sig;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${this._flow(v)}${this._battery(v)}${this._stats()}</ha-card>`;
@@ -183,8 +184,23 @@ class BalkonautCard extends HTMLElement {
     const extraName = esc((names.extra || "Zusatz-WR").slice(0, 14));
     const modules = (k) => esc((names.modules?.[k] || "Module").slice(0, 14));
     const battLabel = (batt || 0) > 5 ? `${battName} lädt` : (batt || 0) < -5 ? `${battName} entlädt` : battName;
+    // Solarfelder je Laderegler (Victron-MPPT): höchstens 6, sonst die kleinsten als „weitere“; AC-gekoppelte PV dazu
+    const fields = Object.keys(this._data.status?.live || {}).filter((k) => k.startsWith("pv_mppt_"))
+      .map((k) => [esc(names.fields?.[k] || `Laderegler ${k.split("_")[2]}`), this._value(k) ?? 0, "panel"])
+      .sort((a, b) => b[1] - a[1]);
+    if (fields.length && pvAc !== null) fields.push([extraName, pvAc, "sun"]);
+    const shown = fields.length > 6 ? [...fields.slice(0, 5), ["weitere", fields.slice(5).reduce((s, f) => s + f[1], 0), "panel"]] : fields;
+    const sun = "var(--bk-sun)";
+    // je Feld eine Leitung, abwechselnd links und rechts, bis 3 je Seite, ohne Kreuzungen
+    const ladder = shown.length === 1
+      ? this._line("M200 66 V222", shown[0][1], sun) + this._node(140, 10, sun, shown[0][0], shown[0][1], shown[0][2])
+      : shown.map(([name, w, icon], k) => {
+        const row = Math.floor(k / 2), y = 10 + row * 68;
+        return k % 2 ? this._line(`M276 ${y + 28} H${208 + row * 7} V222`, w, sun) + this._node(276, y, sun, name, w, icon)
+          : this._line(`M124 ${y + 28} H${192 - row * 7} V222`, w, sun) + this._node(4, y, sun, name, w, icon);
+      }).join("");
     // Module oben, je Wechselrichter ein Feld mit gemeinsamer Leistung (Werte je Modul liefern die Geräte nicht)
-    const pvPart = pvAc === null
+    const pvPart = shown.length ? ladder : pvAc === null
       ? this._line("M200 66 V222", pv, "var(--bk-sun)") + this._node(140, 10, "var(--bk-sun)", modules("storage"), pv, "panel")
       : this._line("M100 66 V182 H190 V222", v.pv_power, "var(--bk-sun)") + this._line("M300 66 V88", pvAc, "var(--bk-sun)")
         + this._line("M300 144 V182 H210 V222", pvAc, "var(--bk-sun)")
