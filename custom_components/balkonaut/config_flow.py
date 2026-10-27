@@ -140,9 +140,8 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_app()
         self._entities, self._invert = dict(entry.data[CONF_ENTITIES]), list(entry.data.get(CONF_INVERT, []))
         self._devices = list(entry.data.get(CONF_DEVICES, []))
-        self._device_values = {}
-        if self._devices:
-            self._device_values = await self.hass.async_add_executor_job(Devices(self._devices).read)
+        self._device_values = (await self.hass.async_add_executor_job(Devices(self._devices).read)
+                               if self._devices else {})
         return await self.async_step_entities()
 
     def _suggest(self, devices: dict[str, str]) -> tuple[dict[str, str], list[str]]:

@@ -211,7 +211,6 @@ def battery(rows, start, prices, commissioned=None, collected=None, known=None):
         "kosten_bei_leerem_akku": import_empty * prices["energy"],
         "zusatz_kapazitaet": extra,
         "groesserer_akku": shifted if extra else None,
-        "groesserer_akku_euro": shifted * prices["energy"] if extra else None,
         # aufs Jahr hochgerechnet über die Stunden mit Ladestand; ponytail: linear, ohne Jahreszeiten
         "groesserer_akku_jahr": shifted * prices["energy"] * 8760 / len(hours["battery_soc"])
         if extra and hours.get("battery_soc") else None,
