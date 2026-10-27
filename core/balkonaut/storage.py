@@ -11,7 +11,7 @@ import math
 import sqlite3
 import threading
 
-RAW_DAYS = 14  # ponytail: feste Aufbewahrung der Rohwerte, konfigurierbar machen, falls jemand mehr braucht
+RAW_DAYS = 14  # Vereinfachung: feste Aufbewahrung der Rohwerte, konfigurierbar machen, falls jemand mehr braucht
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS raw (key TEXT, ts INTEGER, value REAL, PRIMARY KEY (key, ts)) WITHOUT ROWID;

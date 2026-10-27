@@ -217,3 +217,13 @@ def test_victron(monkeypatch):
     assert devices.victron_mqtt("gx") == expected | {"pv_mppt_278_power": 80, "pv_mppt_279_power": 40}  # je Laderegler
     assert devices.LABELS["pv_mppt_278_power"] == "MPPT Ost" and devices.LABELS["pv_mppt_279_power"] == "SmartSolar MPPT 75/15"
     assert devices._portal_id("gx") == "c0619a"
+
+    class Flood(GX):  # sendet ohne Ende Änderungen, aber nie den Abschluss
+        def recv(self, n):
+            if not self.out:
+                self.out = pub("N/c0619a/system/0/Dc/Pv/Power", b'{"value": 1}')
+            return super().recv(n)
+    monkeypatch.setattr(devices, "_connect", lambda host, port, timeout=5: Flood(port))
+    import pytest
+    with pytest.raises(OSError):
+        devices._mqtt("gx", ["N/c0619a/#"], lambda t: False, timeout=0.2)  # endet nach der Zeitgrenze

@@ -37,7 +37,7 @@ def load(path):
 def save(path, cfg):
     if addon():  # Verbindung kommt aus den Add-on-Optionen, Token nicht in config.yaml ablegen
         cfg = {k: v for k, v in cfg.items() if k != "home_assistant"}
-    # ponytail: safe_dump verwirft Kommentare in config.yaml; ruamel.yaml, falls das stört
+    # Vereinfachung: safe_dump verwirft Kommentare in config.yaml; ruamel.yaml, falls das stört
     path.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False))
 
 

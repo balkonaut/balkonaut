@@ -116,7 +116,7 @@
   <button class="save">Standort und Flächen speichern</button>
 </form>
 <script>
-  // ponytail: nur der erste Treffer, Auswahlliste bei Bedarf; Nominatim erlaubt eine Anfrage pro Sekunde, daher nur auf Klick
+  // Vereinfachung: nur der erste Treffer, Auswahlliste bei Bedarf; Nominatim erlaubt eine Anfrage pro Sekunde, daher nur auf Klick
   const ort = document.getElementById("ort");
   function setzeOrt(lat, lon, text) {
     document.getElementById("lat").value = lat.toFixed(4).replace(".", ",");

@@ -154,19 +154,15 @@ def publish_all(client, echo=None):
 
 
 def on_message(client, _userdata, msg):
-    rest = msg.topic.split("/", 2)[2]
+    rest = msg.topic.split("/", 2)[-1]  # auch R/<Portal-ID> ohne Pfad
     if rest in ("keepalive", "system/0/Serial"):  # system/0/Serial: alte Form des Keepalive
-        try:
-            opts = json.loads(msg.payload).get("keepalive-options", []) if msg.payload else []
-        except ValueError:
+        try:  # fremde Nutzlast darf die MQTT-Schleife nicht beenden
+            opts = list(json.loads(msg.payload).get("keepalive-options", [])) if msg.payload else []
+        except (ValueError, AttributeError, TypeError):
             opts = []
         keepalive["until"] = time.time() + 60
         if "suppress-republish" not in opts:
-            publish_all(client, next((o["full-publish-completed-echo"] for o in opts if isinstance(o, dict)), None))
-    elif rest.startswith("system/0/"):  # Leseanfrage für einen Pfad
-        path = "/" + rest.removeprefix("system/0/")
-        if path in (now := values()):
-            client.publish(f"N/{PORTAL_ID}/{rest}", json.dumps({"value": now[path]}))
+            publish_all(client, next((o.get("full-publish-completed-echo") for o in opts if isinstance(o, dict)), None))
 
 
 def run_mqtt():
@@ -203,6 +199,8 @@ async def modbus(reader, writer):
     try:
         while True:
             tid, _, length, unit = struct.unpack(">HHHB", await reader.readexactly(7))
+            if not 2 <= length <= 254:  # Modbus TCP: Unit-ID plus höchstens 253 Bytes
+                break
             pdu = await reader.readexactly(length - 1)
             fc, regs = pdu[0], registers()
             start, count = struct.unpack(">HH", pdu[1:5]) if len(pdu) >= 5 else (0, 0)
@@ -219,7 +217,8 @@ async def modbus(reader, writer):
             writer.write(struct.pack(">HHHB", tid, 0, len(body) + 1, unit) + body)
             await writer.drain()
     except (asyncio.IncompleteReadError, ConnectionError):
-        writer.close()
+        pass
+    writer.close()
 
 
 async def main():

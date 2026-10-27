@@ -98,7 +98,7 @@ def soc_gauge(live):
                           "x2": round(50 + 50 * c, 2), "y2": round(50 + 50 * s, 2)})
     share = (soc - lo) / (hi - lo) if hi > lo else 1
     # Restzeit bis zur Obergrenze (laden) bzw. Minimum oder Entladeschutz (entladen)
-    # ponytail: ohne Wandlungsverluste und bei gleichbleibender Leistung, Verlauf glätten falls es springt
+    # Vereinfachung: ohne Wandlungsverluste und bei gleichbleibender Leistung, Verlauf glätten falls es springt
     power, cap, rest = live.get("battery_power") or 0, live.get("battery_capacity"), None
     target = hi if power > 0 else max(lo, live.get("battery_discharge_protection") or 0)
     if cap and abs(power) >= 20 and (target - soc) * power > 0:

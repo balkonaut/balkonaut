@@ -51,7 +51,7 @@ SECTIONS = {
     "forecast": ["pv_forecast_today", "pv_ac_forecast_today"],
 }
 STORAGE_KEYS = [k for k in KEYS if k not in SECTIONS["grid"] + SECTIONS["forecast"]]
-# ponytail: Texte nur deutsch wie das Handbuch; in die Übersetzungen, sobald es eine zweite Sprache gibt
+# Vereinfachung: Texte nur deutsch wie das Handbuch; in die Übersetzungen, sobald es eine zweite Sprache gibt
 # Funktion -> benötigte Messgrößen, je Eintrag reicht eine der Alternativen
 FEATURES = {
     "Bilanz mit Netzbezug, Einspeisung und Ersparnis": [("grid_power",)],
@@ -270,7 +270,7 @@ class BalkonautOptionsFlow(OptionsFlowWithReload):
                        vol.Required("cost", default=0.0): number("€", 1),
                        vol.Optional("commissioned"): DateSelector()}
             # Flächen für die Prognose ohne Forecast.Solar-Integration, je Wechselrichter eine
-            # ponytail: eine Fläche je Wechselrichter, mehrere bei Nachfrage, spätestens 31.01.2027 prüfen
+            # Vereinfachung: eine Fläche je Wechselrichter, mehrere bei Nachfrage, spätestens 31.01.2027 prüfen
             # Grenzen wie in den Einstellungen der App
             plane = vol.Schema({vol.Optional("declination"): number("°", 1, 0, max=90),
                                 vol.Optional("azimuth"): number("°", 1, 0, max=360),

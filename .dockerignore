@@ -1,10 +1,9 @@
-# Nicht in den Build-Kontext: Zugangsdaten, .env, Messdaten, lokale Umgebungen und Werkzeug-Ausgaben
+# Nicht in den Build-Kontext: Zugangsdaten, .env, Messdaten, lokale Umgebungen
 .*-token
 .git
 data
 .venv*
 site
-graphify-out
 handbuch
 **/__pycache__
 .env

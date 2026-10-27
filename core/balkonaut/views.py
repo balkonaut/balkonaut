@@ -13,7 +13,7 @@ REGULATION_KEYS = ["grid_power", "output_power", "pv_ac_power", "battery_soc"]
 
 # Erklärung und Bewertung je Kachel, für Docker-App und Panel: (Erklärung, gut, schlecht, Text gut, Text schlecht).
 # gut/schlecht None: keine Bewertung. Höher ist besser, wenn gut > schlecht. Werte in den Einheiten der Auswertung
-# (Anteile 0 bis 1). ponytail: feste Grenzen für alle Anlagen, je Anlage einstellbar machen, falls nötig.
+# (Anteile 0 bis 1). Vereinfachung: feste Grenzen für alle Anlagen, je Anlage einstellbar machen, falls nötig.
 KACHELN = {
     "bilanz": {
         "ersparnis": ("Eigenverbrauch mal Arbeitspreis plus Einspeisung mal Vergütung.",),

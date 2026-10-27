@@ -8,8 +8,8 @@ import calendar
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
-TZ = ZoneInfo("Europe/Berlin")  # ponytail: feste Zeitzone, konfigurierbar machen für Nutzer außerhalb DE/AT
-MAX_KWH_PER_DAY = 1.2 * 24  # ponytail: Höchstwert EZHI (1200 W), fängt nur grobe Datumsfehler; Limit aus HA lesen, falls nötig
+TZ = ZoneInfo("Europe/Berlin")  # Vereinfachung: feste Zeitzone, konfigurierbar machen für Nutzer außerhalb DE/AT
+MAX_KWH_PER_DAY = 1.2 * 24  # Vereinfachung: Höchstwert EZHI (1200 W), fängt nur grobe Datumsfehler; Limit aus HA lesen, falls nötig
 
 
 def _years_since(rows, commissioned):
@@ -166,7 +166,7 @@ def battery(rows, start, prices, commissioned=None, collected=None, known=None):
     outputs = energy("output_energy", "output_power+") + (charge or 0)
 
     # Wege der Energie: aus dem Akku ins Haus je Stunde höchstens der Eigenverbrauch dieser Stunde, der Rest der
-    # Entladung sind Wandlungsverluste oder ging ins Netz. ponytail: in Stunden mit Sonne und Entladung zählt der Akku
+    # Entladung sind Wandlungsverluste oder ging ins Netz. Vereinfachung: in Stunden mit Sonne und Entladung zählt der Akku
     # zuerst, genauer ginge es nur mit Messwerten im Sekundentakt.
     self_use = max(energy("output_energy", "output_power+") - wh["grid_power-"] / 1000, 0.0)
     to_house = None
@@ -180,7 +180,7 @@ def battery(rows, start, prices, commissioned=None, collected=None, known=None):
     export_full = import_empty = 0.0
     # Größerer Akku: Nach Stunden mit vollem Akku hätte ein zusätzliches Modul (halbe Kapazität, nutzbar zwischen den
     # Grenzen, 90 % Wirkungsgrad) den Netzbezug der folgenden leeren Stunden bis zu seinem Inhalt decken können.
-    # ponytail: nur Obergrenze, der abgeregelte Überschuss ist nicht gemessen; genau rechnet später der Simulator.
+    # Vereinfachung: nur Obergrenze, der abgeregelte Überschuss ist nicht gemessen; genau rechnet später der Simulator.
     extra = cap / 2 if cap else None
     usable = extra * (soc_max - soc_min) / 100 * 0.9 if extra else 0.0
     shifted = left = 0.0
@@ -211,7 +211,7 @@ def battery(rows, start, prices, commissioned=None, collected=None, known=None):
         "kosten_bei_leerem_akku": import_empty * prices["energy"],
         "zusatz_kapazitaet": extra,
         "groesserer_akku": shifted if extra else None,
-        # aufs Jahr hochgerechnet über die Stunden mit Ladestand; ponytail: linear, ohne Jahreszeiten
+        # aufs Jahr hochgerechnet über die Stunden mit Ladestand; Vereinfachung: linear, ohne Jahreszeiten
         "groesserer_akku_jahr": shifted * prices["energy"] * 8760 / len(hours["battery_soc"])
         if extra and hours.get("battery_soc") else None,
         "geladen": charge if charge is not None else wh["battery_power+"] / 1000,
@@ -316,7 +316,7 @@ def buckets(view, d):
 def history(rows, bars, prices, forecast=None):
     """Bilanz je Balken: Eigenverbrauch, Netzbezug und Erzeugung in kWh; mit forecast ({Stundenbeginn: kWh}, nur für
     Stundenbalken) dazu die erwartete Erzeugung."""
-    # ponytail: rechnet jeden Balken einzeln (Jahr: 12 Durchläufe über ein Jahr Stundenwerte); bei Bedarf vorsummieren
+    # Vereinfachung: rechnet jeden Balken einzeln (Jahr: 12 Durchläufe über ein Jahr Stundenwerte); bei Bedarf vorsummieren
     rows = _recent(rows, bars[0][1], bars[-1][2])
     out = []
     for label, a, b in bars:
@@ -339,7 +339,7 @@ def yield_watch(rows, now):
 
     Die Prognose eines Tages ist der Mittelwert des Sensors „Erzeugung heute“ über die Stunden des Tages.
     """
-    # ponytail: ein voller Akku regelt die PV am Speicher ab und senkt dessen Ertrag; Tage mit vollem Akku ausklammern, falls das stört
+    # Vereinfachung: ein voller Akku regelt die PV am Speicher ab und senkt dessen Ertrag; Tage mit vollem Akku ausklammern, falls das stört
     end = periods(now)["tag"]
     start = datetime.combine(datetime.fromtimestamp(end, TZ).date() - timedelta(days=7), time(), TZ).timestamp()
     rows = _recent(rows, start, end)  # nur die letzten 7 Tage, nicht für jeden Tag die ganze Historie

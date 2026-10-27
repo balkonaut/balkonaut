@@ -3,6 +3,7 @@
 #   docker compose run --rm balkonaut-test python /srv/gx.py history   # einmalig: 40 Tage Verlauf (DAYS)
 #   docker compose up -d --build                                       # Mock und Test-Instanz starten
 # Eine andere Balkonaut-Instanz liest den Mock über die IP-Adresse dieses Rechners.
+# Nur zum Testen im Heimnetz: Broker und Modbus ohne Anmeldung, nicht ins Internet freigeben.
 # Andere Ports: MQTT_PORT und MODBUS_PORT in .env, dann in Balkonaut <IP>:<Port> und den Typ in config.yaml setzen.
 services:
   mosquitto:

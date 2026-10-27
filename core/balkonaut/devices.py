@@ -10,6 +10,7 @@ import json
 import logging
 import socket
 import struct
+import time
 import urllib.error
 import urllib.request
 
@@ -32,7 +33,7 @@ def _num(value):
 
 @functools.lru_cache
 def _ezhi_capacity(host):
-    """Akku-Kapazität in kWh, einmal je Start. ponytail: ein weiteres Modul zeigt sich erst nach einem Neustart."""
+    """Akku-Kapazität in kWh, einmal je Start. Vereinfachung: ein weiteres Modul zeigt sich erst nach einem Neustart."""
     return _num((_get(host, "getDeviceInfo").get("data") or {}).get("batteryCapacity"))
 
 
@@ -132,7 +133,7 @@ def _recv(sock, n):
 
 
 def _modbus(sock, start, count, unit=100):
-    """Holding-Register lesen (Funktion 3). ponytail: alle als int16, uint16 über 32767 W kommt am Balkon nicht vor."""
+    """Holding-Register lesen (Funktion 3). Vereinfachung: alle als int16, uint16 über 32767 W kommt am Balkon nicht vor."""
     sock.sendall(struct.pack(">HHHBBHH", start, 0, 6, unit, 3, start, count))
     head = _recv(sock, 9)  # Transaktion, Protokoll, Länge, Unit, Funktion, Bytes bzw. Fehlercode
     if head[7] & 0x80:
@@ -164,16 +165,19 @@ def _packet(kind, body):
 
 def _mqtt(host, topics, until, publish=None, timeout=5):
     """MQTT 3.1.1 ohne Bibliothek: topics abonnieren, nach dem SUBACK publish (Topic, Nutzlast) senden und
-    Nachrichten {Topic: Nutzlast} sammeln, bis until(topic) zutrifft."""
-    got = {}
+    Nachrichten {Topic: Nutzlast} sammeln, bis until(topic) zutrifft. Höchstens timeout Sekunden insgesamt, auch wenn
+    der Broker ständig sendet, und höchstens 64 KiB je Nachricht (Werte des GX sind wenige Bytes)."""
+    got, deadline = {}, time.monotonic() + timeout
     with _connect(host, 1883, timeout) as s:
         s.sendall(_packet(0x10, _str("MQTT") + bytes([4, 2]) + struct.pack(">H", 30) + _str("")))  # Client-ID vergibt der Broker
         s.sendall(_packet(0x82, b"\0\1" + b"".join(_str(t) + b"\0" for t in topics)))
         while True:
             kind, n, shift = _recv(s, 1)[0], 0, 0
-            while (b := _recv(s, 1)[0]) & 128:
+            while (b := _recv(s, 1)[0]) & 128 and shift < 21:  # Restlänge höchstens 4 Bytes
                 n, shift = n | (b & 127) << shift, shift + 7
-            body = _recv(s, n | b << shift)
+            if (n := n | b << shift) > 65536 or time.monotonic() > deadline:
+                raise OSError("MQTT: Nachricht zu groß oder Zeit überschritten")
+            body = _recv(s, n)
             if kind == 0x90 and publish:  # SUBACK
                 s.sendall(_packet(0x30, _str(publish[0]) + publish[1]))
             elif kind & 0xF0 == 0x30:  # PUBLISH, QoS 0
@@ -189,7 +193,7 @@ LABELS = {}  # Name je Messgröße, die ein Gerät selbst benennt, z. B. pv_mppt
 
 @functools.lru_cache
 def _portal_id(host):
-    """VRM-Portal-ID aus der Serial-Meldung, die der GX auch ohne Keepalive sendet (wie victron-mqtt). ponytail:
+    """VRM-Portal-ID aus der Serial-Meldung, die der GX auch ohne Keepalive sendet (wie victron-mqtt). Vereinfachung:
     Abstand der Meldung am echten GX nicht geprüft, 10 s Wartezeit."""
     return next(iter(_mqtt(host, ["N/+/system/0/Serial"], lambda t: True, timeout=10))).split("/")[1]
 
@@ -197,7 +201,7 @@ def _portal_id(host):
 def victron_mqtt(host):
     """Victron GX über MQTT (am GX unter Einstellungen, Dienste, MQTT einschalten; nicht geprüft). Keepalive löst das
     vollständige Veröffentlichen aus, der GX hält keine Werte vor. Dazu die Leistung je Laderegler (MPPT) als
-    pv_mppt_<Instanz>_power mit Namen in LABELS. ponytail: eine Verbindung je Abfrage."""
+    pv_mppt_<Instanz>_power mit Namen in LABELS. Vereinfachung: eine Verbindung je Abfrage."""
     pid = _portal_id(host)
     got = _mqtt(host, [f"N/{pid}/system/0/#", f"N/{pid}/full_publish_completed"]
                 + [f"N/{pid}/solarcharger/+/{p}" for p in ("Yield/Power", "CustomName", "ProductName")],
