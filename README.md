@@ -52,7 +52,7 @@ Voraussetzung: Home Assistant 2026.10 oder neuer.
 *Eigenständig in Home Assistant* wählen. Die Namen der Entitäten muss man nicht kennen:
 
 1. **Geräte wählen**: Netzmessung, Speicher oder Wechselrichter, optional ein zusätzlicher Wechselrichter und
-   eine Messung am Einspeisepunkt. Was man nicht hat, bleibt leer.
+   eine Messung am Einspeisepunkt. Was man nicht hat, bleibt leer; ohne Geräte in Home Assistant alles leer lassen.
 2. **Entitäten prüfen**: Balkonaut schlägt zu jeder Messgröße eine Entität vor und zeigt die aktuellen Werte mit
    Richtung, z. B. „Netzleistung: 312 W (Bezug)“. Stimmt eine Richtung nicht, die Messgröße unter
    *Vorzeichen drehen* wählen. Geräte ohne Integration in Home Assistant fragt Balkonaut auch selbst ab: ihre

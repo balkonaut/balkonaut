@@ -11,7 +11,7 @@
       },
       "standalone": {
         "title": "Choose devices",
-        "description": "Which devices belong to your system? Balkonaut then suggests the matching entities, you check them in the next step. Leave empty what you don't have.",
+        "description": "Which devices belong to your system? Balkonaut then suggests the matching entities, you check them in the next step. Leave empty what you don't have. If your devices are not set up in Home Assistant, leave everything empty and continue with OK: in the next step you enter their addresses under “Query devices directly”.",
         "data": {
           "grid_device": "Grid meter",
           "storage_device": "Storage or inverter",
@@ -41,7 +41,7 @@
         },
         "data_description": {
           "invert": "Measurements whose entity reports the opposite sign, e.g. output to the house on the APsystems EZHI",
-          "hosts": "Addresses of devices Balkonaut queries itself on the local network, without the manufacturer's integration, separated by commas, e.g. 192.168.1.11, 192.168.1.20. Detected: APsystems EZHI, Shelly Pro 3EM, single-phase Shelly (EM1), Shelly Plug, OpenDTU and AhoyDTU. An entity mapped above takes precedence over the device."
+          "hosts": "Addresses of devices Balkonaut queries itself on the local network, without the manufacturer's integration, separated by commas, e.g. 192.168.1.11, 192.168.1.20. Detected: APsystems EZHI, Shelly Pro 3EM, single-phase Shelly (EM1), Shelly Plug, OpenDTU and AhoyDTU. An entity mapped below takes precedence over the device."
         },
         "sections": {
           "grid": {
@@ -53,9 +53,9 @@
           "generation": {
             "name": "Generation",
             "data": {
-              "pv_power": "PV power at storage",
+              "pv_power": "PV power inverter 1 with storage",
               "pv_energy": "PV energy meter",
-              "pv_ac_power": "PV power, additional inverter"
+              "pv_ac_power": "PV power additional inverter 2"
             }
           },
           "battery": {
@@ -85,8 +85,8 @@
             "name": "Forecast",
             "description": "Optional, for the yield monitor: daily forecast per inverter from the Forecast.Solar integration. Without it, enter a plane later under Configure and Balkonaut fetches the forecast from Forecast.Solar itself.",
             "data": {
-              "pv_forecast_today": "Forecast at storage",
-              "pv_ac_forecast_today": "Forecast, additional inverter"
+              "pv_forecast_today": "Forecast inverter 1 with storage",
+              "pv_ac_forecast_today": "Forecast additional inverter 2"
             }
           }
         }
@@ -260,8 +260,8 @@
     "invert": {
       "options": {
         "grid_power": "Grid power",
-        "pv_power": "PV power at storage",
-        "pv_ac_power": "PV power, additional inverter",
+        "pv_power": "PV power inverter 1 with storage",
+        "pv_ac_power": "PV power additional inverter 2",
         "battery_power": "Battery power",
         "output_power": "Output to the house"
       }

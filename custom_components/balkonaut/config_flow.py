@@ -102,12 +102,12 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
                     return await self.async_step_summary()
                 errors["base"] = "no_entities"
         entity = EntitySelector(EntitySelectorConfig(domain=["sensor", "number", "input_number"]))
-        schema = {vol.Required(sec): section(
+        # Geräte, die Balkonaut selbst abfragt, ohne Integration des Herstellers; zuerst, für Anlagen ohne Entitäten
+        schema = {vol.Optional("hosts", default=""): str}
+        schema |= {vol.Required(sec): section(
             vol.Schema({vol.Optional(k): entity for k in keys}),
             {"collapsed": bool(self._entities) and not any(k in self._entities for k in keys)})
             for sec, keys in SECTIONS.items()}
-        # Geräte, die Balkonaut selbst abfragt, ohne Integration des Herstellers
-        schema[vol.Optional("hosts", default="")] = str
         schema[vol.Optional(CONF_INVERT, default=[])] = SelectSelector(SelectSelectorConfig(
             options=SIGNED_KEYS, multiple=True, translation_key=CONF_INVERT))
         suggested = {sec: {k: self._entities[k] for k in keys if k in self._entities} for sec, keys in SECTIONS.items()}

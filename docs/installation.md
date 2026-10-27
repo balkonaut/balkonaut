@@ -75,8 +75,8 @@ Problemen eine ältere Version festhalten lässt.
     ```
 
 3. `http://<adresse>:8000/` öffnen. Bis alles eingerichtet ist, zeigt die Übersicht oben die Kachel
-   *Einrichtung* mit drei Schritten, jeweils mit Link zum passenden Abschnitt: unter *Einstellungen* die Geräte per IP-Adresse hinzufügen, Standort und Flächen eintragen, dann Preise und
-   Kosten (siehe [Einstellungen](einstellungen.md)). Wer lieber eine Datei pflegt, kopiert `config.example.yaml`
+   *Einrichtung* mit den Schritten, jeweils mit Link zum passenden Abschnitt: unter *Einstellungen* die Geräte per IP-Adresse hinzufügen,
+   optional Standort und Flächen eintragen, dann Preise und Kosten (siehe [Einstellungen](einstellungen.md)). Wer lieber eine Datei pflegt, kopiert `config.example.yaml`
    nach `data/config.yaml` und passt sie an.
 4. Prüfen, ob der Dienst läuft: `http://<adresse>:8000/api/health` muss `{"status": "ok"}` liefern.
 
@@ -151,13 +151,14 @@ Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die E
 
 1. **Geräte wählen**: Netzmessung (z. B. Shelly Pro 3EM), Speicher oder Wechselrichter (z. B. APsystems EZHI),
    optional ein zusätzlicher Wechselrichter (z. B. ein EZ1-M am Off-Grid-Port) und eine Messung am Einspeisepunkt
-   (z. B. ein Shelly Plug). Was man nicht hat, bleibt leer.
-2. **Entitäten prüfen**: Balkonaut schlägt zu jeder Messgröße eine Entität vor, gruppiert nach Netz, Erzeugung, Akku,
+   (z. B. ein Shelly Plug). Was man nicht hat, bleibt leer. Sind die Geräte nicht in Home Assistant eingebunden,
+   bleibt alles leer und es geht mit *OK* weiter zu Schritt 2.
+2. **Entitäten prüfen**: Ganz oben steht *Geräte direkt abfragen* (siehe unten). Balkonaut schlägt zu jeder Messgröße eine Entität vor, gruppiert nach Netz, Erzeugung, Akku,
    Abgabe ins Haus und Prognose. Jede Zuordnung lässt sich ändern oder ergänzen, Abschnitte ohne Vorschlag sind
    eingeklappt. Darüber stehen die aktuellen Werte mit Richtung, z. B. „Netzleistung: 312 W (Bezug)“ oder
    „Akkuleistung: 80 W (lädt)“. Passt die Richtung nicht, etwa „Abgabe ins Haus“ als Bezug während der Akku entlädt,
    die Messgröße unter *Vorzeichen drehen* wählen. Bei Prognosen von Forecast.Solar steht die
-   Ausrichtung der Flächen dabei, z. B. „Prognose Speicher: 4,2 kWh (Südost 150°)“.
+   Ausrichtung der Flächen dabei, z. B. „Prognose Wechselrichter 1 mit Speicher: 4,2 kWh (Südost 150°)“.
    Unter *Geräte direkt abfragen* lassen sich Adressen von Geräten eintragen, die Balkonaut selbst abfragt, ohne
    Integration des Herstellers in Home Assistant, durch Komma getrennt (z. B. `192.168.1.11, 192.168.1.20`). Den
    Gerätetyp erkennt Balkonaut selbst, wie in der Docker-App: APsystems EZHI (lokalen Modus in der App aktivieren),
@@ -198,7 +199,7 @@ Werte kommen in beiden Fällen von Forecast.Solar, es gibt zwei Wege:
 | Linie im Diagramm, Ausrichtung im Energiefluss | aus den Flächen des Forecast.Solar-Eintrags | aus den eingetragenen Flächen |
 
 Gibt es nur einen Forecast.Solar-Eintrag und keinen zweiten Wechselrichter, schlägt Balkonaut die Entität in Schritt 2
-selbst vor. Bei den aktuellen Werten steht die Ausrichtung dabei, z. B. „Prognose Speicher: 4,2 kWh (Südost 150°)“;
+selbst vor. Bei den aktuellen Werten steht die Ausrichtung dabei, z. B. „Prognose Wechselrichter 1 mit Speicher: 4,2 kWh (Südost 150°)“;
 so lässt sich prüfen, ob der richtige Eintrag dem richtigen Wechselrichter zugeordnet ist.
 
 Beides gleichzeitig ist nicht nötig. Ist für einen Wechselrichter eine Prognose-Entität zugeordnet, gilt sie, und
@@ -212,9 +213,9 @@ etwa Forecast.Solar für den Speicher und eine eingetragene Fläche für den zwe
     eingetragenen Flächen, zählt das doppelt; dann besser an einer Stelle die Forecast.Solar-Integration nutzen.
 
 Danach zeigt das Balkonaut-Panel in der Seitenleiste oben die Kachel *Einrichtung*, solange etwas Wichtiges fehlt:
-Messgrößen für Netz, Abgabe, Erzeugung und Ladestand (*⋮ → Neu konfigurieren*), eine Prognose-Entität oder eine
-Fläche sowie Arbeitspreis und Anlagekosten (beides unter *Konfigurieren*). Das Datum der Inbetriebnahme ist als
-vierter Schritt empfohlen, hält die Kachel aber nicht offen. Mit einer Balkonaut-App erscheint die Kachel nicht,
+Messgrößen für Netz, Abgabe, Erzeugung und Ladestand (*⋮ → Neu konfigurieren*) sowie Arbeitspreis und Anlagekosten
+(unter *Konfigurieren*). Prognose (Prognose-Entität oder Fläche) und Datum der Inbetriebnahme sind als Schritte
+empfohlen, halten die Kachel aber nicht offen. Mit einer Balkonaut-App erscheint die Kachel nicht,
 die App hat ihre eigene.
 
 #### Unterstützte Geräte

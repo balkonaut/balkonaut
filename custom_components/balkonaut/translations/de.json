@@ -11,7 +11,7 @@
       },
       "standalone": {
         "title": "Geräte wählen",
-        "description": "Welche Geräte gehören zu deiner Anlage? Balkonaut schlägt danach die passenden Entitäten vor, du prüfst sie im nächsten Schritt. Was du nicht hast, leer lassen.",
+        "description": "Welche Geräte gehören zu deiner Anlage? Balkonaut schlägt danach die passenden Entitäten vor, du prüfst sie im nächsten Schritt. Was du nicht hast, leer lassen. Sind deine Geräte nicht in Home Assistant eingebunden, alles leer lassen und mit OK weiter: Im nächsten Schritt trägst du ihre Adressen unter „Geräte direkt abfragen“ ein.",
         "data": {
           "grid_device": "Netzmessung",
           "storage_device": "Speicher oder Wechselrichter",
@@ -41,7 +41,7 @@
         },
         "data_description": {
           "invert": "Messgrößen, deren Entität das umgekehrte Vorzeichen liefert, z. B. Abgabe ins Haus beim APsystems EZHI",
-          "hosts": "Adressen von Geräten, die Balkonaut selbst im Heimnetz abfragt, ohne Integration des Herstellers, durch Komma getrennt, z. B. 192.168.1.11, 192.168.1.20. Erkannt werden APsystems EZHI, Shelly Pro 3EM, Shelly mit einer Phase (EM1), Shelly Plug, OpenDTU und AhoyDTU. Eine oben zugeordnete Entität geht dem Gerät vor."
+          "hosts": "Adressen von Geräten, die Balkonaut selbst im Heimnetz abfragt, ohne Integration des Herstellers, durch Komma getrennt, z. B. 192.168.1.11, 192.168.1.20. Erkannt werden APsystems EZHI, Shelly Pro 3EM, Shelly mit einer Phase (EM1), Shelly Plug, OpenDTU und AhoyDTU. Eine unten zugeordnete Entität geht dem Gerät vor."
         },
         "sections": {
           "grid": {
@@ -53,9 +53,9 @@
           "generation": {
             "name": "Erzeugung",
             "data": {
-              "pv_power": "PV-Leistung am Speicher",
+              "pv_power": "PV-Leistung Wechselrichter 1 mit Speicher",
               "pv_energy": "Zähler PV",
-              "pv_ac_power": "PV-Leistung Zusatz"
+              "pv_ac_power": "PV-Leistung zusätzlicher Wechselrichter 2"
             }
           },
           "battery": {
@@ -85,8 +85,8 @@
             "name": "Prognose",
             "description": "Optional, für den Ertragswächter: Tagesprognose je Wechselrichter aus der Forecast.Solar-Integration. Ohne sie später unter Konfigurieren eine Fläche eintragen, dann ruft Balkonaut die Prognose selbst bei Forecast.Solar ab.",
             "data": {
-              "pv_forecast_today": "Prognose Speicher",
-              "pv_ac_forecast_today": "Prognose Zusatz"
+              "pv_forecast_today": "Prognose Wechselrichter 1 mit Speicher",
+              "pv_ac_forecast_today": "Prognose zusätzlicher Wechselrichter 2"
             }
           }
         }
@@ -260,8 +260,8 @@
     "invert": {
       "options": {
         "grid_power": "Netzleistung",
-        "pv_power": "PV-Leistung am Speicher",
-        "pv_ac_power": "PV-Leistung Zusatz",
+        "pv_power": "PV-Leistung Wechselrichter 1 mit Speicher",
+        "pv_ac_power": "PV-Leistung zusätzlicher Wechselrichter 2",
         "battery_power": "Akkuleistung",
         "output_power": "Abgabe ins Haus"
       }

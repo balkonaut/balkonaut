@@ -256,19 +256,19 @@ class BalkonautPanel extends HTMLElement {
       ${row("davon im Haus angekommen", k.entladen_ins_haus, k.entladen, "leaf")}${row("Verluste und Netz", lost, k.entladen, "muted")}</div></div>`;
   }
 
-  // Kachel Einrichtung wie in der Docker-App, solange ein Pflichtschritt fehlt; die Inbetriebnahme ist nur empfohlen
+  // Kachel Einrichtung wie in der Docker-App, solange ein Pflichtschritt fehlt; Prognose und Inbetriebnahme sind nur empfohlen
   _setup(setup) {
     if (!setup) return "";
     const steps = [
       ["messgroessen", "Messgrößen zuordnen", "Netz, Abgabe, Erzeugung und Ladestand, sonst bleibt die Bilanz leer. Unter ⋮ → Neu konfigurieren."],
-      ["prognose", "Prognose", "Forecast.Solar-Entität zuordnen oder eine Fläche eintragen, für den Ertragswächter. Unter Konfigurieren."],
+      ["prognose", "Prognose", "Optional: Forecast.Solar-Entität zuordnen oder eine Fläche eintragen, für den Ertragswächter. Unter Konfigurieren.", true],
       ["preise", "Preise und Anlage", "Ohne Arbeitspreis und Anlagekosten stehen Ersparnis und Amortisation auf 0&nbsp;€. Unter Konfigurieren."],
       ["inbetriebnahme", "Datum der Inbetriebnahme", "Empfohlen: macht die Ersparnis pro Jahr genauer. Unter Konfigurieren.", true],
     ];
     const required = steps.filter(([, , , optional]) => !optional);
     const done = required.filter(([key]) => setup[key]).length;
     if (done === required.length) return "";
-    const next = steps.find(([key]) => !setup[key])[0];
+    const next = required.find(([key]) => !setup[key])[0];
     const items = steps.map(([key, title, hint], i) => {
       const cls = setup[key] ? "done" : key === next ? "next" : "";
       return `<li class="${cls}"><span class="mark" aria-hidden="true">${setup[key] ? "✓" : i + 1}</span>

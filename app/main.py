@@ -233,16 +233,16 @@ def dashboard(request: Request, zeitraum: str = "tag"):
                              analytics.buckets("tag", today)[1], cfg["prices"], hourly_forecast(request.app))
     a = st["amortisation"]
     entities = (cfg.get("home_assistant") or {}).get("entities") or {}
-    # Einrichtung: (Schritt, Hinweis, erledigt, Link); im Add-on kommen Geräte und Prognose aus dessen Konfiguration
+    # Einrichtung: (Schritt, Hinweis, erledigt, Link, optional); im Add-on kommen Geräte und Prognose aus dessen Konfiguration
     in_ha = "In Home Assistant: Add-on Balkonaut, Reiter Konfiguration" if config.addon() else None
     setup = [("Geräte eintragen", in_ha or "Per IP-Adresse im Heimnetz, ohne Anmeldung",
-              bool(cfg.get("devices") or entities), None if in_ha else "einstellungen#geraete"),
-             ("Standort und Flächen", "Flächen eintragen oder im Reiter Konfiguration des Add-ons eine "
-              "Prognose-Entität zuordnen" if in_ha else "Für Tagesprognose und Jahresverlauf",
+              bool(cfg.get("devices") or entities), None if in_ha else "einstellungen#geraete", False),
+             ("Standort und Flächen", "Optional: Flächen eintragen oder im Reiter Konfiguration des Add-ons eine "
+              "Prognose-Entität zuordnen" if in_ha else "Optional: für Tagesprognose und Jahresverlauf",
               bool((cfg.get("location") or in_ha) and cfg.get("planes")) or "pv_forecast_today" in entities,
-              "einstellungen#flaechen"),
+              "einstellungen#flaechen", True),
              ("Preise und Anlage", "Ohne Preise stehen Euro-Beträge auf 0",
-              cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0, "einstellungen#preise")]
+              cfg["prices"]["energy"] > 0 and cfg["system"]["cost"] > 0, "einstellungen#preise", False)]
     return templates.TemplateResponse(request, "dashboard.html", {
         "setup": setup,
         "periods": PERIODS, "period": period, "b": st["bilanz"][period], "akku": st["akku"][period],

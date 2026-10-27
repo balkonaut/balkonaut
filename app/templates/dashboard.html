@@ -77,13 +77,13 @@
   .ways .row i { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; display: block; }
   .ways .row i span { display: block; height: 100%; }
 </style>
-{% set done = setup|selectattr(2)|list|length %}
-{% if done < setup|length %}{% set next = (setup|rejectattr(2)|first)[0] %}
+{% set required = setup|rejectattr(4)|list %}{% set done = required|selectattr(2)|list|length %}
+{% if done < required|length %}{% set next = (required|rejectattr(2)|first)[0] %}
 <section class="card setup" aria-labelledby="setup-h">
-  <div class="head"><h2 id="setup-h">Einrichtung</h2><span class="label">{{ done }} von {{ setup|length }} erledigt</span></div>
-  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="{{ setup|length }}" aria-valuenow="{{ done }}" aria-label="Einrichtung"><span style="width:{{ (done / setup|length * 100)|round }}%"></span></div>
+  <div class="head"><h2 id="setup-h">Einrichtung</h2><span class="label">{{ done }} von {{ required|length }} erledigt</span></div>
+  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="{{ required|length }}" aria-valuenow="{{ done }}" aria-label="Einrichtung"><span style="width:{{ (done / required|length * 100)|round }}%"></span></div>
   <ol>
-    {% for title, hint, ok, href in setup %}
+    {% for title, hint, ok, href, optional in setup %}
     <li class="{{ 'done' if ok else 'next' if title == next }}"><span class="mark" aria-hidden="true">{{ "✓" if ok else loop.index }}</span>
       <div class="txt"><b>{{ title }}</b><span>{{ "Erledigt." if ok else hint }}</span></div>
       {% if href %}<a class="btn" href="{{ href }}">{{ "Ändern" if ok else "Jetzt eintragen" if title == next else "Eintragen" }}</a>{% endif %}</li>
