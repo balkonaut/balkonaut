@@ -251,7 +251,8 @@ def history():
                     "commissioned": time.strftime("%Y-%m-%d", time.localtime(time.time() - DAYS * 86400))}})
     storage = Storage(data / "balkonaut.db")
     if storage.first() is not None:
-        sys.exit("Datenbank ist nicht leer. Verlauf nur in eine neue Test-Instanz (balkonaut.db löschen).")
+        print("Datenbank hat schon Messwerte, Verlauf bleibt unverändert (für einen neuen balkonaut.db löschen).")
+        return  # kein Fehler: der Stack startet den Verlauf bei jedem Hochfahren
     storage.db.executescript("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY")  # schneller; bei Absturz neu erzeugen
     prices = config.load(data / "config.yaml")["prices"]
     end = int(time.time()) // 10 * 10
