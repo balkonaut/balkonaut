@@ -6,7 +6,7 @@ Balkonaut rechnet aus den Messwerten für **heute**, **diesen Monat**, **dieses 
 ## Übersicht
 
 Solange Geräte oder Preise fehlen, steht ganz oben die Kachel *Einrichtung* mit dem Stand der Schritte; sie verschwindet,
-sobald beide erledigt sind. Standort und Flächen (im Add-on: Flächen oder eine Prognose-Entität) sind dort als optionaler
+sobald beide erledigt sind. Standort und Flächen sind dort als optionaler
 Schritt aufgeführt, sie halten die Kachel nicht offen.
 Die Startseite `http://<adresse>:8000/` zeigt oben die Ersparnis von heute, den Energiefluss, den Akku
 und die Autarkie von heute. Darunter folgen der heutige Hausverbrauch je Stunde (Anteil Balkonkraftwerk und Netz),
@@ -65,7 +65,7 @@ im Monat werden die Schritte entsprechend gröber.
 | unter Grün oder fehlt (nachts) | das Haus bekam Strom aus dem Akku |
 
 Die **gestrichelte Linie** ist die erwartete Erzeugung je Stunde laut Forecast.Solar, alle Flächen zusammen. Sie
-erscheint nur für heute und nur mit Tagesprognose: in der Docker-App und im Add-on aus den eingetragenen Flächen, in
+erscheint nur für heute und nur mit Tagesprognose: in der Docker-App aus den eingetragenen Flächen, in
 der Integration aus der zugeordneten Forecast.Solar-Integration oder den Flächen unter *Konfigurieren*. Liegen die
 gelben Striche deutlich unter der Linie, lohnt ein Blick auf den [Ertragswächter](#warnungen). Der Knopf **i** am
 Diagramm erklärt das ebenfalls kurz. Dasselbe Diagramm zeigt die Seite *Verlauf* für Woche, Monat und Jahr, dort ohne
@@ -138,7 +138,7 @@ abregeln und so eine Warnung „Ertrag niedrig“ auslösen, obwohl alles in Ord
 
 ## Energiewege
 
-Die Kachel unter der Bilanz zeigt für den gewählten Zeitraum, wohin die Energie geflossen ist (Docker-App, Add-on und
+Die Kachel unter der Bilanz zeigt für den gewählten Zeitraum, wohin die Energie geflossen ist (Docker-App und
 Panel der Integration):
 
 | Wert | Bedeutung |
@@ -260,11 +260,11 @@ beides über die letzten 7 Tage. Liegt ein rotes Feld mit hoher Säule genau im 
 der Modus dort vermutlich Vorrang. Zur Bestätigung an einem sonnigen Tag im [Verlauf](#verlauf) oder in Home
 Assistant Netzleistung, Akkuleistung und Abgabe in diesem Fenster vergleichen: Bleibt die Netzleistung nahe 0 W,
 während der Akku lädt, regelt der Zähler; lädt der Akku mit voller Sonnenleistung und das Haus bezieht Netzstrom, hat
-der Modus Vorrang. Die Karte gibt es in der Docker-App, im Add-on und im Panel der Integration.
+der Modus Vorrang. Die Karte gibt es in der Docker-App und im Panel der Integration.
 
 ## Bewertung der Kennzahlen
 
-Diese Kacheln haben eine Skala von Rot bis Grün, in der Docker-App, im Add-on und im Panel der Integration. Zwischen
+Diese Kacheln haben eine Skala von Rot bis Grün, in der Docker-App und im Panel der Integration. Zwischen
 den Grenzen läuft die Farbe stufenlos. Die Grenzen gelten für alle Anlagen gleich und sind ein Richtwert, keine Norm.
 
 | Kachel | gut | schlecht |
@@ -288,7 +288,7 @@ Kachel wäre also fast immer rot, obwohl alles in Ordnung ist.
   mal Arbeitspreis. Der Zähler läuft meist seit Inbetriebnahme, damit zählen auch die Monate,
   bevor Balkonaut lief. Ohne Abgabezähler zählt nur der Messzeitraum.
 - **Ersparnis pro Jahr**: Mit eingetragenem Datum der Inbetriebnahme die bisherige Ersparnis seit diesem Datum,
-  sonst die Ersparnis der Messtage, jeweils aufs Jahr hochgerechnet. In der Docker-App und im Add-on rechnet
+  sonst die Ersparnis der Messtage, jeweils aufs Jahr hochgerechnet. In der Docker-App rechnet
   Balkonaut mit dem **Jahresverlauf**, sobald es die Flächen kennt (in den Einstellungen eingetragen oder aus der
   Forecast.Solar-Integration in Home Assistant): Aus Standort, Neigung, Ausrichtung und Leistung der Flächen holt es
   den erwarteten Ertrag je Monat bei PVGIS (EU) und gewichtet den Zeitraum danach. Zehn Oktobertage zählen so nicht

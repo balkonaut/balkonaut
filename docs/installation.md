@@ -1,30 +1,10 @@
 # Installation
 
-Balkonaut läuft als Add-on in Home Assistant oder als eigener Docker-Container, zum Beispiel auf einer NAS.
+Balkonaut gibt es auf zwei Wegen:
 
-## Als Home-Assistant-Add-on
-
-Das Add-on braucht Home Assistant OS oder Supervised (dort gibt es den Add-on-Store, in neueren Versionen „Apps“).
-Einen eigenen Server braucht es nicht, die Weboberfläche erscheint in der Seitenleiste von Home Assistant.
-
-1. *Einstellungen → Apps* (in älteren Versionen *Add-ons*) öffnen, dort den Store, oben rechts die drei Punkte →
-   *Repositories*, `https://github.com/balkonaut/balkonaut` eintragen und *Hinzufügen*.
-2. Im Store *Balkonaut* öffnen und *Installieren*.
-3. Im Reiter *Konfiguration* unter *Entitäten* eintragen, welche Entität welche Messgröße liefert (Bedeutung siehe
-   [Einstellungen](einstellungen.md)). Liefert eine Entität das umgekehrte Vorzeichen, die Messgröße unter
-   *Vorzeichen drehen* auswählen, beim EZHI zum Beispiel *output_power*. *Speichern*.
-4. *Starten* und *In Seitenleiste anzeigen* einschalten. Preise und Anschaffungskosten unter *Einstellungen* in
-   Balkonaut eintragen. Die Kachel *Einrichtung* auf der Übersicht zeigt, was noch fehlt; Entitäten und die
-   Entität der Tagesprognose kommen aus dem Reiter *Konfiguration* des Add-ons. Wer keine Forecast.Solar-Integration
-   hat, trägt stattdessen unter *Einstellungen → Standort und Flächen* die Flächen ein; Balkonaut ruft die Prognose
-   dann selbst ab, der Standort kommt aus Home Assistant.
-
-Das Add-on greift über Home Assistant auf die Entitäten zu, ein Token ist nicht nötig. Alle Daten liegen im
-Add-on und sind in den Backups von Home Assistant enthalten. Änderungen an den Entitäten wirken nach einem
-Neustart des Add-ons. Die Übernahme des Verlaufs (siehe unten) ist im Add-on noch nicht möglich, wohl aber in der eigenständigen Integration.
-
-Für die [Integration](#home-assistant-integration) als Adresse die eintragen, die Balkonaut im Add-on unter
-*Einstellungen* anzeigt (Form `http://…-balkonaut:8000`).
+- als [Home-Assistant-Integration](#home-assistant-integration) über HACS, auch unter Home Assistant OS ohne eigenen
+  Server; die Ansichten erscheinen in der Seitenleiste von Home Assistant,
+- als eigener [Docker-Container](#als-docker-container), zum Beispiel auf einer NAS, mit oder ohne Home Assistant.
 
 Aus dem Handbuch geht es über *Zurück zu Balkonaut* im Menü oder über das Logo zurück zur Übersicht.
 
@@ -126,13 +106,13 @@ Die Integration bringt Balkonaut nach Home Assistant: 22 Sensoren (Bilanz für h
 Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Beim Einrichten gibt es zwei Betriebsarten:
 
 - **Eigenständig in Home Assistant**: Die Integration misst selbst. Balkonaut liest die Werte alle 10 Sekunden, aus
-  Entitäten anderer Integrationen oder direkt von den Geräten im Heimnetz, und speichert sie in `balkonaut/balkonaut.db` im Konfigurationsordner von Home Assistant. Eine App, ein Container oder
-  ein Add-on ist nicht nötig. Beim ersten Start übernimmt Balkonaut einmalig den Verlauf der zugeordneten Entitäten
+  Entitäten anderer Integrationen oder direkt von den Geräten im Heimnetz, und speichert sie in `balkonaut/balkonaut.db` im Konfigurationsordner von Home Assistant. Eine App oder ein Container ist nicht
+  nötig. Beim ersten Start übernimmt Balkonaut einmalig den Verlauf der zugeordneten Entitäten
   aus dem Recorder von Home Assistant (standardmäßig die letzten 10 Tage), die Auswertung beginnt also nicht bei null.
   Die Einrichtung ist geführt, siehe [Geführte Einrichtung](#gefuhrte-einrichtung). Arbeitspreis,
   Einspeisevergütung, Anschaffungskosten und Inbetriebnahme stehen danach unter *Konfigurieren*; ohne sie sind die
   Euro-Beträge 0.
-- **Mit einer Balkonaut-App**: Die Integration holt die Werte von einer laufenden Docker-App oder dem Add-on ab. Die
+- **Mit einer Balkonaut-App**: Die Integration holt die Werte von einer laufenden Docker-App ab. Die
   App muss laufen und von Home Assistant aus erreichbar sein.
 
 ### Installation über HACS
@@ -240,7 +220,7 @@ etwa Forecast.Solar für den Speicher und eine eingetragene Fläche für den zwe
 
 !!! note "Abrufgrenze von Forecast.Solar"
     Ohne eigenen Schlüssel erlaubt Forecast.Solar 12 Abrufe je Stunde und öffentlicher IP-Adresse. Alle Geräte im
-    Heimnetz teilen sich diese Grenze, also auch die Forecast.Solar-Integration, die Docker-App oder das Add-on.
+    Heimnetz teilen sich diese Grenze, also auch die Forecast.Solar-Integration und die Docker-App.
     Balkonaut braucht beim eigenen Abruf 2 Abrufe je Fläche und Stunde. Laufen Docker-App und Integration beide mit
     eingetragenen Flächen, zählt das doppelt; dann besser an einer Stelle die Forecast.Solar-Integration nutzen.
 
@@ -269,9 +249,9 @@ Assistant entpacken (z. B. mit dem Add-on *Samba share* oder *Studio Code Server
 Integration wie oben hinzufügen. Updates müssen dann ebenfalls von Hand kopiert werden. Der Ordner im Repository
 allein reicht nicht, weil er die Rechenlogik aus `core/` nur verlinkt; das Zip enthält sie.
 
-### Umzug von Docker-App oder Add-on
+### Umzug von der Docker-App
 
-Wer bisher die Docker-App oder das Add-on genutzt hat, kann deren Messdaten in den eigenständigen Eintrag übernehmen,
+Wer bisher die Docker-App genutzt hat, kann deren Messdaten in den eigenständigen Eintrag übernehmen,
 damit Monatsberichte, Jahr und Amortisation die ganze Historie kennen:
 
 1. Den eigenständigen Eintrag wie oben einrichten.
