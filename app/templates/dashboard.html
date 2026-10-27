@@ -194,17 +194,9 @@
   </section>
 </div>
 
-<h2>Bilanz</h2>
-<div class="tabs">{% for key, name in periods %}<a href="?zeitraum={{ key }}" class="{{ 'on' if key == period }}">{{ name }}</a>{% endfor %}</div>
-<div class="grid" style="margin-top:16px">
-  {{ kachel("bilanz", "ersparnis", "Ersparnis", b.ersparnis|de(2) ~ " €") }}
-  {{ kachel("bilanz", "eigenverbrauch", "Eigenverbrauch", b.eigenverbrauch|de(1) ~ " kWh") }}
-  {{ kachel("bilanz", "autarkiegrad", "Autarkiegrad", b.autarkiegrad|pct) }}
-  {{ kachel("bilanz", "eigenverbrauchsquote", "Eigenverbrauchsquote", b.eigenverbrauchsquote|pct, b.eigenverbrauchsquote) }}
-  {{ kachel("bilanz", "erzeugung", "Erzeugung", b.erzeugung|de(1) ~ " kWh") }}
-  {{ kachel("bilanz", "hausverbrauch", "Hausverbrauch", b.hausverbrauch|de(1) ~ " kWh") }}
-  {{ kachel("bilanz", "netzbezug", "Netzbezug", b.netzbezug|de(1) ~ " kWh") }}
-  {{ kachel("bilanz", "einspeisung", "Einspeisung", b.einspeisung|de(1) ~ " kWh") }}
+<h2>Woher kommt dein Strom heute? <a href="verlauf" style="font-family:system-ui,sans-serif;text-transform:none;letter-spacing:0;font-weight:400">Verlauf</a></h2>
+<div class="card">
+  {% include "_chart.html" %}
 </div>
 
 {% macro way(name, value, total, color) %}<div class="row"><span>{{ name }}</span><b>{{ value|de(1) }} kWh</b><i><span style="width:{{ (value / total * 100)|round(0) if value and total else 0 }}%;background:var(--{{ color }})"></span></i></div>{% endmacro %}
@@ -223,6 +215,19 @@
   </div>
 </div>
 
+<h2>Bilanz</h2>
+<div class="tabs">{% for key, name in periods %}<a href="?zeitraum={{ key }}" class="{{ 'on' if key == period }}">{{ name }}</a>{% endfor %}</div>
+<div class="grid" style="margin-top:16px">
+  {{ kachel("bilanz", "ersparnis", "Ersparnis", b.ersparnis|de(2) ~ " €") }}
+  {{ kachel("bilanz", "eigenverbrauch", "Eigenverbrauch", b.eigenverbrauch|de(1) ~ " kWh") }}
+  {{ kachel("bilanz", "autarkiegrad", "Autarkiegrad", b.autarkiegrad|pct) }}
+  {{ kachel("bilanz", "eigenverbrauchsquote", "Eigenverbrauchsquote", b.eigenverbrauchsquote|pct, b.eigenverbrauchsquote) }}
+  {{ kachel("bilanz", "erzeugung", "Erzeugung", b.erzeugung|de(1) ~ " kWh") }}
+  {{ kachel("bilanz", "hausverbrauch", "Hausverbrauch", b.hausverbrauch|de(1) ~ " kWh") }}
+  {{ kachel("bilanz", "netzbezug", "Netzbezug", b.netzbezug|de(1) ~ " kWh") }}
+  {{ kachel("bilanz", "einspeisung", "Einspeisung", b.einspeisung|de(1) ~ " kWh") }}
+</div>
+
 <h2>Akku</h2>
 <div class="grid">
   {{ kachel("akku", "zyklen", "Vollzyklen im Zeitraum", akku.zyklen|de(1), sub="gesamt " ~ akku.zyklen_gesamt|de(0) ~ (", " ~ akku.zyklen_pro_jahr|de(0) ~ " pro Jahr" if akku.zyklen_pro_jahr else "")) }}
@@ -232,11 +237,6 @@
   {{ kachel("akku", "stunden_voll", "Stunden mit vollem Akku", akku.stunden_voll, sub="dabei eingespeist " ~ akku.einspeisung_bei_vollem_akku|de(1) ~ " kWh") }}
   {{ kachel("akku", "stunden_leer", "Stunden mit leerem Akku", akku.stunden_leer, sub="dabei Netzbezug " ~ akku.netzbezug_bei_leerem_akku|de(1) ~ " kWh (" ~ akku.kosten_bei_leerem_akku|de(2) ~ " €)") }}
   {% if akku.groesserer_akku_jahr is not none %}{{ kachel("akku", "groesserer_akku", "Weiteres Akku-Modul", "bis " ~ akku.groesserer_akku_jahr|de(0) ~ " € im Jahr", akku.groesserer_akku_jahr, sub="mit " ~ akku.zusatz_kapazitaet|de(2) ~ " kWh mehr; im Zeitraum bis " ~ akku.groesserer_akku|de(1) ~ " kWh", wide=true) }}{% endif %}
-</div>
-
-<h2>Woher kommt dein Strom heute? <a href="verlauf" style="font-family:system-ui,sans-serif;text-transform:none;letter-spacing:0;font-weight:400">Verlauf</a></h2>
-<div class="card">
-  {% include "_chart.html" %}
 </div>
 
 <h2>Amortisation</h2>

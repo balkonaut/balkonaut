@@ -8,8 +8,9 @@ Balkonaut rechnet aus den Messwerten für **heute**, **diesen Monat**, **dieses 
 Solange Geräte, Standort und Flächen (im Add-on: Flächen oder eine Prognose-Entität) oder die Preise fehlen,
 steht ganz oben die Kachel *Einrichtung* mit dem Stand der drei Schritte; sie verschwindet, sobald alle erledigt sind.
 Die Startseite `http://<adresse>:8000/` zeigt oben die Ersparnis von heute, den Energiefluss, den Akku
-und die Autarkie von heute. Darunter folgen die Bilanz für den gewählten Zeitraum, die Akku-Kennzahlen,
-der heutige Hausverbrauch je Stunde (Anteil Balkonkraftwerk und Netz) und der Stand der Amortisation.
+und die Autarkie von heute. Darunter folgen der heutige Hausverbrauch je Stunde (Anteil Balkonkraftwerk und Netz),
+die Energiewege, die Bilanz, die Akku-Kennzahlen und der Stand der Amortisation. Die Reiter bei der Bilanz wählen
+den Zeitraum für Energiewege, Bilanz und Akku.
 Die Werte aktualisieren sich alle 10 Sekunden, ohne dass die Seite neu lädt. Sind die letzten Messwerte älter als zwei Minuten, wird der Punkt
 neben „Energiefluss jetzt“ orange und oben erscheint ein Hinweis: Dann sind meist die Geräte oder Home Assistant nicht erreichbar.
 

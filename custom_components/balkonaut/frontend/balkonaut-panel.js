@@ -287,8 +287,9 @@ class BalkonautPanel extends HTMLElement {
     const date = (iso) => iso ? new Date(iso).toLocaleDateString(this._hass.locale?.language || "de", { month: "2-digit", year: "numeric" }) : "–";
     return `${this._setup(data.setup)}${st.warnungen.map((w) => `<p class="note">${esc(w.text)}</p>`).join("")}
       <balkonaut-card></balkonaut-card>
-      <h2>Bilanz</h2><div class="tabs">${tabs}</div>${this._balance(b)}
+      <h2>Woher kommt dein Strom heute?</h2><div class="card">${this._chart(today.balken)}</div>
       <h2>Energiewege</h2>${this._ways(b, k)}
+      <h2>Bilanz</h2><div class="tabs">${tabs}</div>${this._balance(b)}
       <h2>Akku</h2><div class="grid">
         ${this._kachel("akku", "zyklen", "Vollzyklen im Zeitraum", this._fmt(k.zyklen), null, `gesamt ${this._fmt(k.zyklen_gesamt, 0)}${k.zyklen_pro_jahr ? `, ${this._fmt(k.zyklen_pro_jahr, 0)} pro Jahr` : ""}`)}
         ${this._kachel("akku", "gesundheit", "Gesundheit (SoH)", `${this._fmt(k.gesundheit, 0)} %`, null, `Kapazität ${this._fmt(k.kapazitaet, 2)} kWh`)}
@@ -297,7 +298,6 @@ class BalkonautPanel extends HTMLElement {
         ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", k.stunden_voll ?? "–", null, `dabei eingespeist ${this._fmt(k.einspeisung_bei_vollem_akku)} kWh`)}
         ${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", k.stunden_leer ?? "–", null, `dabei Netzbezug ${this._fmt(k.netzbezug_bei_leerem_akku)} kWh (${this._fmt(k.kosten_bei_leerem_akku, 2)} €)`)}
         ${this._bigger(k)}</div>
-      <h2>Woher kommt dein Strom heute?</h2><div class="card">${this._chart(today.balken)}</div>
       <h2>Amortisation</h2><div class="card">
         <div class="label">Bisher gespart ${this._fmt(a.bisher_gespart, 0)} € von ${this._fmt(a.kosten, 0)} €</div>
         <div class="bar"><span style="width:${progress}%"></span></div>
