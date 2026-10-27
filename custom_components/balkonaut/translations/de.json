@@ -130,7 +130,7 @@
         },
         "sections": {
           "plane_storage": {
-            "name": "Fläche am Speicher",
+            "name": "Fläche Wechselrichter 1 mit Speicher",
             "description": "Für die Tagesprognose (Ertragswächter, optional), wenn keine Forecast.Solar-Integration zugeordnet ist: Balkonaut ruft sie dann selbst bei Forecast.Solar ab. Ausrichtung 0 = Nord, 90 = Ost, 180 = Süd, 270 = West; Neigung 0 = waagerecht, 90 = senkrecht.",
             "data": {
               "declination": "Neigung",
@@ -139,7 +139,7 @@
             }
           },
           "plane_extra": {
-            "name": "Fläche am zweiten Wechselrichter",
+            "name": "Fläche zusätzlicher Wechselrichter 2",
             "description": "Nur falls ein zweiter Wechselrichter vorhanden ist.",
             "data": {
               "declination": "Neigung",

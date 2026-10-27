@@ -130,7 +130,7 @@
         },
         "sections": {
           "plane_storage": {
-            "name": "Plane at the storage inverter",
+            "name": "Plane inverter 1 with storage",
             "description": "For the daily forecast (yield monitor, optional) if no Forecast.Solar integration is assigned: Balkonaut then fetches it from Forecast.Solar itself. Azimuth 0 = north, 90 = east, 180 = south, 270 = west; tilt 0 = flat, 90 = vertical.",
             "data": {
               "declination": "Tilt",
@@ -139,7 +139,7 @@
             }
           },
           "plane_extra": {
-            "name": "Plane at the second inverter",
+            "name": "Plane additional inverter 2",
             "description": "Only if there is a second inverter.",
             "data": {
               "declination": "Tilt",

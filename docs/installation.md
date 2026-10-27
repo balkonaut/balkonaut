@@ -145,6 +145,23 @@ Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen. Beim 
 
 Neue Versionen bietet HACS danach als Update an.
 
+!!! note "HACS noch nicht installiert?"
+    Unter Home Assistant OS: *Einstellungen → Apps* (in älteren Versionen *Add-ons*) → App-Store, oben rechts
+    ⋮ → *Repositories*, `https://github.com/hacs/addons` hinzufügen. Danach ⋮ → *Nach Updates suchen*, die App
+    **Get HACS** steht ganz unten im Abschnitt „HACS“. Installieren, starten und im *Protokoll* warten, bis sie fertig
+    meldet. Home Assistant neu starten, die Seite neu laden, dann *Geräte & Dienste → Integration hinzufügen → HACS*
+    und den angezeigten Code unter `https://github.com/login/device` bestätigen.
+
+!!! note "Vorabversionen (Beta) testen"
+    Beim *Herunterladen* in HACS lässt sich die Version wählen, z. B. eine `…-beta.N`. Damit HACS spätere Betas als
+    Update anbietet: *Geräte & Dienste → HACS → Geräte → Balkonaut*, die Entität *Pre-release* aktivieren und
+    einschalten. Betas am besten auf einer Testinstanz ausprobieren.
+
+!!! warning "Nach einem Update die Seite neu laden"
+    Nach einem Update von Balkonaut die Seite in Home Assistant einmal neu laden (Mac: Cmd+Shift+R, Windows: Strg+F5).
+    Sonst zeigt der Browser noch das alte Panel, und die Seiten *Verlauf*, *Nulleinspeisung* oder *Bericht* lassen sich
+    unter Umständen nicht öffnen.
+
 ### Geführte Einrichtung
 
 Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die Einrichtung hat drei Schritte:
@@ -168,6 +185,20 @@ Im eigenständigen Betrieb muss man die Namen der Entitäten nicht kennen. Die E
    *Speichern* schließt ab, *Zuordnung ändern* führt zurück zu Schritt 2.
 
 Pflicht ist nur eine einzige Messgröße oder ein Gerät. Fehlt eine, entfällt nur die Funktion, die sie braucht.
+
+!!! example "Beispiel: Geräte nicht in Home Assistant eingebunden"
+    1. *Integration hinzufügen → Balkonaut → Eigenständig in Home Assistant*.
+    2. *Geräte wählen*: alles leer lassen, *OK*.
+    3. *Entitäten prüfen*: unter *Geräte direkt abfragen* die Adressen eintragen, z. B.
+       `192.168.178.11, 192.168.178.168, 192.168.178.38` (Speicher, Netzmessung, Zwischenstecker). Die Abschnitte
+       darunter bleiben leer, auch *Prognose*, wenn keine Forecast.Solar-Integration installiert ist. *OK*.
+    4. *Zusammenfassung*: Sie zeigt, welche Funktionen verfügbar sind. Zum Prüfen der Richtungen *Zuordnung ändern*:
+       Schritt 2 zeigt jetzt oben die aktuellen Werte der Geräte mit „(Gerät)“. Stimmt eine Richtung nicht, unter
+       *Vorzeichen drehen* die Messgröße wählen, *OK*.
+    5. In der Zusammenfassung *Speichern*.
+    6. Danach unter *Konfigurieren* Arbeitspreis, Einspeisevergütung und Anschaffungskosten eintragen, optional das
+       Datum der Inbetriebnahme und für die Tagesprognose die Flächen (siehe unten). Die Kachel *Einrichtung* im Panel
+       zeigt, was noch fehlt.
 
 !!! tip "Pro Gerät eine Quelle: Integration oder Adresse"
     Ein Gerät entweder über seine Integration in Home Assistant einbinden oder direkt über die Adresse, nicht beides.
@@ -193,7 +224,7 @@ Werte kommen in beiden Fällen von Forecast.Solar, es gibt zwei Wege:
 
 | | Forecast.Solar-Integration installiert | ohne diese Integration |
 |---|---|---|
-| Einrichtung | Schritt 2, Abschnitt *Prognose*: je Wechselrichter die Entität *Geschätzte Energieerzeugung – heute* des passenden Forecast.Solar-Eintrags zuordnen (nicht *Resttag heute*) | unter *Konfigurieren*: *Fläche am Speicher* und gegebenenfalls *Fläche am zweiten Wechselrichter* mit Neigung, Ausrichtung und Leistung |
+| Einrichtung | Schritt 2, Abschnitt *Prognose*: je Wechselrichter die Entität *Geschätzte Energieerzeugung – heute* des passenden Forecast.Solar-Eintrags zuordnen (nicht *Resttag heute*) | unter *Konfigurieren*: *Fläche Wechselrichter 1 mit Speicher* und gegebenenfalls *Fläche zusätzlicher Wechselrichter 2* mit Neigung, Ausrichtung und Leistung |
 | Abruf bei Forecast.Solar | durch die Forecast.Solar-Integration, Balkonaut liest nur ihre Entität | durch Balkonaut selbst, zur vollen und halben Stunde, mit dem Standort aus Home Assistant |
 | Flächen je Wechselrichter | mehrere, so viele wie im Forecast.Solar-Eintrag angelegt | eine |
 | Linie im Diagramm, Ausrichtung im Energiefluss | aus den Flächen des Forecast.Solar-Eintrags | aus den eingetragenen Flächen |
