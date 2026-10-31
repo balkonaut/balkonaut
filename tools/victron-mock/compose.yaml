@@ -1,14 +1,18 @@
-# Victron-GX-Mock als vollständiger Stack, z. B. in Dockhand (Compose einfügen, keine weiteren Dateien nötig):
+# Mocks als vollständiger Stack, z. B. in Dockhand (Compose einfügen, keine weiteren Dateien nötig):
 # - mosquitto: MQTT-Broker wie auf dem GX, Port 1883
 # - gx: nachgebauter GX (MQTT und Modbus TCP Port 502) mit simulierter Anlage
 # - history: füllt beim ersten Start 40 Tage Verlauf in die Test-Datenbank, danach ohne Wirkung
 # - balkonaut-test: eigene Balkonaut-Instanz auf Port 8001, getrennt von der echten Anlage
+# - opendtu, ahoydtu: Hoymiles HM-800 und HMS-800W-2T hinter OpenDTU (Port 8091) bzw. AhoyDTU (Port 8092);
+#   in Balkonaut als Gerät mit Adresse <Rechner>:8091 bzw. <Rechner>:8092 eintragen
 # Der Code des Mocks kommt von GitHub, fest auf einen Commit (MOCK_REF), damit nie ungeprüfter Code läuft.
 # Eine andere Balkonaut-Instanz liest den Mock über die IP-Adresse dieses Rechners.
 # Nur zum Testen im Heimnetz: Broker und Modbus ohne Anmeldung, nicht ins Internet freigeben.
-# Anpassbar über Umgebungsvariablen bzw. .env: MQTT_PORT, MODBUS_PORT, TEST_PORT, SPEED, WEATHER, DAYS, TZ, MOCK_REF.
+# Anpassbar über Umgebungsvariablen bzw. .env: MQTT_PORT, MODBUS_PORT, TEST_PORT, OPENDTU_PORT, AHOYDTU_PORT, SPEED,
+# WEATHER, DAYS, TZ, MOCK_REF.
 x-mock: &mock
   MOCK_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-24b21d7b7d0b57d0b77742e2f63b0e5459021bea}/tools/victron-mock/gx.py
+  HOYMILES_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-24b21d7b7d0b57d0b77742e2f63b0e5459021bea}/tools/victron-mock/hoymiles.py
   TZ: ${TZ:-Europe/Berlin}
 
 services:
@@ -62,6 +66,31 @@ services:
       gx:
         condition: service_started
     restart: unless-stopped
+
+  opendtu: &hoymiles
+    image: python:3.12-slim
+    environment:
+      <<: *mock
+      DTU: opendtu
+      SPEED: ${SPEED:-1}
+      WEATHER: ${WEATHER:-auto}
+    working_dir: /srv
+    command: >
+      sh -c "python -c \"import os, urllib.request as u; u.urlretrieve(os.environ['MOCK_URL'], 'gx.py');
+      u.urlretrieve(os.environ['HOYMILES_URL'], 'hoymiles.py')\" && exec python -u hoymiles.py"
+    ports:
+      - "${OPENDTU_PORT:-8091}:80"
+    restart: unless-stopped
+
+  ahoydtu:
+    <<: *hoymiles
+    environment:
+      <<: *mock
+      DTU: ahoydtu
+      SPEED: ${SPEED:-1}
+      WEATHER: ${WEATHER:-auto}
+    ports:
+      - "${AHOYDTU_PORT:-8092}:80"
 
 volumes:
   test-data:
