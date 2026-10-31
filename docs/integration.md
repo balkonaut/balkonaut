@@ -45,11 +45,12 @@ Die Namen der Entitäten muss man nicht kennen. Die Einrichtung hat drei Schritt
 
 1. **Geräte wählen**: Netzmessung (z. B. Shelly Pro 3EM), Speicher oder Wechselrichter (z. B. APsystems EZHI),
    optional ein zusätzlicher Wechselrichter (z. B. ein EZ1-M am Off-Grid-Port) und eine Messung am Einspeisepunkt
-   (z. B. ein Shelly Plug). Was man nicht hat, bleibt leer. Sind die Geräte nicht in Home Assistant eingebunden,
-   bleibt alles leer und es geht mit *OK* weiter zu Schritt 2.
+   (z. B. ein Shelly Plug). Was man nicht hat, bleibt leer. Dieser Schritt dient nur dazu, Entitäten von Geräten
+   vorzuschlagen, die schon in Home Assistant eingebunden sind. Sind die Geräte nicht eingebunden oder soll Balkonaut
+   sie selbst im Heimnetz abfragen, bleibt alles leer und es geht mit *OK* weiter zu Schritt 2.
 2. **Entitäten prüfen**: Ganz oben steht *Geräte direkt abfragen* (siehe unten). Balkonaut schlägt zu jeder Messgröße eine Entität vor, gruppiert nach Netz, Erzeugung, Akku,
    Abgabe ins Haus und Prognose. Jede Zuordnung lässt sich ändern oder ergänzen, Abschnitte ohne Vorschlag sind
-   eingeklappt. Darüber stehen die aktuellen Werte mit Richtung, z. B. „Netzleistung: 312 W (Bezug)“ oder
+   eingeklappt. Ganz unten bei *Vorzeichen drehen* stehen die aktuellen Werte mit Richtung, z. B. „Netzleistung: 312 W (Bezug)“ oder
    „Akkuleistung: 80 W (lädt)“. Passt die Richtung nicht, etwa „Abgabe ins Haus“ als Bezug während der Akku entlädt,
    die Messgröße unter *Vorzeichen drehen* wählen. Bei Prognosen von Forecast.Solar steht die
    Ausrichtung der Flächen dabei, z. B. „Prognose Wechselrichter 1 mit Speicher: 4,2 kWh (Südost 150°)“.
@@ -71,7 +72,7 @@ Pflicht ist nur eine einzige Messgröße oder ein Gerät. Fehlt eine, entfällt 
        `192.168.178.11, 192.168.178.168, 192.168.178.38` (Speicher, Netzmessung, Zwischenstecker). Die Abschnitte
        darunter bleiben leer, auch *Prognose*, wenn keine Forecast.Solar-Integration installiert ist. *OK*.
     4. *Zusammenfassung*: Sie zeigt, welche Funktionen verfügbar sind. Zum Prüfen der Richtungen *Zuordnung ändern*:
-       Schritt 2 zeigt jetzt oben die aktuellen Werte der Geräte mit „(Gerät)“. Stimmt eine Richtung nicht, unter
+       Schritt 2 zeigt jetzt unten bei *Vorzeichen drehen* die aktuellen Werte der Geräte mit „(Gerät)“. Stimmt eine Richtung nicht, unter
        *Vorzeichen drehen* die Messgröße wählen, *OK*.
     5. In der Zusammenfassung *Speichern*.
     6. Danach unter *Konfigurieren* Arbeitspreis, Einspeisevergütung und Anschaffungskosten eintragen, optional das

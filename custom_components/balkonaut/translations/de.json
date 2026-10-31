@@ -3,7 +3,7 @@
     "step": {
       "standalone": {
         "title": "Geräte wählen",
-        "description": "Welche Geräte gehören zu deiner Anlage? Balkonaut schlägt danach die passenden Entitäten vor, du prüfst sie im nächsten Schritt. Was du nicht hast, leer lassen. Sind deine Geräte nicht in Home Assistant eingebunden, alles leer lassen und mit OK weiter: Im nächsten Schritt trägst du ihre Adressen unter „Geräte direkt abfragen“ ein.",
+        "description": "Sind deine Geräte schon in Home Assistant eingebunden, z. B. über die Shelly- oder APsystems-Integration? Dann wähle sie hier aus. Balkonaut schlägt daraus die passenden Entitäten vor, du prüfst sie im nächsten Schritt. Was du nicht hast, leer lassen.\n\n**Alles leer lassen und mit OK weiter**, wenn deine Geräte nicht in Home Assistant eingebunden sind oder Balkonaut sie selbst im Heimnetz abfragen soll. Dann trägst du im nächsten Schritt ganz oben unter „Geräte direkt abfragen“ ihre IP-Adressen ein. Entitäten lassen sich dort auch ohne Auswahl hier von Hand zuordnen.",
         "data": {
           "grid_device": "Netzmessung",
           "storage_device": "Speicher oder Wechselrichter",
@@ -19,13 +19,13 @@
       },
       "entities": {
         "title": "Entitäten prüfen",
-        "description": "Vorgeschlagene Zuordnung, jede Entität lässt sich ändern oder ergänzen. Leere Abschnitte sind eingeklappt.\n\nAktuelle Werte:\n{values}",
+        "description": "Ganz oben die Geräte, die Balkonaut selbst im Heimnetz abfragt, darunter die Entitäten aus Home Assistant. Vorgeschlagene Entitäten lassen sich ändern oder ergänzen, leere Abschnitte sind eingeklappt. Die aktuellen Werte zur Kontrolle stehen ganz unten bei „Vorzeichen drehen“.",
         "data": {
           "invert": "Vorzeichen drehen",
           "hosts": "Geräte direkt abfragen"
         },
         "data_description": {
-          "invert": "Messgrößen, deren Entität das umgekehrte Vorzeichen liefert, z. B. Abgabe ins Haus beim APsystems EZHI",
+          "invert": "Messgrößen, deren Entität das umgekehrte Vorzeichen liefert, z. B. Abgabe ins Haus beim APsystems EZHI\n\nAktuelle Werte:\n{values}",
           "hosts": "Adressen von Geräten, die Balkonaut selbst im Heimnetz abfragt, ohne Integration des Herstellers, durch Komma getrennt, z. B. 192.168.1.11, 192.168.1.20. Erkannt werden APsystems EZHI, Shelly Pro 3EM, Shelly mit einer Phase (EM1), Shelly Plug, OpenDTU, AhoyDTU und Victron GX (MQTT oder Modbus TCP). Eine unten zugeordnete Entität geht dem Gerät vor."
         },
         "sections": {
