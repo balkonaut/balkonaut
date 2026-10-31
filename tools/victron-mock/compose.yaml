@@ -5,10 +5,11 @@
 # - balkonaut-test: eigene Balkonaut-Instanz auf Port 8001, getrennt von der echten Anlage
 # - opendtu, ahoydtu: Hoymiles HM-800 und HMS-800W-2T hinter OpenDTU (Port 8091) bzw. AhoyDTU (Port 8092);
 #   in Balkonaut als Gerät mit Adresse <Rechner>:8091 bzw. <Rechner>:8092 eintragen
+# - balkonaut-hoymiles: zweite Balkonaut-Instanz auf Port 8002, liest nur den Hoymiles-Mock (OpenDTU), ohne Verlauf
 # Der Code des Mocks kommt von GitHub, fest auf einen Commit (MOCK_REF), damit nie ungeprüfter Code läuft.
 # Eine andere Balkonaut-Instanz liest den Mock über die IP-Adresse dieses Rechners.
 # Nur zum Testen im Heimnetz: Broker und Modbus ohne Anmeldung, nicht ins Internet freigeben.
-# Anpassbar über Umgebungsvariablen bzw. .env: MQTT_PORT, MODBUS_PORT, TEST_PORT, OPENDTU_PORT, AHOYDTU_PORT, SPEED,
+# Anpassbar über Umgebungsvariablen bzw. .env: MQTT_PORT, MODBUS_PORT, TEST_PORT, HOYMILES_TEST_PORT, OPENDTU_PORT, AHOYDTU_PORT, SPEED,
 # WEATHER, DAYS, TZ, MOCK_REF.
 x-mock: &mock
   MOCK_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-f8d5ae9b3d535313d312364862a088f4b2a8fa9a}/tools/victron-mock/gx.py
@@ -92,5 +93,25 @@ services:
     ports:
       - "${AHOYDTU_PORT:-8092}:80"
 
+  balkonaut-hoymiles:
+    image: ghcr.io/balkonaut/balkonaut:latest
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+    # beim ersten Start Zuordnung auf den OpenDTU-Mock (AhoyDTU: in den Einstellungen Adresse ahoydtu eintragen)
+    command: >
+      sh -c "python -c \"from app import config; p = config.data_dir() / 'config.yaml'; p.exists() or config.save(p,
+      {'devices': [{'type': 'opendtu', 'host': 'opendtu'}], 'location': {'lat': 50.0, 'lon': 10.0},
+      'planes': [{'declination': 30, 'azimuth': 180, 'kwp': 1.68, 'inverter': 'storage'}],
+      'prices': {'energy': 0.32, 'feed_in': 0.0}, 'system': {'cost': 600.0}})\"
+      && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "${HOYMILES_TEST_PORT:-8002}:8000"
+    volumes:
+      - hoymiles-data:/data
+    depends_on:
+      - opendtu
+    restart: unless-stopped
+
 volumes:
   test-data:
+  hoymiles-data:
