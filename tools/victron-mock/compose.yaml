@@ -15,9 +15,9 @@
 # Anpassbar über Umgebungsvariablen bzw. .env: MQTT_PORT, MODBUS_PORT, TEST_PORT, HOYMILES_TEST_PORT, OPENDTU_PORT, AHOYDTU_PORT,
 # DEYE_TEST_PORT, DEYE_MICRO_PORT, SPEED, WEATHER, DAYS, TZ, MOCK_REF. Deye-Hybrid fest auf 8899 und 48899 (wie am Stick).
 x-mock: &mock
-  MOCK_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-fc6b954ff70baf5e70b47a6dcfb8d050ccd8f29f}/tools/victron-mock/gx.py
-  HOYMILES_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-fc6b954ff70baf5e70b47a6dcfb8d050ccd8f29f}/tools/victron-mock/hoymiles.py
-  DEYE_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-fc6b954ff70baf5e70b47a6dcfb8d050ccd8f29f}/tools/victron-mock/deye.py
+  MOCK_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-72d7e9f3e78eeaa80295aa1f5b7e8457a701e413}/tools/victron-mock/gx.py
+  HOYMILES_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-72d7e9f3e78eeaa80295aa1f5b7e8457a701e413}/tools/victron-mock/hoymiles.py
+  DEYE_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-72d7e9f3e78eeaa80295aa1f5b7e8457a701e413}/tools/victron-mock/deye.py
   TZ: ${TZ:-Europe/Berlin}
 
 services:
