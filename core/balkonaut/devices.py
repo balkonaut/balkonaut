@@ -2,8 +2,8 @@
 
 Liefert dieselben Messgrößen wie der Home-Assistant-Adapter (W, kWh, Vorzeichen siehe dort).
 Geprüft an APsystems EZHI, Shelly Pro 3EM und Shelly Outdoor Plug S Gen3 (Oktober 2026). Shelly mit einer Phase
-(EM1), OpenDTU und AhoyDTU sind aus deren Dokumentation und Quellcode abgeleitet, nicht an Geräten geprüft. Victron GX
-(MQTT, Modbus TCP) ist aus der Dokumentation von Victron abgeleitet und nur gegen tools/victron-mock geprüft.
+(EM1) ist aus der Dokumentation abgeleitet, nicht an Geräten geprüft. OpenDTU und AhoyDTU (Quellcode) sowie Victron GX
+(MQTT, Modbus TCP, Dokumentation von Victron) sind nur gegen die Nachbauten in tools/victron-mock geprüft.
 """
 import functools
 import json

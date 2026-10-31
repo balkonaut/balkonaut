@@ -16,6 +16,8 @@ Der **Stand** sagt, woher das Wissen kommt:
 - **bestätigt**: an einem echten Gerät geprüft
 - **nicht geprüft**: aus dem Code und der Dokumentation der Integration abgeleitet, noch an keinem echten Gerät
   getestet
+- **nicht geprüft, nur gegen einen Nachbau**: wie *nicht geprüft*, zusätzlich gegen einen Nachbau getestet, der die
+  Schnittstelle des Geräts nach dessen Quellcode oder Dokumentation nachbildet (Erkennung, Werte, Einheiten)
 
 Die Spalte **Direkt per Adresse** sagt, ob Balkonaut das Gerät auch ohne diese Integration selbst abfragen kann
 (siehe [Geräte direkt im Heimnetz](#gerate-direkt-im-heimnetz)). Bei *nein* ist die Integration nötig, bei
@@ -78,8 +80,8 @@ besser deren Entitäten zu.
 | Shelly Pro 3EM und andere Shelly mit drei Phasen | Shelly | Netzleistung über alle Phasen | bestätigt (Pro 3EM) |
 | Shelly Plug (Gen2, Gen3) | Shelly | Abgabe ins Haus mit Zähler | bestätigt |
 | Shelly Pro EM, EM Gen3 (eine Phase je Kanal) | Shelly | Netzleistung am ersten Kanal | nicht geprüft |
-| Hoymiles über OpenDTU | OpenDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, mit Zähler | nicht geprüft |
-| Hoymiles über AhoyDTU | AhoyDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, ohne Zähler | nicht geprüft |
+| Hoymiles über OpenDTU | OpenDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, mit Zähler | nicht geprüft, nur gegen einen Nachbau |
+| Hoymiles über AhoyDTU | AhoyDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, ohne Zähler | nicht geprüft, nur gegen einen Nachbau |
 | Victron GX (Cerbo GX, Venus GX, Ekrano GX) | GX (am GX unter *Einstellungen → Dienste* MQTT oder Modbus TCP einschalten) | PV am Laderegler, AC-gekoppelte PV als zusätzlicher Wechselrichter, Akku mit Ladestand, Netz über alle Phasen, Abgabe ins Haus, ohne Zähler | nicht geprüft, nur gegen einen Nachbau |
 
 ### Victron GX
