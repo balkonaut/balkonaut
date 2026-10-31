@@ -27,7 +27,7 @@ const PANEL_STYLE = `
   nav .spacer { flex: 1; }
   h2 { font: 600 13px var(--bk-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--bk-muted); margin: 28px 0 12px; }
   .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
-  @media (min-width: 40rem) { .grid > .wide { grid-column: span 2; } }
+  .grid > .wide { grid-column: 1 / -1; } @media (min-width: 40rem) { .grid > .wide { grid-column: span 2; } }  /* schmal ganze Zeile, sonst doppelt breit */
   .card { background: var(--bk-card); border: 1px solid var(--bk-line); border-radius: 6px; padding: 16px 20px; min-width: 0; }
   .label { color: var(--bk-muted); font-size: 14px; }
   .card > .label:first-child { font: 600 12px var(--bk-mono); text-transform: uppercase; letter-spacing: .08em; }
@@ -73,7 +73,7 @@ const PANEL_STYLE = `
   .setup a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 6px; text-decoration: none;
     font-weight: 600; border: 1px solid var(--bk-line); color: var(--bk-ink); margin-top: auto; }
   .setup .next a { background: var(--primary-color); color: var(--text-primary-color, #fff); border-color: var(--primary-color); }
-  .card:has(> .info) { position: relative; } .card:has(> .info) > .label:first-child { padding-right: 40px; overflow-wrap: anywhere; }
+  .card:has(> .info) { position: relative; } .card:has(> .info) > .label:first-child { padding-right: 40px; hyphens: auto; overflow-wrap: anywhere; }
   .info { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--bk-line);
     background: var(--bk-card); color: var(--bk-muted); font: 600 14px/1 var(--bk-mono); cursor: pointer;
     display: grid; place-items: center; padding: 0; }
