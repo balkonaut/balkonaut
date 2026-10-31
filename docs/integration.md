@@ -57,8 +57,8 @@ Die Namen der Entitäten muss man nicht kennen. Die Einrichtung hat drei Schritt
    Unter *Geräte direkt abfragen* lassen sich Adressen von Geräten eintragen, die Balkonaut selbst abfragt, ohne
    Integration des Herstellers in Home Assistant, durch Komma getrennt (z. B. `192.168.1.11, 192.168.1.20`). Den
    Gerätetyp erkennt Balkonaut selbst, wie in der Docker-App: APsystems EZHI (lokalen Modus in der App aktivieren),
-   Shelly Pro 3EM, Shelly mit einer Phase, Shelly Plug, OpenDTU, AhoyDTU und Victron GX (MQTT oder Modbus TCP,
-   nicht geprüft). Ihre Werte stehen mit „(Gerät)“ bei den
+   Shelly Pro 3EM, Shelly mit einer Phase, Shelly Plug, OpenDTU, AhoyDTU, Deye (Hybrid einphasig und
+   Mikrowechselrichter, über den Logger-Stick) und Victron GX (MQTT oder Modbus TCP, nicht geprüft). Ihre Werte stehen mit „(Gerät)“ bei den
    aktuellen Werten. Ist für eine Messgröße zusätzlich eine Entität zugeordnet, geht die Entität vor.
 3. **Zusammenfassung**: welche Funktionen mit der Zuordnung verfügbar sind und welche nicht, weil Messgrößen fehlen.
    *Speichern* schließt ab, *Zuordnung ändern* führt zurück zu Schritt 2.

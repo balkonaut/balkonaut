@@ -61,10 +61,12 @@ devices:
 | `opendtu` | Hoymiles über OpenDTU (nicht geprüft) | Erzeugung und Abgabe aller Wechselrichter, mit Zähler |
 | `ahoydtu` | Hoymiles über AhoyDTU (nicht geprüft) | Erzeugung und Abgabe aller Wechselrichter, ohne Zähler |
 | `shelly_plug` | Shelly Plug Gen2 oder Gen3 am Einspeisepunkt | Abgabe ins Haus mit Zähler |
+| `deye_micro` | Deye-Mikrowechselrichter, Statusseite des WLAN-Sticks (nicht geprüft) | Erzeugung und Abgabe, mit Zähler |
+| `deye_hybrid` | Deye-Hybrid einphasig über den Logger-Stick, Solarman V5 (nicht geprüft) | PV, Akku mit Ladestand und Zählern, Netz, Abgabe ins Haus |
 | `victron_mqtt` | Victron GX über MQTT (nicht geprüft) | PV (DC und AC-gekoppelt), Akku mit Ladestand, Netz über alle Phasen, Abgabe ins Haus, ohne Zähler |
 | `victron_modbus` | Victron GX über Modbus TCP, Unit-ID 100 (nicht geprüft) | wie `victron_mqtt` |
 
-Welche IP-Adresse bei Hoymiles einzutragen ist und was die Docker-App nicht direkt liest, steht unter
+Welche IP-Adresse bei Hoymiles und Deye einzutragen ist und was die Docker-App nicht direkt liest, steht unter
 [Unterstützte Geräte](geraete.md#gerate-direkt-im-heimnetz). Hat das System einen Speicher, gilt dessen
 Abgabe-Leistung, vom Plug zählt nur der Zähler (siehe
 [Messquellen](messquellen.md)). Meldet ein Gerät eine Richtung umgekehrt, die Messgröße unter `invert` eintragen,

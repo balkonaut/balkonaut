@@ -3,11 +3,15 @@
 Liefert dieselben Messgrößen wie der Home-Assistant-Adapter (W, kWh, Vorzeichen siehe dort).
 Geprüft an APsystems EZHI, Shelly Pro 3EM und Shelly Outdoor Plug S Gen3 (Oktober 2026). Shelly mit einer Phase
 (EM1) ist aus der Dokumentation abgeleitet, nicht an Geräten geprüft. OpenDTU und AhoyDTU (Quellcode) sowie Victron GX
-(MQTT, Modbus TCP, Dokumentation von Victron) sind nur gegen die Nachbauten in tools/victron-mock geprüft.
+(MQTT, Modbus TCP, Dokumentation von Victron) sind nur gegen die Nachbauten in tools/victron-mock geprüft. Deye
+(Statusseite des Sticks, Solarman V5 nach pysolarmanv5, Register nach ha-solarman) ebenso nur gegen einen Nachbau.
 """
+import base64
 import functools
 import json
 import logging
+import random
+import re
 import socket
 import struct
 import time
@@ -86,6 +90,79 @@ def shelly_plug(host):
     s = _get(host, "rpc/Switch.GetStatus?id=0")
     wh = _num((s.get("aenergy") or {}).get("total"))
     return {"output_power": _num(s.get("apower")), "output_energy": None if wh is None else wh / 1000}
+
+
+def deye_micro(host):
+    """Deye-Mikrowechselrichter mit WLAN-Stick (z. B. SUN600/800 G3): Statusseite des Sticks (nicht geprüft). Nachts ist
+    der Stick aus. Vereinfachung: Anmeldung fest mit der Werkseinstellung admin/admin."""
+    auth = {"Authorization": "Basic " + base64.b64encode(b"admin:admin").decode()}
+    with urllib.request.urlopen(urllib.request.Request(f"http://{host}/status.html", headers=auth), timeout=5) as r:
+        web = dict(re.findall(r'webdata_(\w+)\s*=\s*"([^"]*)"', r.read(65536).decode(errors="replace")))
+    if "now_p" not in web:
+        raise ValueError("keine Statusseite eines Deye-Sticks")
+    power, energy = _num(web["now_p"]), _num(web.get("total_e"))
+    return {"pv_power": power, "pv_energy": energy, "output_power": power, "output_energy": energy}
+
+
+def _crc16(data):
+    """Prüfsumme eines Modbus-RTU-Rahmens."""
+    crc = 0xFFFF
+    for b in data:
+        crc ^= b
+        for _ in range(8):
+            crc = crc >> 1 ^ 0xA001 if crc & 1 else crc >> 1
+    return crc
+
+
+@functools.lru_cache
+def _logger_serial(host):
+    """Seriennummer des Logger-Sticks, die Solarman V5 in jeder Anfrage braucht, per UDP-Suche (Antwort IP,MAC,Serie)."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.settimeout(3)
+        s.sendto(b"WIFIKIT-214028-READ", (host.partition(":")[0], 48899))
+        return int(s.recv(256).decode().split(",")[2])
+
+
+def _solarman(host, start, count):
+    """Holding-Register über den Logger-Stick lesen: Modbus RTU (Gerät 1, Funktion 3) in einem Solarman-V5-Rahmen,
+    TCP 8899 (host darf einen Port tragen)."""
+    rtu = struct.pack(">BBHH", 1, 3, start, count)
+    rtu += struct.pack("<H", _crc16(rtu))
+    body = struct.pack("<BHIII", 2, 0, 0, 0, 0) + rtu  # Rahmentyp, Sensortyp, drei Zeiten
+    frame = struct.pack("<BHHHI", 0xA5, len(body), 0x4510, random.randrange(65536), _logger_serial(host)) + body
+    frame += bytes([sum(frame[1:]) & 0xFF, 0x15])
+    with _connect(host, 8899) as s:
+        s.sendall(frame)
+        head = _recv(s, 11)
+        if head[0] != 0xA5 or head[3:5] != b"\x10\x15":
+            raise ValueError("keine Solarman-V5-Antwort")
+        rtu = _recv(s, struct.unpack("<H", head[1:3])[0] + 2)[14:-2]  # Rahmentyp, Status, drei Zeiten; Prüfsumme, Ende
+    if len(rtu) < 3 or rtu[1] & 0x80 or rtu[2] < 2 * count:
+        raise ValueError(f"Modbus-Fehler bei Register {start}")
+    return struct.unpack(f">{count}H", rtu[3:3 + 2 * count])
+
+
+def _deye_single_phase_hybrid(host):
+    """Erkennung: Gerätetyp in Register 0, 3 bzw. 0x300 ist ein einphasiger Hybrid (Lookup in ha-solarman)."""
+    if _solarman(host, 0, 1)[0] not in (0x0003, 0x0300):
+        raise ValueError("kein einphasiger Deye-Hybrid")
+
+
+DEYE_FIRST, DEYE_COUNT = 72, 119  # Register 72 bis 190 in einer Anfrage (Modbus erlaubt bis 125)
+
+
+def deye_hybrid(host):
+    """Deye-Hybrid einphasig (SUN-*-SG0xLP1) über den Logger-Stick (nicht geprüft). Register nach deye_hybrid.yaml in
+    ha-solarman: Akku 190 positiv beim Entladen, Netz 169 positiv beim Bezug, Zähler in 0,1 kWh, niedriges Wort zuerst.
+    Vereinfachung: dreiphasige Hybride (andere Register) und die Kapazität (Register in Ah) fehlen."""
+    regs = _solarman(host, DEYE_FIRST, DEYE_COUNT)
+    u16 = lambda n: regs[n - DEYE_FIRST]
+    s16 = lambda n: u16(n) - 65536 if u16(n) > 32767 else u16(n)
+    kwh = lambda n: (u16(n) | u16(n + 1) << 16) / 10
+    return {"pv_power": float(sum(u16(n) for n in range(186, 190))), "pv_energy": kwh(96),
+            "battery_power": 0.0 - s16(190), "battery_soc": float(u16(184)),
+            "battery_charge_energy": kwh(72), "battery_discharge_energy": kwh(74),
+            "grid_power": float(s16(169)), "output_power": float(s16(175))}
 
 
 # Victron GX: Messgröße -> Pfade in com.victronenergy.system, summiert; Akku + Laden, Netz + Bezug wie in Balkonaut
@@ -220,9 +297,11 @@ def victron_mqtt(host):
 # Reihenfolge: spätere Geräte überschreiben frühere, so gilt die Abgabe des Plugs am Einspeisepunkt vor der der DTU,
 # die Abgabe-Leistung des Speichers vor der des Plugs, und der Zähler am Einspeisepunkt, den der Speicher nicht
 # liefert, bleibt (Handbuch, Messquellen)
-TYPES = {"opendtu": opendtu, "ahoydtu": ahoydtu, "shelly_plug": shelly_plug, "apsystems_ezhi": apsystems_ezhi,
+TYPES = {"opendtu": opendtu, "ahoydtu": ahoydtu, "deye_micro": deye_micro, "shelly_plug": shelly_plug,
+         "apsystems_ezhi": apsystems_ezhi, "deye_hybrid": deye_hybrid,
          "victron_mqtt": victron_mqtt, "victron_modbus": victron_modbus, "shelly_em": shelly_em, "shelly_em1": shelly_em1}
-HUB_NAMES = {"apsystems_ezhi": "EZHI", "opendtu": "Hoymiles", "ahoydtu": "Hoymiles", "victron_mqtt": "Victron",
+HUB_NAMES = {"apsystems_ezhi": "EZHI", "opendtu": "Hoymiles", "ahoydtu": "Hoymiles", "deye_micro": "Deye",
+             "deye_hybrid": "Deye", "victron_mqtt": "Victron",
              "victron_modbus": "Victron"}  # Mitte des Energieflusses
 
 # Erkennung: (Typ, Pfad, Prüfung der Antwort), der erste Treffer gilt
@@ -234,8 +313,10 @@ PROBES = [
     ("opendtu", "api/livedata/status", lambda d: "inverters" in d and "total" in d),
     ("ahoydtu", "api/generic", lambda d: "modules" in d and "esp_type" in d),
 ]
-# ohne Webserver-Antwort: Victron GX, Modbus zuerst (antwortet sofort), dann MQTT
-SOCKET_PROBES = [("victron_modbus", victron_modbus), ("victron_mqtt", _portal_id)]
+# ohne JSON-Antwort: Victron GX über Modbus (antwortet sofort), Deye (Hybrid vor Mikrowechselrichter, beide mit
+# Stick), zuletzt Victron über MQTT (wartet auf die Serial-Meldung)
+SOCKET_PROBES = [("victron_modbus", victron_modbus), ("deye_hybrid", _deye_single_phase_hybrid),
+                 ("deye_micro", deye_micro), ("victron_mqtt", _portal_id)]
 
 
 def detect(host):

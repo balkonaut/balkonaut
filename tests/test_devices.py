@@ -227,3 +227,52 @@ def test_victron(monkeypatch):
     import pytest
     with pytest.raises(OSError):
         devices._mqtt("gx", ["N/c0619a/#"], lambda t: False, timeout=0.2)  # endet nach der Zeitgrenze
+
+
+def test_deye(monkeypatch):
+    """Deye: Statusseite des Mikrowechselrichters und Hybrid über Solarman V5 (Fake-Stick wie tools/victron-mock/deye.py)."""
+    import io
+    import struct
+    page = b'<script>\nvar webdata_now_p = "312";\nvar webdata_total_e = "1234.5";\n</script>'
+    monkeypatch.setattr(devices.urllib.request, "urlopen", lambda req, timeout: io.BytesIO(page))
+    assert devices.deye_micro("micro") == {"pv_power": 312, "pv_energy": 1234.5, "output_power": 312,
+                                           "output_energy": 1234.5}
+    regs = {0: 0x300, 72: 0x2D, 73: 1, 74: 12, 96: 100, 169: 65536 - 150, 175: 420, 184: 64, 186: 300, 187: 270,
+            190: 65536 - 200}  # Netz -150 W, Akku -200 W (lädt)
+
+    class Stick:
+        out = b""
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def recv(self, n):
+            chunk, self.out = self.out[:n], self.out[n:]
+            return chunk
+
+        def sendall(self, frame):
+            assert frame[0] == 0xA5 and frame[-1] == 0x15 and sum(frame[1:-2]) & 0xFF == frame[-2]
+            assert struct.unpack("<I", frame[7:11])[0] == 4711  # Seriennummer aus der Suche
+            rtu = frame[26:-2]
+            assert devices._crc16(rtu[:6]) == struct.unpack("<H", rtu[6:8])[0]
+            _, _, start, count = struct.unpack(">BBHH", rtu[:6])
+            answer = bytes([1, 3, 2 * count]) + struct.pack(f">{count}H", *(regs.get(r, 0) for r in range(start, start + count)))
+            body = bytes(14) + answer + struct.pack("<H", devices._crc16(answer))
+            out = struct.pack("<BHHHI", 0xA5, len(body), 0x1510, 0, 4711) + body
+            self.out = out + bytes([sum(out[1:]) & 0xFF, 0x15])
+
+    monkeypatch.setattr(devices, "_logger_serial", lambda host: 4711)
+    monkeypatch.setattr(devices, "_connect", lambda host, port, timeout=5: Stick())
+    devices._deye_single_phase_hybrid("hybrid")  # Gerätetyp 0x300
+    assert devices.deye_hybrid("hybrid") == {
+        "pv_power": 570, "pv_energy": 10.0, "battery_power": 200, "battery_soc": 64,
+        "battery_charge_energy": 6558.1, "battery_discharge_energy": 1.2, "grid_power": -150, "output_power": 420}
+    regs[0] = 0x400  # Mikrowechselrichter
+    try:
+        devices._deye_single_phase_hybrid("hybrid")
+        raise AssertionError("Mikrowechselrichter als Hybrid erkannt")
+    except ValueError:
+        pass

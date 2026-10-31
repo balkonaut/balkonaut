@@ -6,14 +6,18 @@
 # - opendtu, ahoydtu: Hoymiles HM-800 und HMS-800W-2T hinter OpenDTU (Port 8091) bzw. AhoyDTU (Port 8092);
 #   in Balkonaut als Gerät mit Adresse <Rechner>:8091 bzw. <Rechner>:8092 eintragen
 # - balkonaut-hoymiles: zweite Balkonaut-Instanz auf Port 8002, liest nur den Hoymiles-Mock (OpenDTU), ohne Verlauf
+# - deye-micro: Deye SUN800G3 mit Statusseite des Sticks, Port 8093 (Anmeldung admin/admin)
+# - deye-hybrid: Deye-Hybrid einphasig mit Akku, Logger-Stick mit Solarman V5 auf Port 8899 und Suche auf UDP 48899
+# - balkonaut-deye: dritte Balkonaut-Instanz auf Port 8003, liest nur den Deye-Hybrid, ohne Verlauf
 # Der Code des Mocks kommt von GitHub, fest auf einen Commit (MOCK_REF), damit nie ungeprüfter Code läuft.
 # Eine andere Balkonaut-Instanz liest den Mock über die IP-Adresse dieses Rechners.
 # Nur zum Testen im Heimnetz: Broker und Modbus ohne Anmeldung, nicht ins Internet freigeben.
-# Anpassbar über Umgebungsvariablen bzw. .env: MQTT_PORT, MODBUS_PORT, TEST_PORT, HOYMILES_TEST_PORT, OPENDTU_PORT, AHOYDTU_PORT, SPEED,
-# WEATHER, DAYS, TZ, MOCK_REF.
+# Anpassbar über Umgebungsvariablen bzw. .env: MQTT_PORT, MODBUS_PORT, TEST_PORT, HOYMILES_TEST_PORT, OPENDTU_PORT, AHOYDTU_PORT,
+# DEYE_TEST_PORT, DEYE_MICRO_PORT, SPEED, WEATHER, DAYS, TZ, MOCK_REF. Deye-Hybrid fest auf 8899 und 48899 (wie am Stick).
 x-mock: &mock
   MOCK_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-f8d5ae9b3d535313d312364862a088f4b2a8fa9a}/tools/victron-mock/gx.py
   HOYMILES_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-f8d5ae9b3d535313d312364862a088f4b2a8fa9a}/tools/victron-mock/hoymiles.py
+  DEYE_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-f8d5ae9b3d535313d312364862a088f4b2a8fa9a}/tools/victron-mock/deye.py
   TZ: ${TZ:-Europe/Berlin}
 
 services:
@@ -112,6 +116,52 @@ services:
       - opendtu
     restart: unless-stopped
 
+  deye-micro: &deye
+    image: python:3.12-slim
+    environment:
+      <<: *mock
+      DEYE: micro
+      SPEED: ${SPEED:-1}
+      WEATHER: ${WEATHER:-auto}
+    working_dir: /srv
+    command: >
+      sh -c "python -c \"import os, urllib.request as u; u.urlretrieve(os.environ['MOCK_URL'], 'gx.py');
+      u.urlretrieve(os.environ['DEYE_URL'], 'deye.py')\" && exec python -u deye.py"
+    ports:
+      - "${DEYE_MICRO_PORT:-8093}:80"
+    restart: unless-stopped
+
+  deye-hybrid:
+    <<: *deye
+    environment:
+      <<: *mock
+      DEYE: hybrid
+      SPEED: ${SPEED:-1}
+      WEATHER: ${WEATHER:-auto}
+    ports:
+      - "8899:8899"
+      - "48899:48899/udp"
+
+  balkonaut-deye:
+    image: ghcr.io/balkonaut/balkonaut:latest
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+    # beim ersten Start Zuordnung auf den Deye-Hybrid (Mikrowechselrichter: in den Einstellungen Adresse deye-micro)
+    command: >
+      sh -c "python -c \"from app import config; p = config.data_dir() / 'config.yaml'; p.exists() or config.save(p,
+      {'devices': [{'type': 'deye_hybrid', 'host': 'deye-hybrid'}], 'location': {'lat': 50.0, 'lon': 10.0},
+      'planes': [{'declination': 30, 'azimuth': 180, 'kwp': 1.8, 'inverter': 'storage'}],
+      'prices': {'energy': 0.32, 'feed_in': 0.0}, 'system': {'cost': 2500.0}})\"
+      && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "${DEYE_TEST_PORT:-8003}:8000"
+    volumes:
+      - deye-data:/data
+    depends_on:
+      - deye-hybrid
+    restart: unless-stopped
+
 volumes:
   test-data:
   hoymiles-data:
+  deye-data:

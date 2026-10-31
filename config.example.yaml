@@ -10,6 +10,8 @@
 #     invert: [output_power] # nur falls der Plug die Abgabe negativ meldet
 #   - type: opendtu          # Hoymiles über OpenDTU (ahoydtu: AhoyDTU), IP-Adresse der DTU
 #     host: 192.168.1.23
+#   - type: deye_hybrid      # Deye-Hybrid einphasig über den Logger-Stick (deye_micro: Mikrowechselrichter)
+#     host: 192.168.1.25
 #   - type: victron_modbus   # Victron GX über Modbus TCP (victron_mqtt: über MQTT), Port nach Doppelpunkt möglich
 #     host: 192.168.1.24
 # location: {lat: 50.0, lon: 10.0}   # Standort, für Prognose und Jahresverlauf ohne Home Assistant

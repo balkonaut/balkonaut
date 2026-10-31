@@ -313,7 +313,8 @@ def zero_feed_in(request: Request):
 
 DEVICE_NAMES = {"apsystems_ezhi": "APsystems EZHI", "shelly_em": "Shelly 3EM", "shelly_em1": "Shelly EM (eine Phase)",
                 "shelly_plug": "Shelly Plug", "opendtu": "Hoymiles über OpenDTU", "ahoydtu": "Hoymiles über AhoyDTU",
-                "victron_mqtt": "Victron GX über MQTT", "victron_modbus": "Victron GX über Modbus TCP"}
+                "victron_mqtt": "Victron GX über MQTT", "victron_modbus": "Victron GX über Modbus TCP",
+                "deye_micro": "Deye-Mikrowechselrichter", "deye_hybrid": "Deye-Hybrid"}
 INVERTIBLE = {"shelly_plug": "output_power", "shelly_em": "grid_power", "shelly_em1": "grid_power"}  # Richtung je nach Anschluss
 # Anzeige der aktuellen Werte: Messgröße, Name, Einheit, Richtung bei + und -
 LIVE = [("grid_power", "Netz", "W", ("Bezug", "Einspeisung")), ("pv_power", "PV", "W", None),

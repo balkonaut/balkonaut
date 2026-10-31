@@ -34,7 +34,7 @@ nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung p
 |---|---|---|---|---|---|
 | APsystems EZHI | APsystems EZHI Local API (HACS) | PV, Akku mit Zählern, Kapazität und Ladegrenzen, Abgabe ins Haus, Off-Grid-Port, Abgabelimit | belegt | ja, ohne Ladegrenzen, Entladeschutz und Abgabelimit | bestätigt |
 | APsystems EZ1-M | APsystems | PV-Leistung, PV-Zähler, Abgabelimit | — | nein | bestätigt |
-| Deye (Hybrid und Mikrowechselrichter) | Solarman (HACS), Varianten von davidrapan und StephanJoubert | PV, Akku mit Zählern, Netz, Abgabe | Akku belegt, Netz prüfen | nein | nicht geprüft |
+| Deye (Hybrid und Mikrowechselrichter) | Solarman (HACS), Varianten von davidrapan und StephanJoubert | PV, Akku mit Zählern, Netz, Abgabe | Akku belegt, Netz prüfen | ja über den Logger-Stick: Hybrid einphasig und Mikrowechselrichter (siehe unten) | nicht geprüft |
 | Huawei SUN2000 mit LUNA2000 | Huawei Solar (HACS) | PV-Leistung, Akku mit Zählern, Kapazität und Ladegrenzen, Netz über Power Meter, Abgabe | belegt | nein | nicht geprüft |
 | Hoymiles HM, HMS | OpenDTU oder AhoyDTU (MQTT), Hoymiles WiFi (HACS) | PV-Leistung, PV-Zähler (nicht bei Hoymiles WiFi) | — | ja über OpenDTU (gleichwertig) und AhoyDTU (ohne Zähler), nicht über Hoymiles WiFi | nicht geprüft |
 | Anker Solix Solarbank | Anker Solix (HACS) | PV-Leistung, Akku, Abgabe ins Haus, Netz | Akku belegt, Netz prüfen | nein | nicht geprüft |
@@ -82,6 +82,8 @@ besser deren Entitäten zu.
 | Shelly Pro EM, EM Gen3 (eine Phase je Kanal) | Shelly | Netzleistung am ersten Kanal | nicht geprüft |
 | Hoymiles über OpenDTU | OpenDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, mit Zähler | nicht geprüft, nur gegen einen Nachbau |
 | Hoymiles über AhoyDTU | AhoyDTU | Erzeugung und Abgabe aller Wechselrichter zusammen, ohne Zähler | nicht geprüft, nur gegen einen Nachbau |
+| Deye-Mikrowechselrichter (z. B. SUN600/800 G3) | WLAN-Stick des Wechselrichters | Erzeugung und Abgabe mit Zähler | nicht geprüft, nur gegen einen Nachbau |
+| Deye-Hybrid einphasig (SUN-…-SG0…LP1) | Logger-Stick | PV, Akku mit Ladestand und Zählern, Netz, Abgabe ins Haus | nicht geprüft, nur gegen einen Nachbau |
 | Victron GX (Cerbo GX, Venus GX, Ekrano GX) | GX (am GX unter *Einstellungen → Dienste* MQTT oder Modbus TCP einschalten) | PV am Laderegler, AC-gekoppelte PV als zusätzlicher Wechselrichter, Akku mit Ladestand, Netz über alle Phasen, Abgabe ins Haus, ohne Zähler | nicht geprüft, nur gegen einen Nachbau |
 
 ### Victron GX
@@ -94,6 +96,21 @@ ist der Verbrauch, den der GX misst, minus dem Netzbezug; daraus ergibt sich der
 der GX für das System nicht, Balkonaut summiert die Leistung dann selbst auf. Über MQTT liest Balkonaut zusätzlich jeden
 Laderegler (MPPT) einzeln, der Energiefluss zeigt dann ein Feld je Solarfeld. Ein Shelly als Netzmessung geht dem
 Netzwert des GX vor.
+
+### Deye
+
+Deye-Wechselrichter haben einen Logger-Stick (WLAN), seine IP-Adresse wird eingetragen. Balkonaut erkennt die Art
+selbst:
+
+- **Hybrid einphasig** (SUN-…-SG0…LP1, mit Akku): Balkonaut fragt den Stick über das Solarman-Protokoll (Port 8899)
+  ab und findet die Seriennummer des Sticks selbst (Suche über UDP-Port 48899). Akku positiv beim Laden, Netz
+  positiv beim Bezug. Dreiphasige Hybride (SG04LP3 und ähnliche) haben andere Register und gehen noch nicht direkt,
+  ebenso die Akkukapazität: Sie lässt sich unter [Einstellungen → Akku](einstellungen.md#akku) eintragen.
+- **Mikrowechselrichter** (z. B. SUN600/800 G3, SUN-M80G3): Balkonaut liest die Statusseite des Sticks
+  (`status.html`) mit der Werkseinstellung *admin*/*admin*. Wer das Passwort am Stick geändert hat, nutzt die
+  Home-Assistant-Integration. Nachts schaltet der Stick mit dem Wechselrichter ab, Balkonaut zeigt dann keine Werte.
+
+Beides ist aus dem Quellcode verbreiteter Auslese-Projekte abgeleitet und nur gegen einen Nachbau geprüft.
 
 ### Hoymiles: welche IP-Adresse?
 
@@ -114,7 +131,7 @@ liefert keinen Zähler, Balkonaut summiert die Leistung dann selbst auf.
 
 ### Was nicht direkt geht
 
-Geräte mit Modbus (z. B. Sungrow, Huawei, Fox ESS, Deye) oder nur mit Cloud-Zugang (z. B. Anker Solix,
+Geräte mit Modbus (z. B. Sungrow, Huawei, Fox ESS, dreiphasige Deye-Hybride) oder nur mit Cloud-Zugang (z. B. Anker Solix,
 EcoFlow, Zendure, Growatt, Tibber) liest Balkonaut nicht selbst. Dafür gibt es zwei Wege: die
 [Integration für Home Assistant](integration.md) mit der Integration des Herstellers, deren Entitäten Balkonaut für
 viele dieser Geräte kennt (Tabellen oben), oder die Docker-App mit der
