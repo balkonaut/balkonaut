@@ -11,8 +11,8 @@
 # Anpassbar über Umgebungsvariablen bzw. .env: MQTT_PORT, MODBUS_PORT, TEST_PORT, OPENDTU_PORT, AHOYDTU_PORT, SPEED,
 # WEATHER, DAYS, TZ, MOCK_REF.
 x-mock: &mock
-  MOCK_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-24b21d7b7d0b57d0b77742e2f63b0e5459021bea}/tools/victron-mock/gx.py
-  HOYMILES_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-24b21d7b7d0b57d0b77742e2f63b0e5459021bea}/tools/victron-mock/hoymiles.py
+  MOCK_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-f8d5ae9b3d535313d312364862a088f4b2a8fa9a}/tools/victron-mock/gx.py
+  HOYMILES_URL: https://raw.githubusercontent.com/balkonaut/balkonaut/${MOCK_REF:-f8d5ae9b3d535313d312364862a088f4b2a8fa9a}/tools/victron-mock/hoymiles.py
   TZ: ${TZ:-Europe/Berlin}
 
 services:
