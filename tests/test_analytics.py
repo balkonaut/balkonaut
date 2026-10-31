@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from balkonaut.analytics import TZ, amortization, balance, battery, periods
+from balkonaut.analytics import TZ, amortization, balance, battery, history, periods
 
 PRICES = {"energy": 0.30, "feed_in": 0.10}
 
@@ -215,3 +215,12 @@ def test_guete():
     assert guete("nulleinspeisung", "reaktionszeit_median", 37.5) == 0.5  # kleiner ist besser
     assert guete("bilanz", "autarkiegrad", 0.5) is None and guete("akku", "wirkungsgrad", None) is None
     assert all(len(e) in (1, 5, 6) for b in KACHELN.values() for e in b.values())  # 6: eigene Wörter für die Bewertung
+
+
+def test_history_battery():
+    rows = [("battery_power", 3600, -100, 300, -400, None), ("battery_power", 7200, 500, 500, 0, None),
+            ("battery_soc", 3600, 40, 40, 0, 35), ("battery_soc", 7200, 50, 50, 0, None)]
+    a, b = history(rows, [("1", 3600, 7200), ("2", 7200, 10800)], PRICES)
+    assert (a["charge"], a["discharge"], a["soc"]) == (0.3, 0.4, 35)  # Ladestand: letzter Wert der Stunde
+    assert (b["charge"], b["discharge"], b["soc"]) == (0.5, 0.0, 50)  # ohne letzten Wert der Mittelwert
+    assert history(rows[:2], [("1", 3600, 7200)], PRICES)[0]["soc"] is None

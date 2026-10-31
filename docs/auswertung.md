@@ -104,7 +104,9 @@ Ein gelber Ring bei etwa 50 % ist deshalb dort schon „schwach“.
 
 Die Seite *Verlauf* zeigt Tag (Stunden), Woche, Monat (je Tag) und Jahr (je Monat) als Balkendiagramm:
 grün der Teil des Hausverbrauchs, den das Balkonkraftwerk gedeckt hat, blau der Netzbezug, der gelbe Strich
-die Erzeugung. Mit *zurück* und *weiter* blätterst du durch die Zeiträume, darunter steht die Bilanz des
+die Erzeugung. Darunter zeigt das Diagramm *Akku* oben den Ladestand am Ende jedes Abschnitts in % und unten,
+was in den Akku geladen wurde (türkis, nach oben) und was er abgegeben hat (orange, nach unten), in kWh; ohne
+Akkuwerte fehlt es. Mit *zurück* und *weiter* blätterst du durch die Zeiträume, darunter steht die Bilanz des
 gewählten Zeitraums. Stundenwerte bleiben unbegrenzt gespeichert, du kannst also bis zum ersten Messtag
 (oder bis zum Beginn des importierten Verlaufs) zurückblättern.
 

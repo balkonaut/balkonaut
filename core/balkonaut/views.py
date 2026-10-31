@@ -50,6 +50,8 @@ KACHELN = {
                      "ist die Erzeugung aller Module, egal wohin sie ging: Liegt er über Grün, ging der Rest in den Akku "
                      "oder ins Netz; liegt er darunter, half der Akku aus. Die gestrichelte Linie ist die erwartete "
                      "Erzeugung laut Forecast.Solar, nur für heute.",),
+        "akku": ("Oben der Ladestand am Ende jedes Zeitabschnitts in %. Unten je Zeitabschnitt, was in den Akku geladen "
+                 "wurde (türkis, nach oben) und was er abgegeben hat (orange, nach unten), in kWh.",),
         "uhrzeit": ("Die letzten 7 Tage nach Uhrzeit zusammengefasst. Oben je Stunde der Anteil der regelbereiten Zeit, "
                     "in der der Netzanschluss bei ±50 W lag, in %: grün ab 80 %, rot bis 50 %. Blasse Felder ohne Zahl: "
                     "In dieser Stunde konnte der Speicher nie nachregeln (Akku leer oder Abgabe am Limit). Unten der "

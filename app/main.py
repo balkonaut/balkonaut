@@ -76,6 +76,18 @@ def chart(bars):
             "forecast": forecast if any(b.get("fc") for b in bars) else None}
 
 
+def battery_chart(bars):
+    """Akku je Zeitabschnitt: Laden nach oben, Entladen nach unten (je höchstens 40 Einheiten um y=120), Ladestand als
+    Linie in der oberen Fläche (y=70 bei 0 %, y=10 bei 100 %); None ohne Akkuwerte."""
+    peak = max((max(b["charge"], b["discharge"]) for b in bars), default=0)
+    if not peak and all(b["soc"] is None for b in bars):
+        return None
+    w = (480 - 36) / len(bars)
+    return {"bars": bars, "scale": 40 / peak if peak else 0, "peak": de(peak, 2 if peak < 1 else 1),
+            "soc": " ".join(f"{36 + (i + 0.5) * w:.1f},{70 - b['soc'] * 0.6:.1f}"
+                            for i, b in enumerate(bars) if b["soc"] is not None)}
+
+
 def soc_gauge(live):
     """Akku-Ring: Ladestand, Farbton von 0 (rot, Untergrenze) bis 130 (grün, Obergrenze) und Grenzmarken
     als Striche im Ring (viewBox 100, Radius 34 bis 50). None ohne Ladestand."""
@@ -275,7 +287,7 @@ def history(request: Request, ansicht: str = "tag", datum: str = ""):
     d = history_data(request, ansicht, datum)
     return templates.TemplateResponse(request, "history.html", {
         "views": views.VIEWS.items(), "view": d["ansicht"], "title": d["titel"], "prev": d["zurueck"], "next": d["weiter"],
-        "chart": chart(d["balken"]), "b": d["bilanz"],
+        "chart": chart(d["balken"]), "akku": battery_chart(d["balken"]), "b": d["bilanz"],
     })
 
 

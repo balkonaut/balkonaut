@@ -11,7 +11,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 const PANEL_STYLE = `
   :host { display: block; min-height: 100%; background: var(--primary-background-color);
-    --bk-sun: #f2b733; --bk-leaf: #3fa66b; --bk-batt: #0b84a5; --bk-sky: #4a8fd0; --bk-warn: #d9682f;
+    --bk-sun: #f2b733; --bk-leaf: #3fa66b; --bk-batt: #0b84a5; --bk-batt-flow: #14b8a6; --bk-sky: #4a8fd0; --bk-warn: #d9682f;
     --bk-line: var(--divider-color, #c4cfdd); --bk-ink: var(--primary-text-color); --bk-muted: var(--secondary-text-color);
     --bk-card: var(--ha-card-background, var(--card-background-color, #fff));
     --bk-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; color: var(--bk-ink); }
@@ -237,6 +237,35 @@ class BalkonautPanel extends HTMLElement {
       ${help ? `<p class="hilfe" id="hilfe-diagramm" hidden>${esc(help)}</p>` : ""}`;
   }
 
+  // Akku je Zeitabschnitt wie app/templates/_akku.html: oben Ladestand als Linie, unten Laden (nach oben) und Entladen
+  _battery(bars) {
+    const peak = Math.max(0, ...bars.map((b) => Math.max(b.charge, b.discharge)));
+    if (!peak && bars.every((b) => b.soc == null)) return "";
+    const n = bars.length, left = 36, w = (480 - left) / n, every = Math.ceil(n / 12), scale = peak ? 40 / peak : 0;
+    const p = this._fmt(peak, peak < 1 ? 2 : 1), help = this._kacheln?.diagramm?.akku?.[0];
+    const soc = bars.map((b, i) => b.soc == null ? "" : `${(left + (i + 0.5) * w).toFixed(1)},${(70 - b.soc * 0.6).toFixed(1)}`).filter(Boolean).join(" ");
+    const cols = bars.map((h, i) => {
+      const x = left + i * w;
+      return `<g><title>${esc(h.label)}: ${this._fmt(h.charge, 2)} kWh geladen, ${this._fmt(h.discharge, 2)} kWh entladen${h.soc == null ? "" : `, Ladestand ${this._fmt(h.soc, 0)} %`}</title>
+        <rect x="${x + w * 0.15}" y="${120 - h.charge * scale}" width="${w * 0.7}" height="${h.charge * scale}" fill="var(--bk-batt-flow)"/>
+        <rect x="${x + w * 0.15}" y="120" width="${w * 0.7}" height="${h.discharge * scale}" fill="var(--bk-warn)"/></g>
+        ${i % every === 0 ? `<text x="${x + w * 0.5}" y="174" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${esc(h.label)}</text>` : ""}`;
+    }).join("");
+    return `<h2>Akku</h2><div class="card">${help ? `<button class="info" type="button" aria-expanded="false" aria-controls="hilfe-akku" aria-label="Erklärung zum Akku-Diagramm">i</button>` : ""}
+      <svg class="chart" viewBox="0 0 480 176" role="img" aria-label="Akku je Zeitabschnitt: Ladestand, geladen und entladen">
+      <text x="0" y="8" font-size="9" fill="var(--bk-muted)">%</text>
+      <rect x="${left}" y="10" width="${480 - left}" height="60" fill="none" stroke="var(--bk-line)"/>
+      ${[0, 50, 100].map((v) => `<text x="${left - 4}" y="${73 - v * 0.6}" font-size="9" text-anchor="end" fill="var(--bk-muted)">${v}</text>`).join("")}
+      ${soc ? `<polyline points="${soc}" fill="none" stroke="var(--bk-sun)" stroke-width="2"><title>Ladestand am Ende des Zeitabschnitts</title></polyline>` : ""}
+      <text x="0" y="104" font-size="9" fill="var(--bk-muted)">kWh</text>
+      <text x="${left - 4}" y="83" font-size="9" text-anchor="end" fill="var(--bk-muted)">${p}</text>
+      <text x="${left - 4}" y="163" font-size="9" text-anchor="end" fill="var(--bk-muted)">−${p}</text>
+      <line x1="${left}" x2="480" y1="120" y2="120" stroke="var(--bk-muted)"/>${cols}</svg>
+      <div class="legend"><span><i style="background:var(--bk-batt-flow)"></i>Geladen</span><span><i style="background:var(--bk-warn)"></i>Entladen</span>
+      <span><i style="background:none;height:0;border-top:2px solid var(--bk-sun);vertical-align:3px"></i>Ladestand (%, oben)</span></div>
+      ${help ? `<p class="hilfe" id="hilfe-akku" hidden>${esc(help)}</p>` : ""}</div>`;
+  }
+
   _balance(b) {
     const k = (key, label, value, raw) => this._kachel("bilanz", key, label, value, raw);
     return `<div class="grid">${k("ersparnis", "Ersparnis", `${this._fmt(b.ersparnis, 2)} €`)}${k("eigenverbrauch", "Eigenverbrauch", `${this._fmt(b.eigenverbrauch)} kWh`)}
@@ -314,7 +343,7 @@ class BalkonautPanel extends HTMLElement {
     return `<div class="tabs">${tabs}</div>
       <div class="pager"><button data-set="_datum=${esc(d.zurueck)}">← zurück</button><b>${esc(d.titel)}</b>
         <button ${d.weiter ? `data-set="_datum=${esc(d.weiter)}"` : "disabled"}>weiter →</button></div>
-      <div class="card">${this._chart(d.balken)}</div><h2>Bilanz</h2>${this._balance(d.bilanz)}`;
+      <div class="card">${this._chart(d.balken)}</div>${this._battery(d.balken)}<h2>Bilanz</h2>${this._balance(d.bilanz)}`;
   }
 
   _regulation(r) {

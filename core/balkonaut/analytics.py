@@ -314,14 +314,19 @@ def buckets(view, d):
 
 
 def history(rows, bars, prices, forecast=None):
-    """Bilanz je Balken: Eigenverbrauch, Netzbezug und Erzeugung in kWh; mit forecast ({Stundenbeginn: kWh}, nur für
-    Stundenbalken) dazu die erwartete Erzeugung."""
+    """Bilanz je Balken: Eigenverbrauch, Netzbezug und Erzeugung in kWh, Akku geladen/entladen in kWh und Ladestand am
+    Ende des Balkens in %; mit forecast ({Stundenbeginn: kWh}, nur für Stundenbalken) dazu die erwartete Erzeugung."""
     # Vereinfachung: rechnet jeden Balken einzeln (Jahr: 12 Durchläufe über ein Jahr Stundenwerte); bei Bedarf vorsummieren
     rows = _recent(rows, bars[0][1], bars[-1][2])
     out = []
     for label, a, b in bars:
-        x = balance([r for r in rows if r[1] < b], a, prices)
+        c = _collect([r for r in rows if r[1] < b], a)
+        x, soc, energy = balance(None, a, prices, c), c[2].get("battery_soc"), c[3]
+        mean, *_, last = soc[max(soc)] if soc else (None, None)
         out.append({"label": label, "own": x["eigenverbrauch"], "grid": x["netzbezug"], "gen": x["erzeugung"],
+                    "charge": energy("battery_charge_energy", "battery_power+"),
+                    "discharge": energy("battery_discharge_energy", "battery_power-"),
+                    "soc": mean if last is None else last,
                     "fc": forecast.get(a) if forecast else None, "datum": datetime.fromtimestamp(a, TZ).date().isoformat()})
     return out
 

@@ -10,6 +10,7 @@
   {% if next %}<a href="?ansicht={{ view }}&datum={{ next }}">weiter →</a>{% else %}<span class="label">weiter →</span>{% endif %}
 </p>
 <div class="card">{% include "_chart.html" %}</div>
+{% if akku %}<h2>Akku</h2><div class="card">{% include "_akku.html" %}</div>{% endif %}
 <div class="grid" style="margin-top:.75rem">
   {{ kachel("bilanz", "erzeugung", "Erzeugung", b.erzeugung|de(1) ~ " kWh") }}
   {{ kachel("bilanz", "hausverbrauch", "Hausverbrauch", b.hausverbrauch|de(1) ~ " kWh") }}

@@ -61,6 +61,13 @@ def test_chart_ticks():
     assert chart([])["ticks"] == []
 
 
+def test_battery_chart():
+    from app.main import battery_chart
+    c = battery_chart([{"charge": 0.4, "discharge": 0, "soc": None}, {"charge": 0, "discharge": 0.2, "soc": 50}])
+    assert c["scale"] == 100 and c["peak"] == "0,40" and c["soc"] == "369.0,40.0"  # 50 % in der Mitte der oberen Fläche
+    assert battery_chart([{"charge": 0, "discharge": 0, "soc": None}]) is None
+
+
 def test_api_v1(client):
     s = client.get("/api/v1/status").json()
     assert s["stand"] is None and s["live"] == {} and s["bilanz"]["tag"]["ersparnis"] == 0

@@ -7,7 +7,7 @@ Eine technische Übersicht aller Abfragen liefert `http://<adresse>:8000/docs`.
 | Abfrage | Inhalt |
 |---|---|
 | `GET /api/v1/status` | Aktuelle Messwerte, Bilanz und Akku für heute, Monat, Jahr und gesamt, Amortisation |
-| `GET /api/v1/verlauf?ansicht=tag\|woche\|monat\|jahr&datum=JJJJ-MM-TT` | Balken der Verlaufsansicht und Bilanz des Zeitraums |
+| `GET /api/v1/verlauf?ansicht=tag\|woche\|monat\|jahr&datum=JJJJ-MM-TT` | Balken der Verlaufsansicht (mit Akku geladen, entladen und Ladestand) und Bilanz des Zeitraums |
 | `GET /api/v1/nulleinspeisung` | Regelgüte der Nulleinspeisung der letzten 7 Tage |
 | `GET /api/v1/bericht?monat=JJJJ-MM` | Monatsbericht: Bilanz, Vormonat, Vorjahresmonat, Akku, Erwartung, Tageswerte |
 | `GET /api/v1/export` | Gesamte Historie (Stundenwerte, Tageswerte der Regelgüte) für den Umzug in die Integration |
