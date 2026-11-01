@@ -124,7 +124,7 @@ async def test_standalone(hass):
     er.async_get(hass).async_get_or_create("sensor", "forecast_solar", f"{solar.entry_id}_energy_production_today",
                                            suggested_object_id="prognose", config_entry=solar)
     result = await start_flow(hass)
-    assert result["step_id"] == "standalone"
+    assert result["step_id"] == "user"
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {"storage_device": ezhi, "grid_device": em})
     assert result["step_id"] == "entities"
     values = result["description_placeholders"]["values"]

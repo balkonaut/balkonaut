@@ -66,9 +66,6 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return await self.async_step_standalone(user_input)
-
-    async def async_step_standalone(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Eigenständig, Schritt 1: Geräte wählen, aus ihnen schlägt Balkonaut die Entitäten vor."""
         await self.async_set_unique_id("standalone")  # eine eigene Datenbank, also nur ein eigenständiger Eintrag
         self._abort_if_unique_id_configured()
@@ -77,7 +74,7 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
             self._devices, self._device_values = [], {}
             return await self.async_step_entities()
         device = DeviceSelector(DeviceSelectorConfig(entity=[EntityFilterSelectorConfig(domain="sensor")]))
-        return self.async_show_form(step_id="standalone", data_schema=vol.Schema({vol.Optional(r): device for r in ROLES}))
+        return self.async_show_form(step_id="user", data_schema=vol.Schema({vol.Optional(r): device for r in ROLES}))
 
     async def async_step_entities(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Schritt 2: Vorschläge prüfen und ergänzen, mit aktuellen Werten zur Kontrolle."""

@@ -464,8 +464,8 @@ async def save_settings(request: Request):
     multi = await form_data(request)
     cfg = config.load(request.app.state.config_path)
     bereich = (multi.get("bereich") or [""])[0]
-    if bereich in ("geraete", "flaechen", "akku"):
-        return await {"geraete": save_devices, "flaechen": save_planes, "akku": save_battery}[bereich](request, cfg, multi)
+    if save := {"geraete": save_devices, "flaechen": save_planes, "akku": save_battery}.get(bereich):
+        return await save(request, cfg, multi)
     form = {k: v[0] for k, v in multi.items()}
     try:
         values = {k: float(form[k].replace(",", ".")) for k in ("energy", "feed_in", "cost")}

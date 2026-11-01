@@ -12,9 +12,7 @@ async def run(adapter, storage, interval=10, manual=None):
         now = int(time.time())
         try:
             values = await asyncio.to_thread(adapter.read)
-            for key, value in (manual or {}).items():
-                if values.get(key) is None:
-                    values[key] = value
+            values |= {k: v for k, v in (manual or {}).items() if values.get(k) is None}
             storage.add(now, values)
             storage.aggregate(now)
         except Exception:

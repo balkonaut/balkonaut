@@ -1,7 +1,7 @@
 {
   "config": {
     "step": {
-      "standalone": {
+      "user": {
         "title": "Geräte wählen",
         "description": "Sind deine Geräte schon in Home Assistant eingebunden, z. B. über die Shelly- oder APsystems-Integration? Dann wähle sie hier aus. Balkonaut schlägt daraus die passenden Entitäten vor, du prüfst sie im nächsten Schritt. Was du nicht hast, leer lassen.\n\n**Alles leer lassen und mit OK weiter**, wenn deine Geräte nicht in Home Assistant eingebunden sind oder Balkonaut sie selbst im Heimnetz abfragen soll. Dann trägst du im nächsten Schritt ganz oben unter „Geräte direkt abfragen“ ihre IP-Adressen ein. Entitäten lassen sich dort auch ohne Auswahl hier von Hand zuordnen.",
         "data": {

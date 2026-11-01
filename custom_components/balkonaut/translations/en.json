@@ -1,7 +1,7 @@
 {
   "config": {
     "step": {
-      "standalone": {
+      "user": {
         "title": "Choose devices",
         "description": "Are your devices already set up in Home Assistant, e.g. via the Shelly or APsystems integration? Then select them here. Balkonaut suggests the matching entities, you check them in the next step. Leave empty what you don't have.\n\n**Leave everything empty and continue with OK** if your devices are not set up in Home Assistant or Balkonaut should query them itself on your home network. In the next step you then enter their IP addresses at the very top under “Query devices directly”. Entities can also be assigned there by hand without a selection here.",
         "data": {
