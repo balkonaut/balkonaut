@@ -26,7 +26,7 @@ die Docker-App liest sie von den Geräten.
 | `battery_soh` | Akku-Gesundheit in % (optional) | |
 | `battery_soc_min`, `battery_soc_max` | eingestellte Lade-Untergrenze und -Obergrenze in % (optional) | |
 | `battery_discharge_protection` | eingestellter Entladeschutz in % (optional), erscheint als Marke im Akku-Ring | |
-| `battery_mode` | Betriebsart des Speichers als Text, z. B. das Szenario des EZHI (optional, nur Integration), erscheint unter dem Akku-Ring; wird nicht gespeichert | |
+| `battery_mode` | Betriebsart des Speichers als Text, z. B. das Szenario des EZHI (optional; Integration, Docker-App über die APsystems-Cloud), erscheint unter dem Akku-Ring; wird nicht gespeichert | |
 | `output_power_limit` | eingestelltes Abgabelimit des Speichers in W (optional, sonst 800 W) | |
 | `pv_forecast_today`, `pv_ac_forecast_today` | Prognose „Erzeugung heute“ in kWh für die Fläche am Speicher bzw. am zweiten Wechselrichter, z. B. aus Forecast.Solar (optional) | |
 

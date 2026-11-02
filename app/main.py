@@ -8,15 +8,15 @@ import time
 from contextlib import asynccontextmanager
 from datetime import date, datetime
 from pathlib import Path
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
 
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app import config
-from balkonaut import analytics, collector, devices, pvgis, views
+from balkonaut import analytics, apcloud, collector, devices, pvgis, views
 from balkonaut.profiles import direction
 from balkonaut.storage import Storage
 
@@ -150,6 +150,32 @@ async def lifespan(app):
         task.cancel()
 
 
+CLOUD_INTERVAL = 300  # Sekunden; Ladegrenzen und Szenario ändern sich selten
+CLOUD_KEYS = ("battery_soc_min", "battery_soc_max", "battery_discharge_protection", "output_power_limit")
+
+
+async def cloud_job(app):
+    """Werte der APsystems-Cloud lesen und als Ergänzung für die Messung bereitstellen (vor den Handeinträgen)."""
+    while True:
+        await refresh_cloud(app)
+        await asyncio.sleep(CLOUD_INTERVAL)
+
+
+async def refresh_cloud(app):
+    try:
+        values = await asyncio.to_thread(app.state.cloud.read)
+    except apcloud.CloudError as e:
+        app.state.cloud_error = str(e)
+        log.warning("APsystems-Cloud: %s", e)
+        return
+    except Exception:
+        app.state.cloud_error = "Unerwarteter Fehler beim Lesen, Details im Protokoll"
+        log.exception("APsystems-Cloud nicht gelesen")
+        return
+    app.state.cloud_error, app.state.cloud_values = None, values
+    app.state.fill.update({k: values[k] for k in CLOUD_KEYS if values.get(k) is not None})
+
+
 def start_measuring(app, cfg):
     """Messung, Ertragsprofil und Regelgüte mit dem Adapter aus der Konfiguration (neu) starten."""
     for task in app.state.tasks:
@@ -157,13 +183,33 @@ def start_measuring(app, cfg):
     app.state.tasks = []
     adapter = config.adapter(cfg)
     app.state.forecast = adapter.forecast if adapter else None  # Prognose je Stunde für das Diagramm
+    # Ergänzt fehlende Messwerte: von Hand eingetragen, darüber die Cloud; gemessene Werte gehen immer vor
+    app.state.fill = dict(cfg.get("battery") or {})
+    cloud = cfg.get("apsystems_cloud")
+    app.state.cloud = apcloud.Cloud(cloud["username"], cloud["password"], cloud["device_id"]) if cloud else None
+    app.state.cloud_values, app.state.cloud_error = {}, None
+    if app.state.cloud:
+        app.state.tasks.append(asyncio.create_task(cloud_job(app)))
     if adapter:
-        app.state.tasks = [asyncio.create_task(collector.run(adapter, app.state.storage, manual=cfg.get("battery"))),
-                           asyncio.create_task(load_profile(app, adapter, app.state.config_path.parent / "ertragsprofil.json")),
-                           asyncio.create_task(regulation_job(app))]
+        app.state.tasks += [asyncio.create_task(collector.run(adapter, app.state.storage, manual=app.state.fill)),
+                            asyncio.create_task(load_profile(app, adapter, app.state.config_path.parent / "ertragsprofil.json")),
+                            asyncio.create_task(regulation_job(app))]
 
 
 app = FastAPI(title="Balkonaut", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def same_origin(request: Request, call_next):
+    """Formulare nur von der eigenen Seite: Die App hat keine Anmeldung, eine fremde Webseite im Browser darf weder
+    Einstellungen noch den Wechselrichter ändern."""
+    if request.method == "POST":
+        origin = request.headers.get("origin")
+        cross = (urlsplit(origin).netloc != request.headers.get("host") if origin and origin != "null"
+                 else request.headers.get("sec-fetch-site") == "cross-site" or origin == "null")
+        if cross:
+            return PlainTextResponse("Nur von der Balkonaut-Seite aus erlaubt", status_code=403)
+    return await call_next(request)
 
 
 # Gebautes Handbuch (MkDocs), im Container unter /srv/handbuch
@@ -245,6 +291,7 @@ def dashboard(request: Request, zeitraum: str = "tag"):
         "setup": setup,
         "periods": PERIODS, "period": period, "b": st["bilanz"][period], "akku": st["akku"][period],
         "heute": st["bilanz"]["tag"], "live": live, "gauge": soc_gauge(live),
+        "mode": request.app.state.cloud_values.get("battery_mode"),
         "live_age": int(time.time() - st["stand"].timestamp()) if st["stand"] else None,
         "chart": chart(bars), "a": a, "warnings": st["warnungen"],
         "progress": min(a["bisher_gespart"] / a["kosten"] * 100, 100) if a["kosten"] else 0,
@@ -339,9 +386,13 @@ def device_values(dev):
 
 async def settings_page(request, cfg, status_code=200, **errors):
     live = await asyncio.to_thread(lambda: [device_values(d) for d in cfg.get("devices") or []])
+    state = request.app.state
     return templates.TemplateResponse(request, "settings.html", {
-        "cfg": cfg, "live": live, "names": DEVICE_NAMES, "invertible": INVERTIBLE, "battery_fields": BATTERY_FIELDS, **errors},
-        status_code=status_code)
+        "cfg": cfg, "live": live, "names": DEVICE_NAMES, "invertible": INVERTIBLE, "battery_fields": BATTERY_FIELDS,
+        "cloud": {"on": bool(cfg.get("apsystems_cloud")), "user": (cfg.get("apsystems_cloud") or {}).get("username"),
+                  "device_id": (cfg.get("apsystems_cloud") or {}).get("device_id"), "werte": state.cloud_values,
+                  "error": state.cloud_error, "modes": [(m, apcloud.MODES[m]) for m in apcloud.SELECTABLE]},
+        **errors}, status_code=status_code)
 
 
 @app.get("/einstellungen", include_in_schema=False)
@@ -459,12 +510,65 @@ async def save_planes(request, cfg, form):
     return save_and_restart(request, cfg, "flaechen")
 
 
+def ezhi_device_id(cfg):
+    """Geräte-ID des direkt abgefragten EZHI für die Cloud, sonst leer."""
+    for d in cfg.get("devices") or []:
+        if d["type"] == "apsystems_ezhi":
+            try:
+                return str(devices._get(d["host"], "getDeviceInfo")["data"]["deviceId"])
+            except Exception:
+                return ""
+    return ""
+
+
+async def save_cloud(request, cfg, form):
+    """APsystems-Cloud verbinden (Anmeldung prüfen, dann speichern), trennen oder den EZHI steuern."""
+    form = {k: v[0].strip() for k, v in form.items()}
+    state, action = request.app.state, form.get("aktion")
+    if action == "trennen":
+        cfg.pop("apsystems_cloud", None)
+        return save_and_restart(request, cfg, "cloud")
+    if action == "verbinden":
+        device_id = form.get("device_id") or await asyncio.to_thread(ezhi_device_id, cfg)
+        if not (form.get("username") and form.get("password") and re.fullmatch(r"[A-Za-z0-9]{6,32}", device_id)):
+            return await settings_page(request, cfg, 400, cloud_error=(
+                "Benutzername, Passwort und Geräte-ID des EZHI eingeben (Geräte-ID: Buchstaben und Ziffern, steht in "
+                "der APsystems-App; mit direkt eingetragenem EZHI füllt Balkonaut sie selbst)."))
+        cloud = apcloud.Cloud(form["username"][:100], form["password"][:200], device_id)
+        try:
+            await asyncio.to_thread(cloud.read)
+        except apcloud.CloudError as e:
+            return await settings_page(request, cfg, 400, cloud_error=str(e))
+        cfg["apsystems_cloud"] = {"username": cloud.username, "password": cloud.password, "device_id": device_id}
+        return save_and_restart(request, cfg, "cloud")
+    if not state.cloud:
+        return await settings_page(request, cfg, 400, cloud_error="Erst mit der APsystems-Cloud verbinden.")
+    try:
+        if action == "szenario":
+            await asyncio.to_thread(state.cloud.set_mode, form.get("mode", ""))
+        elif action == "grenzen":
+            soc_min, soc_max = (int(num(form.get(k, ""), 0, 100, what)) for k, what in
+                                (("soc_min", "Minimum"), ("soc_max", "Maximum")))
+            await asyncio.to_thread(state.cloud.set_soc, soc_min, soc_max)
+        elif action == "schutz":
+            await asyncio.to_thread(state.cloud.set_protection, int(num(form.get("protection", ""), 0, 100, "Entladeschutz")))
+        elif action in ("ein", "aus"):
+            await asyncio.to_thread(state.cloud.set_on, action == "ein")
+        else:
+            return await settings_page(request, cfg, 400, cloud_error="Unbekannte Aktion")
+    except (apcloud.CloudError, ValueError) as e:
+        return await settings_page(request, cfg, 400, cloud_error=str(e))
+    await refresh_cloud(request.app)  # neuen Stand gleich zeigen
+    return RedirectResponse(f"einstellungen?gesetzt={action}#cloud", status_code=303)  # Knopf zeigt „gesetzt“
+
+
 @app.post("/einstellungen", include_in_schema=False)
 async def save_settings(request: Request):
     multi = await form_data(request)
     cfg = config.load(request.app.state.config_path)
     bereich = (multi.get("bereich") or [""])[0]
-    if save := {"geraete": save_devices, "flaechen": save_planes, "akku": save_battery}.get(bereich):
+    if save := {"geraete": save_devices, "flaechen": save_planes, "akku": save_battery,
+                "cloud": save_cloud}.get(bereich):
         return await save(request, cfg, multi)
     form = {k: v[0] for k, v in multi.items()}
     try:

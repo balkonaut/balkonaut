@@ -24,6 +24,7 @@ def load(path):
 def save(path, cfg):
     # Vereinfachung: safe_dump verwirft Kommentare in config.yaml; ruamel.yaml, falls das stört
     path.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False))
+    path.chmod(0o600)  # enthält ggf. Zugangsdaten (Home Assistant, APsystems-Cloud)
 
 
 def commissioned(cfg):

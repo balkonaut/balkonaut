@@ -10,6 +10,8 @@
   button { min-height: 44px; padding: .5rem 1.25rem; font-size: 1rem; border-radius: 6px; cursor: pointer;
     border: 1px solid var(--act-bg); background: var(--act-bg); color: var(--act-ink); }
   button.quiet { background: transparent; color: var(--ink); border-color: var(--line); }
+  button.done { background: var(--leaf-soft); color: var(--ink); border-color: var(--leaf); }
+  button.done::before { content: "\2713\00a0"; color: var(--leaf); font-weight: 700; }
   .devices { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
   .device { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
   .device .what { flex: 1 1 16rem; min-width: 0; }
@@ -159,6 +161,70 @@
   </div>
   <button class="save">Speichern</button>
 </form>
+
+<h2 id="cloud">APsystems-Cloud (optional)</h2>
+<div class="card">
+  {% if cloud_error or cloud.error %}<p class="field-error" role="alert">{{ cloud_error or cloud.error }}</p>{% endif %}
+  {% if not cloud.on %}
+  <p class="intro">Für den APsystems EZHI: Szenario, Ladegrenzen, Entladeschutz und Abgabelimit lesen und den EZHI
+  steuern. Die lokale Schnittstelle des EZHI liefert diese Werte nicht. Werte aus Home Assistant gehen vor.</p>
+  <p class="note" style="margin-top:1rem"><strong>Nicht offiziell.</strong> Balkonaut nutzt dafür denselben Zugang wie
+  die APsystems-App, nachgebaut, ohne Zusage von APsystems. Er kann jederzeit ausfallen. Benutzername und Passwort
+  liegen in <code>config.yaml</code> im Datenverzeichnis, damit sich Balkonaut nach Ablauf des Tokens selbst neu
+  anmeldet. Daten gehen dabei an die APsystems-Cloud. Wer das nicht möchte, lässt diesen Bereich leer.</p>
+  <p class="note err" style="margin-top:.75rem"><strong>Nutzung auf eigenes Risiko.</strong> Die Nutzungsbedingungen von
+  APsystems untersagen Software, die APsystems nicht selbst freigegeben hat, und erlauben, das Konto dafür zu sperren.</p>
+  <form method="post" action="einstellungen"><input type="hidden" name="bereich" value="cloud">
+    <div class="pair">
+      <div><label for="cloud_user">Benutzername oder E-Mail-Adresse</label>
+        <input id="cloud_user" name="username" autocomplete="username" maxlength="100"></div>
+      <div><label for="cloud_pw">Passwort</label>
+        <input id="cloud_pw" name="password" type="password" autocomplete="current-password" maxlength="200"></div>
+    </div>
+    <label for="cloud_dev">Geräte-ID des EZHI</label>
+    <input id="cloud_dev" name="device_id" autocomplete="off" maxlength="32" placeholder="leer lassen bei direkt eingetragenem EZHI">
+    <p class="label">Die Geräte-ID beginnt meist mit D0 und steht in der APsystems-App beim Gerät.</p>
+    <button class="save" name="aktion" value="verbinden">Verbinden</button>
+  </form>
+  {% else %}{% set v = cloud.werte %}{% set done = request.query_params.get("gesetzt") %}
+  {% macro act(name, label, label_done, quiet=false, extra="") -%}
+    <button class="{{ 'done' if done == name else ('quiet' if quiet else '') }}" name="aktion" value="{{ name }}" data-label="{{ label }}" {{ extra|safe }}>{{ label_done if done == name else label }}</button>
+  {%- endmacro %}
+  <p class="intro">Verbunden als <strong>{{ cloud.user }}</strong>, EZHI {{ cloud.device_id }}. Liest alle 5 Minuten.</p>
+  <div class="device" style="margin-top:1rem"><div class="what"><div class="vals">
+    {% if v %}{{ v.battery_mode or "Szenario unbekannt" }} · {{ "eingeschaltet" if v.inverter_on else "ausgeschaltet" if v.inverter_on is false else "Ein/Aus unbekannt" }}
+    · Ladestand {{ v.battery_soc_min|de(0) }} bis {{ v.battery_soc_max|de(0) }} % · Entladeschutz {{ v.battery_discharge_protection|de(0) }} %
+    · Abgabelimit {{ v.output_power_limit|de(0) }} W{% else %}Noch keine Werte gelesen.{% endif %}</div></div></div>
+  <form method="post" action="einstellungen" class="add cloud-form"><input type="hidden" name="bereich" value="cloud">
+    <div><label for="mode">Szenario</label><select id="mode" name="mode">
+      {% for m, name in cloud.modes %}<option value="{{ m }}"{% if v.mode == m %} selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
+    {{ act("szenario", "Umstellen", "Umgestellt") }}
+  </form>
+  <form method="post" action="einstellungen" class="add cloud-form"><input type="hidden" name="bereich" value="cloud">
+    <div><label for="soc_min">Minimum (%)</label><input id="soc_min" name="soc_min" inputmode="numeric" value="{{ v.battery_soc_min|de(0) if v.battery_soc_min is not none else '' }}"></div>
+    <div><label for="soc_max">Maximum (%)</label><input id="soc_max" name="soc_max" inputmode="numeric" value="{{ v.battery_soc_max|de(0) if v.battery_soc_max is not none else '' }}"></div>
+    {{ act("grenzen", "Ladegrenzen setzen", "Ladegrenzen gesetzt") }}
+  </form>
+  <form method="post" action="einstellungen" class="add cloud-form"><input type="hidden" name="bereich" value="cloud">
+    <div><label for="protection">Entladeschutz (%)</label><input id="protection" name="protection" inputmode="numeric" value="{{ v.battery_discharge_protection|de(0) if v.battery_discharge_protection is not none else '' }}"></div>
+    {{ act("schutz", "Entladeschutz setzen", "Entladeschutz gesetzt") }}
+  </form>
+  <p class="label">Der Entladeschutz muss mindestens 2 % über dem Minimum liegen. „Ohne Batterie“ lässt sich nur wählen,
+  wenn kein Akku angeschlossen ist.</p>
+  <form method="post" action="einstellungen" class="add"><input type="hidden" name="bereich" value="cloud">
+    {{ act("ein", "Einschalten", "Eingeschaltet", true) }}
+    {{ act("aus", "Ausschalten", "Ausgeschaltet", true, "onclick=\"return confirm('EZHI wirklich ausschalten? Wieder einschalten geht nur, solange er mit der Cloud verbunden ist, sonst am Akku-Knopf.')\"") }}
+    <button class="quiet" name="aktion" value="trennen" style="margin-left:auto">Cloud trennen</button>
+  </form>
+  <script>
+    // Neue Eingabe: Knopf wieder normal, „gesetzt“ gilt nur für den übernommenen Wert
+    document.querySelectorAll(".cloud-form").forEach(f => f.addEventListener("input", () => {
+      const b = f.querySelector("button.done");
+      if (b) { b.classList.remove("done"); b.textContent = b.dataset.label; }
+    }));
+  </script>
+  {% endif %}
+</div>
 
 <h2 id="preise">Preise und Anlage</h2>
 <form method="post" action="einstellungen" class="card">

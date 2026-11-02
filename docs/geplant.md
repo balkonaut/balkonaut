@@ -28,7 +28,9 @@ lokal nur den aktuellen Stand und Zähler seit der Inbetriebnahme, keinen Verlau
   Herstellers eingerichtet wurde. Bisher reicht der [Import](integration.md) nur so weit, wie Home Assistant die
   Rohdaten aufhebt, meist 10 Tage.
 - **Docker-App:** wahlweise aus der Cloud des Herstellers, zuerst APsystems. Das ist eine Option, die man
-  ausdrücklich einschaltet; ohne sie liest die Docker-App weiter nur im Heimnetz.
+  ausdrücklich einschaltet; ohne sie liest die Docker-App weiter nur im Heimnetz. Die
+  [APsystems-Cloud](einstellungen.md#apsystems-cloud-optional) liefert bisher Einstellungen und Szenario, aber
+  keinen Verlauf.
 
 ## Installation über die HACS-Standardliste
 

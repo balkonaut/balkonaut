@@ -23,11 +23,46 @@ Unter *Einstellungen → Akku*, alles optional:
 - **Abgabelimit** in W: eingestelltes Limit des Speichers, für die Regelgüte der Nulleinspeisung (ohne Angabe 800 W).
 
 Die Grenzwerte braucht es nur, wenn das Gerät sie nicht meldet, etwa der direkt abgefragte APsystems EZHI. Meldet das
-Gerät einen Wert, gilt der gemessene. Ein leeres Feld entfernt den eingetragenen Wert. Ändert man die Grenzen in der
+Gerät einen Wert, gilt der gemessene, danach der aus der [APsystems-Cloud](#apsystems-cloud-optional), zuletzt der
+eingetragene. Ein leeres Feld entfernt den eingetragenen Wert. Ändert man die Grenzen in der
 App des Herstellers, hier ebenfalls anpassen. In `data/config.yaml` stehen sie im Abschnitt `battery`, z. B.
 `battery: {battery_soc_min: 10, battery_soc_max: 100, battery_discharge_protection: 20, output_power_limit: 800}`.
 
 Kommazahlen gehen mit Komma oder Punkt.
+
+## APsystems-Cloud (optional)
+
+Für den APsystems EZHI. Seine lokale Schnittstelle liefert weder Szenario noch Ladegrenzen, Entladeschutz oder
+Abgabelimit, und ändern lässt sich darüber auch nichts. Die APsystems-Cloud kann beides. Ab Werk ist sie aus.
+
+!!! warning "Nicht offiziell"
+    Balkonaut nutzt denselben Zugang wie die APsystems-App, nachgebaut nach der Integration
+    [APsystems EZHI Local API](https://github.com/kamilkosek/EZHI) (MIT-Lizenz), ohne Zusage von APsystems. Er kann
+    jederzeit ausfallen. Die Docker-App spricht dann mit den Servern von APsystems; ohne diese Option bleibt sie im
+    Heimnetz.
+
+    **Nutzung auf eigenes Risiko:** Die [Nutzungsbedingungen von APsystems](https://apsystems.com/apsystems-terms-of-service/)
+    (Stand 6. März 2024) bezeichnen Software, die nicht von APsystems entwickelt und freigegeben wurde, als unzulässig
+    und erlauben, das Konto dafür zu sperren.
+
+Unter *Einstellungen → APsystems-Cloud* Benutzername oder E-Mail-Adresse und Passwort des APsystems-Kontos
+eintragen, dazu die Geräte-ID des EZHI (beginnt meist mit D0, steht in der APsystems-App). Ist der EZHI unter
+[Geräte](#gerate-direkt-ohne-home-assistant) eingetragen, liest Balkonaut die Geräte-ID selbst. *Verbinden* meldet sich
+an und speichert nur, wenn das klappt.
+
+- **Lesen** alle 5 Minuten: Szenario (unter dem Akku-Ring), Ein/Aus, Ladegrenzen, Entladeschutz und Abgabelimit.
+  Werte aus Home Assistant gehen vor, eingetragene Werte unter [Akku](#akku) gelten nur, wenn die Cloud nichts meldet.
+- **Steuern**: Szenario umstellen, Ladegrenzen und Entladeschutz setzen, den EZHI ein- und ausschalten. Vor jeder
+  Änderung liest Balkonaut die aktuelle Einstellung neu. Der Entladeschutz muss mindestens 2 % über dem Minimum liegen
+  (Regel der APsystems-App). „Ohne Batterie“ geht nur, wenn der EZHI keinen Akku meldet. Das Abgabelimit (800 oder
+  1200 W) stellt Balkonaut nicht um. Ausgeschaltet lässt sich der EZHI nur wieder einschalten, solange er noch mit der
+  Cloud verbunden ist, sonst am Knopf des Akkus.
+- **Zugangsdaten**: Benutzername und Passwort stehen im Abschnitt `apsystems_cloud` in `data/config.yaml`, damit sich
+  Balkonaut nach Ablauf des Tokens (7 Tage) selbst neu anmeldet. Die Datei ist nur für den Besitzer lesbar. *Cloud
+  trennen* löscht den Abschnitt.
+
+Die Docker-App hat keine eigene Anmeldung. Wer sie im Heimnetz öffnen kann, kann damit auch den EZHI steuern.
+Formulare nimmt sie nur von der eigenen Seite an, eine fremde Webseite kann also nichts umstellen.
 
 ## Geräte direkt, ohne Home Assistant
 
@@ -71,7 +106,8 @@ Welche IP-Adresse bei Hoymiles und Deye einzutragen ist und was die Docker-App n
 Abgabe-Leistung, vom Plug zählt nur der Zähler (siehe
 [Messquellen](messquellen.md)). Meldet ein Gerät eine Richtung umgekehrt, die Messgröße unter `invert` eintragen,
 z. B. `invert: [output_power]`. Ladegrenzen, Entladeschutz und Abgabelimit des EZHI gibt es nur über die
-APsystems-Cloud; dafür die Werte unter [Akku](#akku) eintragen. Ohne sie rechnet Balkonaut mit den zuletzt bekannten
+APsystems-Cloud; dafür die [APsystems-Cloud](#apsystems-cloud-optional) verbinden oder die Werte unter [Akku](#akku)
+eintragen. Ohne sie rechnet Balkonaut mit den zuletzt bekannten
 Werten (etwa aus einem früheren Betrieb über Home Assistant), sonst mit 0 und 100 %. Der Import des Verlaufs (`app.backfill`) geht nur über Home Assistant.
 
 Für Prognose (Ertragswächter) und Jahresverlauf ohne Home Assistant Standort und Flächen eintragen (im Browser
