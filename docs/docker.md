@@ -74,7 +74,7 @@ mehrfach laufen.
 
 ## In Home Assistant einbinden
 
-Die Docker-App und die Integration sind getrennt, die Integration liest nicht aus der Docker-App. In Home Assistant
+Die Docker-App und die Home-Assistant-Integration sind getrennt, die Home-Assistant-Integration liest nicht aus der Docker-App. In Home Assistant
 lässt sich die Docker-App trotzdem anzeigen:
 
 - Übersicht und Handbuch als eigene Dashboards in der Seitenleiste von Home Assistant:
@@ -86,9 +86,9 @@ lässt sich die Docker-App trotzdem anzeigen:
 Wird Home Assistant über HTTPS aufgerufen, blockiert der Browser eine Seite mit `http://`.
 Dann muss Balkonaut ebenfalls über HTTPS erreichbar sein, zum Beispiel über einen Reverse Proxy.
 
-## Später zur Integration wechseln
+## Später zur Home-Assistant-Integration wechseln
 
-Die gespeicherten Messdaten der Docker-App lassen sich in die Integration übernehmen, siehe
+Die gespeicherten Messdaten der Docker-App lassen sich in die Home-Assistant-Integration übernehmen, siehe
 [Umzug von der Docker-App](integration.md#umzug-von-der-docker-app).
 
 ## Tests bei jedem Push (Gitea Actions)

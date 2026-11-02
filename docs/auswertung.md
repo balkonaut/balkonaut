@@ -27,8 +27,8 @@ die Version und ein Link zum Quellcode auf GitHub.
 
 Das Bild zeigt, wohin die Leistung gerade fließt: von den **Modulen** in den Wechselrichter in der Mitte, von dort in
 den **Akku** oder ins **Haus**, und zwischen **Netz** und Haus. Die Mitte trägt das Modell des Geräts (z. B. **EZHI**), in
-der Integration aus dem Geräteregister von Home Assistant; ohne bekanntes Modell heißt sie **Wechselrichter**. Den Namen
-des Akkus, z. B. den Hersteller, trägt man selbst ein (Docker-App: *Einstellungen → Preise und Anlage*, Integration:
+der Home-Assistant-Integration aus dem Geräteregister von Home Assistant; ohne bekanntes Modell heißt sie **Wechselrichter**. Den Namen
+des Akkus, z. B. den Hersteller, trägt man selbst ein (Docker-App: *Einstellungen → Preise und Anlage*, Home-Assistant-Integration:
 *Konfigurieren*), weil die Geräte ihn nicht verlässlich melden; ohne Eintrag steht dort **Akku**. Ebenso für den
 zweiten Wechselrichter: Ist er in Home Assistant ein eigenes Gerät, steht dort sein Modell, sonst die eingetragene
 Bezeichnung (z. B. **EZ1-M**, wenn der Speicher ihn am Off-Grid-Port mitmisst) oder **Zusatz-WR**.
@@ -40,7 +40,7 @@ Ist ein zweiter Wechselrichter eingetragen (`pv_ac_power`, z. B. ein Mikrowechse
 Bild oben zwei Modulfelder: links die Module am Speicher, rechts die Module am zweiten Wechselrichter, der als eigenes
 Feld **Zusatz-WR** dazwischen steht. Die Module eines Wechselrichters teilen sich eine Anzeige, weil die Geräte keine
 Werte je Modul liefern. Die Modulfelder tragen die Ausrichtung der Flächen (z. B. **Südost**, **West**): in der Docker-App aus den
-Einstellungen, in der Integration aus den Forecast.Solar-Einträgen, die der Prognose des jeweiligen Wechselrichters
+Einstellungen, in der Home-Assistant-Integration aus den Forecast.Solar-Einträgen, die der Prognose des jeweiligen Wechselrichters
 zugeordnet sind. Ohne Flächen heißen sie **Module**.
 
 Bei einem **Victron GX** über MQTT hängt jedes Solarfeld an einem eigenen Laderegler (MPPT). Das Bild zeigt dann ein
@@ -66,7 +66,7 @@ im Monat werden die Schritte entsprechend gröber.
 
 Die **gestrichelte Linie** ist die erwartete Erzeugung je Stunde laut Forecast.Solar, alle Flächen zusammen. Sie
 erscheint nur für heute und nur mit Tagesprognose: in der Docker-App aus den eingetragenen Flächen, in
-der Integration aus der zugeordneten Forecast.Solar-Integration oder den Flächen unter *Konfigurieren*. Liegen die
+der Home-Assistant-Integration aus der zugeordneten Forecast.Solar-Integration oder den Flächen unter *Konfigurieren*. Liegen die
 gelben Striche deutlich unter der Linie, lohnt ein Blick auf den [Ertragswächter](#warnungen). Der Knopf **i** am
 Diagramm erklärt das ebenfalls kurz. Dasselbe Diagramm zeigt die Seite *Verlauf* für Woche, Monat und Jahr, dort ohne
 Prognose.
@@ -141,7 +141,7 @@ abregeln und so eine Warnung „Ertrag niedrig“ auslösen, obwohl alles in Ord
 ## Energiewege
 
 Die Kachel unter der Bilanz zeigt für den gewählten Zeitraum, wohin die Energie geflossen ist (Docker-App und
-Panel der Integration):
+Panel der Home-Assistant-Integration):
 
 | Wert | Bedeutung |
 |---|---|
@@ -262,11 +262,11 @@ beides über die letzten 7 Tage. Liegt ein rotes Feld mit hoher Säule genau im 
 der Modus dort vermutlich Vorrang. Zur Bestätigung an einem sonnigen Tag im [Verlauf](#verlauf) oder in Home
 Assistant Netzleistung, Akkuleistung und Abgabe in diesem Fenster vergleichen: Bleibt die Netzleistung nahe 0 W,
 während der Akku lädt, regelt der Zähler; lädt der Akku mit voller Sonnenleistung und das Haus bezieht Netzstrom, hat
-der Modus Vorrang. Die Karte gibt es in der Docker-App und im Panel der Integration.
+der Modus Vorrang. Die Karte gibt es in der Docker-App und im Panel der Home-Assistant-Integration.
 
 ## Bewertung der Kennzahlen
 
-Diese Kacheln haben eine Skala von Rot bis Grün, in der Docker-App und im Panel der Integration. Zwischen
+Diese Kacheln haben eine Skala von Rot bis Grün, in der Docker-App und im Panel der Home-Assistant-Integration. Zwischen
 den Grenzen läuft die Farbe stufenlos. Die Grenzen gelten für alle Anlagen gleich und sind ein Richtwert, keine Norm.
 
 | Kachel | gut | schlecht |
@@ -294,7 +294,7 @@ Kachel wäre also fast immer rot, obwohl alles in Ordnung ist.
   Balkonaut mit dem **Jahresverlauf**, sobald es die Flächen kennt (in den Einstellungen eingetragen oder aus der
   Forecast.Solar-Integration in Home Assistant): Aus Standort, Neigung, Ausrichtung und Leistung der Flächen holt es
   den erwarteten Ertrag je Monat bei PVGIS (EU) und gewichtet den Zeitraum danach. Zehn Oktobertage zählen so nicht
-  wie zehn Junitage. Ohne Flächen, und bisher immer in der Integration für Home Assistant, wird gleichmäßig über das
+  wie zehn Junitage. Ohne Flächen, und bisher immer in der Home-Assistant-Integration, wird gleichmäßig über das
   Jahr gerechnet.
 - **Amortisiert**: Monat, in dem die Anschaffungskosten voraussichtlich erreicht sind, und die Jahre bis dahin.
 - **Plausibilität**: Ist der Abgabezähler höher, als ein Wechselrichter mit 1200 W Dauerleistung seit dem eingetragenen
@@ -320,7 +320,7 @@ Ungenau bleibt:
   Inbetriebnahme falsch, erscheint der Hinweis zur Plausibilität.
 - **Ohne Abgabezähler** zählt nur der Messzeitraum, die bisherige Ersparnis ist dann zu niedrig.
 
-Die Messlücke lässt sich etwas verkleinern: Die Integration übernimmt beim Einrichten von selbst den Verlauf, den
+Die Messlücke lässt sich etwas verkleinern: Die Home-Assistant-Integration übernimmt beim Einrichten von selbst den Verlauf, den
 Home Assistant noch gespeichert hat (standardmäßig zehn Tage), in der Docker-App mit Verbindung zu Home Assistant geht
 das mit einem Befehl (siehe [Verlauf aus Home Assistant übernehmen](docker.md#verlauf-aus-home-assistant-ubernehmen)).
 Dann beginnt auch die Eigenverbrauchsquote früher.

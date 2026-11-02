@@ -120,10 +120,10 @@ type: custom:balkonaut-card
 
 ## Ohne Home Assistant: die Docker-App
 
-Balkonaut gibt es auch als eigenständige Docker-App, getrennt von der Integration, ohne Home Assistant, etwa auf einer NAS oder einem Raspberry Pi,
+Balkonaut gibt es auch als eigenständige Docker-App, getrennt von der Home-Assistant-Integration, ohne Home Assistant, etwa auf einer NAS oder einem Raspberry Pi,
 mit eigener Web-Oberfläche. Sie liest APsystems EZHI, Shelly-Zähler und Shelly Plug, Hoymiles über OpenDTU oder
 AhoyDTU, Deye über den Logger-Stick sowie Victron GX (MQTT, Modbus TCP) direkt im Heimnetz und holt Prognose und Jahresverlauf aus Standort und Flächen. Andere Geräte liest die
-Docker-App über Home Assistant, oder man nutzt gleich die Integration, die viele Hersteller kennt
+Docker-App über Home Assistant, oder man nutzt gleich die Home-Assistant-Integration, die viele Hersteller kennt
 ([Unterstützte Geräte](https://balkonaut.github.io/balkonaut/geraete/)):
 
 ```yaml
@@ -142,12 +142,12 @@ hinzufügen. Für den APsystems EZHI lässt sich optional die APsystems-Cloud ve
 auch Szenario, Ladegrenzen und Entladeschutz und kann sie setzen (nicht offiziell, Nutzung auf eigenes Risiko, siehe
 [Handbuch](https://balkonaut.github.io/balkonaut/einstellungen/#apsystems-cloud-optional)). Die Weboberfläche lässt
 sich in Home Assistant als Webseiten-Dashboard einbinden. Wer später zur
-Integration wechselt, übernimmt die Messdaten mit der Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen*.
+Home-Assistant-Integration wechselt, übernimmt die Messdaten mit der Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen*.
 Details im [Handbuch](https://balkonaut.github.io/balkonaut/docker/).
 
 ## Handbuch
 
-Das ausführliche [Handbuch](https://balkonaut.github.io/balkonaut/) auf Deutsch: Installation von Integration und Docker-App, Einstellungen, Auswertung, Messquellen und
+Das ausführliche [Handbuch](https://balkonaut.github.io/balkonaut/) auf Deutsch: Installation von Home-Assistant-Integration und Docker-App, Einstellungen, Auswertung, Messquellen und
 Schnittstelle.
 
 ## Unterstützen

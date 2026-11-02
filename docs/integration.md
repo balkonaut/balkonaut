@@ -1,10 +1,10 @@
 # Home-Assistant-Integration
 
-Die Integration bringt Balkonaut nach Home Assistant: 22 Sensoren (Bilanz für heute, Monat und Jahr,
+Die Home-Assistant-Integration bringt Balkonaut nach Home Assistant: 22 Sensoren (Bilanz für heute, Monat und Jahr,
 Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen, dazu eigene Ansichten in der Seitenleiste
 und eine Karte für das Dashboard. Sie läuft auch unter Home Assistant OS, ohne eigenen Server.
 
-Die Integration misst selbst. Balkonaut liest die Werte alle 10 Sekunden, aus Entitäten anderer Integrationen oder
+Die Home-Assistant-Integration misst selbst. Balkonaut liest die Werte alle 10 Sekunden, aus Entitäten anderer Integrationen oder
 direkt von den Geräten im Heimnetz, und speichert sie in `balkonaut/balkonaut.db` im Konfigurationsordner von Home
 Assistant. Die [Docker-App](docker.md) braucht es dafür nicht. Beim ersten Start übernimmt Balkonaut einmalig den
 Verlauf der zugeordneten Entitäten aus dem Recorder von Home Assistant (standardmäßig die letzten 10 Tage), die
@@ -119,7 +119,7 @@ etwa Forecast.Solar für den Speicher und eine eingetragene Fläche für den zwe
 !!! note "Abrufgrenze von Forecast.Solar"
     Ohne eigenen Schlüssel erlaubt Forecast.Solar 12 Abrufe je Stunde und öffentlicher IP-Adresse. Alle Geräte im
     Heimnetz teilen sich diese Grenze, also auch die Forecast.Solar-Integration und die Docker-App.
-    Balkonaut braucht beim eigenen Abruf 2 Abrufe je Fläche und Stunde. Laufen Docker-App und Integration beide mit
+    Balkonaut braucht beim eigenen Abruf 2 Abrufe je Fläche und Stunde. Laufen Docker-App und Home-Assistant-Integration beide mit
     eingetragenen Flächen, zählt das doppelt; dann besser an einer Stelle die Forecast.Solar-Integration nutzen.
 
 Danach zeigt das Balkonaut-Panel in der Seitenleiste oben die Kachel *Einrichtung*, solange etwas Wichtiges fehlt:
@@ -143,20 +143,20 @@ Damit ein weiteres Gerät dazukommt: Balkonaut einrichten, die Entitäten von Ha
 
 Unter *Releases* auf GitHub `balkonaut.zip` herunterladen, nach `config/custom_components/balkonaut` in Home
 Assistant entpacken (z. B. mit dem Add-on *Samba share* oder *Studio Code Server*), Home Assistant neu starten und die
-Integration wie oben hinzufügen. Updates müssen dann ebenfalls von Hand kopiert werden. Der Ordner im Repository
+Home-Assistant-Integration wie oben hinzufügen. Updates müssen dann ebenfalls von Hand kopiert werden. Der Ordner im Repository
 allein reicht nicht, weil er die Rechenlogik aus `core/` nur verlinkt; das Zip enthält sie.
 
 ## Umzug von der Docker-App
 
-Wer bisher die Docker-App genutzt hat, kann deren Messdaten in die Integration übernehmen,
+Wer bisher die Docker-App genutzt hat, kann deren Messdaten in die Home-Assistant-Integration übernehmen,
 damit Monatsberichte, Jahr und Amortisation die ganze Historie kennen:
 
-1. Die Integration wie oben einrichten.
+1. Die Home-Assistant-Integration wie oben einrichten.
 2. Als Administrator *Entwicklerwerkzeuge → Aktionen*, die Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen*
    wählen und die Adresse der laufenden App eintragen (z. B. `http://192.168.1.10:8000`), *Aktion ausführen*.
 
-Stunden vor der ersten eigenen Messung der Integration werden durch die Werte der App ersetzt, die genauer
-sind als der Verlauf aus dem Recorder. Was die Integration selbst gemessen hat, bleibt. Die Antwort nennt die
+Stunden vor der ersten eigenen Messung der Home-Assistant-Integration werden durch die Werte der App ersetzt, die genauer
+sind als der Verlauf aus dem Recorder. Was die Home-Assistant-Integration selbst gemessen hat, bleibt. Die Antwort nennt die
 Zahl der übernommenen Stunden. Danach kann die App abgeschaltet werden. Die App muss mindestens die Version haben, die
 `/api/v1/export` kennt (siehe [Schnittstelle](schnittstelle.md)).
 
@@ -164,12 +164,12 @@ Zahl der übernommenen Stunden. Danach kann die App abgeschaltet werden. Die App
 
 Sobald Balkonaut eingerichtet ist, erscheint *Balkonaut* in der Seitenleiste von Home Assistant. Dort gibt es dieselben Ansichten wie in der Docker-App: Übersicht mit Energiefluss, Bilanz, Akku,
 heutigem Verlauf und Amortisation, außerdem *Verlauf*, *Nulleinspeisung* und den Monatsbericht zum Drucken.
-*Einstellungen* führt zu den Optionen der Integration, *Handbuch* zu diesem Handbuch als Website
+*Einstellungen* führt zu den Optionen der Home-Assistant-Integration, *Handbuch* zu diesem Handbuch als Website
 (https://balkonaut.github.io/balkonaut/).
 
 ## Karte für das Dashboard
 
-Die Integration bringt eine Lovelace-Karte mit Energiefluss, Akku-Ring mit SoC-Grenzen und Restzeit sowie Ersparnis
+Die Home-Assistant-Integration bringt eine Lovelace-Karte mit Energiefluss, Akku-Ring mit SoC-Grenzen und Restzeit sowie Ersparnis
 und Autarkie von heute mit. Sie wird automatisch geladen, ein Eintrag unter *Ressourcen* ist nicht nötig. Im
 Dashboard *Bearbeiten → Karte hinzufügen* und nach *Balkonaut* suchen, oder als YAML:
 
@@ -232,4 +232,4 @@ mode: queued
 Wer vorher die REST-Sensoren aus [Schnittstelle](schnittstelle.md) genutzt hat: den `rest:`-Block aus der
 `configuration.yaml` entfernen, Home Assistant neu starten und die verwaisten Einträge (Integration *RESTful*,
 Status *nicht verfügbar*) unter *Einstellungen → Geräte & Dienste → Entitäten* löschen. Danach lassen sich die
-Sensoren der Integration, die wegen belegter Namen auf `_2` enden, umbenennen.
+Sensoren der Home-Assistant-Integration, die wegen belegter Namen auf `_2` enden, umbenennen.

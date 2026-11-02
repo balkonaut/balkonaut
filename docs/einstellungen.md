@@ -1,6 +1,6 @@
 # Einstellungen der Docker-App
 
-Diese Seite gilt für die [Docker-App](docker.md). Die Integration stellt man unter *Konfigurieren* ein, siehe
+Diese Seite gilt für die [Docker-App](docker.md). Die Home-Assistant-Integration stellt man unter *Konfigurieren* ein, siehe
 [Home-Assistant-Integration](integration.md#einstellungen-diagnose-storungen).
 
 ## Preise und Anlagenkosten

@@ -65,7 +65,7 @@ nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung p
 ## Geräte direkt im Heimnetz
 
 Diese Geräte liest Balkonaut selbst über deren lokale Schnittstelle, ohne Integration des Herstellers: die Docker-App
-(*Einstellungen → Geräte*) und die Integration für Home Assistant (*Geräte direkt abfragen* in Schritt 2 der
+(*Einstellungen → Geräte*) und die Home-Assistant-Integration (*Geräte direkt abfragen* in Schritt 2 der
 [geführten Einrichtung](integration.md#gefuhrte-einrichtung)). Es genügt die IP-Adresse; Balkonaut fragt die Adresse
 an und erkennt an der Antwort, welches Gerät dort läuft. Unbekannte Geräte meldet die Einrichtung.
 
@@ -133,7 +133,7 @@ liefert keinen Zähler, Balkonaut summiert die Leistung dann selbst auf.
 
 Geräte mit Modbus (z. B. Sungrow, Huawei, Fox ESS, dreiphasige Deye-Hybride) oder nur mit Cloud-Zugang (z. B. Anker Solix,
 EcoFlow, Zendure, Growatt, Tibber) liest Balkonaut nicht selbst. Dafür gibt es zwei Wege: die
-[Integration für Home Assistant](integration.md) mit der Integration des Herstellers, deren Entitäten Balkonaut für
+[Home-Assistant-Integration](integration.md) mit der Integration des Herstellers, deren Entitäten Balkonaut für
 viele dieser Geräte kennt (Tabellen oben), oder die Docker-App mit der
 [Verbindung zu Home Assistant](einstellungen.md#verbindung-zu-home-assistant), dann kommen die Werte aus Home Assistant. Weitere Geräte kommen dazu, wenn jemand sie über
 [Gerät melden](integration.md#gerat-melden) beisteuert.
