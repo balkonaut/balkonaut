@@ -25,7 +25,8 @@ gut, und regelt die Nulleinspeisung sauber?
 - **Nulleinspeisung**: wie gut der Speicher den Hausverbrauch trifft, was an Einspeisung und Bezug übrig bleibt
 - **Ertragswächter**: Vergleich mit der Prognose von Forecast.Solar, Warnung bei auffälligen Abweichungen
 - **Monatsbericht** zum Drucken
-- **Karte** für das Dashboard mit Energiefluss und Akku-Ring, **Seitenleiste** mit allen Ansichten
+- **Karte** für das Dashboard mit Energiefluss und Akku-Ring (auf Wunsch mit dem Szenario des Speichers, etwa beim
+  APsystems EZHI), **Seitenleiste** mit allen Ansichten
 - **Saubere Messwerte**: feste Regeln, welche Quelle für welche Größe zählt (z. B. über alle Phasen
   saldierter Netzbezug statt der Phasenzähler eines Shelly Pro 3EM)
 
@@ -120,7 +121,7 @@ type: custom:balkonaut-card
 ## Ohne Home Assistant: die Docker-App
 
 Balkonaut gibt es auch als eigenständige Docker-App, getrennt von der Integration, ohne Home Assistant, etwa auf einer NAS oder einem Raspberry Pi,
-mit eigener Web-Oberfläche. Er liest APsystems EZHI, Shelly-Zähler und Shelly Plug, Hoymiles über OpenDTU oder
+mit eigener Web-Oberfläche. Sie liest APsystems EZHI, Shelly-Zähler und Shelly Plug, Hoymiles über OpenDTU oder
 AhoyDTU, Deye über den Logger-Stick sowie Victron GX (MQTT, Modbus TCP) direkt im Heimnetz und holt Prognose und Jahresverlauf aus Standort und Flächen. Andere Geräte liest die
 Docker-App über Home Assistant, oder man nutzt gleich die Integration, die viele Hersteller kennt
 ([Unterstützte Geräte](https://balkonaut.github.io/balkonaut/geraete/)):
@@ -137,7 +138,10 @@ services:
 ```
 
 `docker compose up -d`, dann `http://<adresse>:8000/` öffnen und unter *Einstellungen* die Geräte per IP-Adresse
-hinzufügen. Die Weboberfläche lässt sich in Home Assistant als Webseiten-Dashboard einbinden. Wer später zur
+hinzufügen. Für den APsystems EZHI lässt sich optional die APsystems-Cloud verbinden: Dann liest die Docker-App
+auch Szenario, Ladegrenzen und Entladeschutz und kann sie setzen (nicht offiziell, Nutzung auf eigenes Risiko, siehe
+[Handbuch](https://balkonaut.github.io/balkonaut/einstellungen/#apsystems-cloud-optional)). Die Weboberfläche lässt
+sich in Home Assistant als Webseiten-Dashboard einbinden. Wer später zur
 Integration wechselt, übernimmt die Messdaten mit der Aktion *Balkonaut: Historie aus Balkonaut-App übernehmen*.
 Details im [Handbuch](https://balkonaut.github.io/balkonaut/docker/).
 
