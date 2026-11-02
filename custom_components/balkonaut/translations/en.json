@@ -55,7 +55,8 @@
               "battery_soh": "Battery health",
               "battery_soc_min": "Minimum state of charge",
               "battery_soc_max": "Maximum state of charge",
-              "battery_discharge_protection": "Discharge protection"
+              "battery_discharge_protection": "Discharge protection",
+              "battery_mode": "Operating mode (scenario)"
             }
           },
           "output": {

@@ -32,6 +32,7 @@ EZHI = [
     e("number.terrasse_apsystens_ezhi_soc_maximum", "apsystems_ezhi_local", "apsystems_APSystens EZHI_cloud_socmax", "battery", "%"),
     e("number.terrasse_apsystens_ezhi_preset_output_power", "apsystems_ezhi_local", "apsystems_APSystens EZHI_cloud_user_set_power", "power", "W"),
     e("number.terrasse_apsystens_ezhi_discharge_protection", "apsystems_ezhi_local", "apsystems_APSystens EZHI_cloud_discharge_protection", "battery", "%"),
+    e("select.terrasse_apsystens_ezhi_system_mode", "apsystems_ezhi_local", "apsystems_APSystens EZHI_cloud_system_mode"),
     e("sensor.apsystens_ezhi_battery_power_inverted", "energy", "energy_power_battery_inverted_sensor_apsystens_ezhi_battery_power", "power", "W", "measurement"),
 ]
 EM = [
@@ -51,7 +52,7 @@ PLUG = [
 ]
 STORAGE_KEYS = ["pv_power", "pv_ac_power", "battery_power", "battery_soc", "output_power", "pv_energy",
                 "battery_charge_energy", "battery_discharge_energy", "battery_capacity", "battery_soh",
-                "battery_soc_min", "battery_soc_max", "battery_discharge_protection", "output_power_limit"]
+                "battery_soc_min", "battery_soc_max", "battery_discharge_protection", "battery_mode", "output_power_limit"]
 
 
 def test_own_system():
@@ -62,6 +63,7 @@ def test_own_system():
         "battery_charge_energy": "sensor.apsystens_ezhi_battery_total_charge_energy",
         "battery_discharge_energy": "sensor.apsystens_ezhi_battery_total_discharge_energy",
         "battery_discharge_protection": "number.terrasse_apsystens_ezhi_discharge_protection",
+        "battery_mode": "select.terrasse_apsystens_ezhi_system_mode",
         "battery_power": "sensor.apsystens_ezhi_battery_power",
         "battery_soc": "sensor.apsystens_ezhi_battery_state_of_charge",
         "battery_soc_max": "number.terrasse_apsystens_ezhi_soc_maximum",

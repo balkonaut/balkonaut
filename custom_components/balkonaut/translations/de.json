@@ -55,7 +55,8 @@
               "battery_soh": "Akku-Gesundheit",
               "battery_soc_min": "Ladestand Minimum",
               "battery_soc_max": "Ladestand Maximum",
-              "battery_discharge_protection": "Entladeschutz"
+              "battery_discharge_protection": "Entladeschutz",
+              "battery_mode": "Betriebsart (Szenario)"
             }
           },
           "output": {

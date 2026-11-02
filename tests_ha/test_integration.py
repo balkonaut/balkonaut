@@ -310,10 +310,14 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
     er.async_get(hass).async_get_or_create("sensor", "forecast_solar", f"{solar.entry_id}_energy_production_today",
                                            suggested_object_id="prognose", config_entry=solar)
     hass.config_entries.async_update_entry(entry, data={**entry.data, "entities": {
-        "battery_soc": "sensor.soc", "pv_ac_power": "sensor.hms", "pv_forecast_today": "sensor.prognose"}})
+        "battery_soc": "sensor.soc", "pv_ac_power": "sensor.hms", "pv_forecast_today": "sensor.prognose",
+        "battery_mode": "select.szenario"}})
+    hass.states.async_set("select.szenario", "AI")  # Text, nur zur Anzeige
     await ws.send_json({"id": 20, "type": "balkonaut/status"})
-    names = (await ws.receive_json())["result"]["names"]
+    result = (await ws.receive_json())["result"]
+    names = result["names"]
     assert names["extra"] == "HMS-800W-2T" and names["modules"] == {"storage": "Südost", "extra": None}
+    assert result["battery_mode"] == "AI"
     client = await hass_client()
     for name in ("balkonaut-card.js", "balkonaut-panel.js"):
         resp = await client.get(f"/balkonaut_static/{name}")

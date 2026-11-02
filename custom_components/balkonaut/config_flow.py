@@ -42,7 +42,8 @@ SECTIONS = {
     "grid": ["grid_power"],
     "generation": ["pv_power", "pv_energy", "pv_ac_power"],
     "battery": ["battery_power", "battery_soc", "battery_charge_energy", "battery_discharge_energy",
-                "battery_capacity", "battery_soh", "battery_soc_min", "battery_soc_max", "battery_discharge_protection"],
+                "battery_capacity", "battery_soh", "battery_soc_min", "battery_soc_max", "battery_discharge_protection",
+                "battery_mode"],
     "output": ["output_power", "output_energy", "output_power_limit"],
     "forecast": ["pv_forecast_today", "pv_ac_forecast_today"],
 }
@@ -94,7 +95,7 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
                                     if k in entities or self._device_values.get(k) is not None]
                     return await self.async_step_summary()
                 errors["base"] = "no_entities"
-        entity = EntitySelector(EntitySelectorConfig(domain=["sensor", "number", "input_number"]))
+        entity = EntitySelector(EntitySelectorConfig(domain=["sensor", "number", "input_number", "select", "input_select"]))
         # Geräte, die Balkonaut selbst abfragt, ohne Integration des Herstellers; zuerst, für Anlagen ohne Entitäten
         schema = {vol.Optional("hosts", default=""): str}
         schema |= {vol.Required(sec): section(
@@ -196,6 +197,8 @@ class BalkonautConfigFlow(ConfigFlow, domain=DOMAIN):
         return "\n".join(lines) or "–"
 
     def _live(self, key: str) -> str:
+        if key == "battery_mode":  # Text, keine Zahl
+            return getattr(self.hass.states.get(self._entities[key]), "state", None) or "kein Wert"
         sign = -1 if key in self._invert else 1
         if key in self._entities:
             state = self.hass.states.get(self._entities[key])

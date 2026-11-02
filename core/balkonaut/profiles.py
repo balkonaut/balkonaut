@@ -35,6 +35,7 @@ PROFILES = {
         (r"_cloud_socmin$", "battery_soc_min", False),
         (r"_cloud_socmax$", "battery_soc_max", False),
         (r"_cloud_discharge_protection$", "battery_discharge_protection", False),
+        (r"_cloud_system_mode$", "battery_mode", False),  # Szenario, z. B. AI oder Balcony Storage
     ],
     "apsystems": [  # APsystems EZ1-M, Integration in Home Assistant
         (r"_total_power$", "pv_power", False),

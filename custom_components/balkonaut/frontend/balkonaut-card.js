@@ -10,6 +10,9 @@ const ICONS = {
   pole: '<path d="M12 2v20M2 5h20M3 3v2M7 3v2M17 3v2M21 3v2"/><path d="m19 5-7 7-7-7"/>',
 };
 // Texte aus Optionen und Geräteregister kommen ins HTML, daher maskieren
+// Szenarien des APsystems EZHI (Entität der Integration „APsystems EZHI Local API“), sonst der Text der Entität
+const MODES = { "Balcony Storage": "Balkon-Energiespeicher", Portable: "Tragbare Stromversorgung", AI: "KI-Modus",
+  Local: "Lokaler Modus", "No Battery": "Ohne Batterie" };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 const STYLE = `
@@ -116,7 +119,7 @@ class BalkonautCard extends HTMLElement {
       "battery_soc_min", "battery_soc_max", "battery_discharge_protection", "battery_capacity"];
     const v = Object.fromEntries(keys.map((k) => [k, this._value(k)]));
     const mppt = Object.entries(this._data.status?.live || {}).filter(([k]) => k.startsWith("pv_mppt_"));
-    const sig = JSON.stringify([v, mppt, this._data.status?.bilanz?.tag]);
+    const sig = JSON.stringify([v, mppt, this._data.status?.bilanz?.tag, this._data.battery_mode]);
     if (sig === this._last) return; // nur neu zeichnen, wenn sich ein Wert geändert hat
     this._last = sig;
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${this._flow(v)}${this._battery(v)}${this._stats()}</ha-card>`;
@@ -230,7 +233,7 @@ class BalkonautCard extends HTMLElement {
       return `<line x1="${50 + 34 * c}" y1="${50 + 34 * s}" x2="${50 + 50 * c}" y2="${50 + 50 * s}" stroke="${color(k)}" stroke-width="3"/>`;
     }).join("");
     const state = batt > 5 ? "lädt" : batt < -5 ? "entlädt" : "ruht";
-    const m = g.rest?.minutes;
+    const m = g.rest?.minutes, mode = this._data.battery_mode;
     return `<div class="row">
       <svg class="ring" viewBox="0 0 100 100" role="img" aria-label="Ladestand ${this._fmt(g.soc)} %">
         <circle cx="50" cy="50" r="42" stroke="var(--bk-line)"/>
@@ -241,7 +244,8 @@ class BalkonautCard extends HTMLElement {
       </svg>
       <div><div class="val">${this._fmt(g.soc)}<span class="unit">%</span></div>
         <div class="sub">${state}${Math.abs(batt) > 5 ? ` mit ${this._fmt(Math.abs(batt))} W` : ""}</div>
-        ${g.rest ? `<div class="sub">${this._fmt(g.rest.target)} % in ca. ${m >= 60 ? `${Math.floor(m / 60)} h ` : ""}${m % 60} min</div>` : ""}</div>
+        ${g.rest ? `<div class="sub">${this._fmt(g.rest.target)} % in ca. ${m >= 60 ? `${Math.floor(m / 60)} h ` : ""}${m % 60} min</div>` : ""}
+        ${mode ? `<div class="sub">${esc(MODES[mode] || mode)}</div>` : ""}</div>
     </div>
     ${g.marks.length ? `<div class="key">${g.marks.map(([k, p, name]) =>
       `<span><i style="background:${color(k)}"></i>${name} ${this._fmt(p)} %</span>`).join("")}</div>` : ""}`;

@@ -45,7 +45,7 @@ BACKFILLED = "backfilled"  # Verlauf aus dem Recorder schon übernommen
 # Messgrößen, die Balkonaut aus Home-Assistant-Entitäten liest (Bedeutung: Handbuch, Einstellungen)
 KEYS = ["grid_power", "pv_power", "pv_ac_power", "battery_power", "battery_soc", "output_power", "output_energy",
         "pv_energy", "battery_charge_energy", "battery_discharge_energy", "battery_capacity", "battery_soh",
-        "battery_soc_min", "battery_soc_max", "battery_discharge_protection", "output_power_limit",
+        "battery_soc_min", "battery_soc_max", "battery_discharge_protection", "battery_mode", "output_power_limit",
         "pv_forecast_today", "pv_ac_forecast_today"]
 PLANES = {"plane_storage": "storage", "plane_extra": "extra"}  # Optionen: Fläche je Wechselrichter
 SIGNED_KEYS = ["grid_power", "pv_power", "pv_ac_power", "battery_power", "output_power"]
@@ -291,7 +291,13 @@ async def ws_status(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     await entry.runtime_data.async_request_refresh()
     connection.send_result(msg["id"], {
         "entry_id": entry.entry_id, "status": entry.runtime_data.data, "setup": _setup(entry),
-        "names": _names(hass, entry)})
+        "names": _names(hass, entry), "battery_mode": _mode(hass, entry)})
+
+
+def _mode(hass: HomeAssistant, entry: ConfigEntry) -> str | None:
+    """Betriebsart des Speichers als Text der Entität, z. B. „AI“ beim EZHI; nur zur Anzeige, nicht gespeichert."""
+    state = hass.states.get((entry.data.get(CONF_ENTITIES) or {}).get("battery_mode", ""))
+    return state.state if state and state.state not in ("unknown", "unavailable") else None
 
 
 def _setup(entry: ConfigEntry) -> dict:
