@@ -41,6 +41,9 @@ const STYLE = `
   .unit { font-size: .55em; color: var(--bk-muted); margin-left: 4px; }
   .sub { font-size: 14px; color: var(--bk-muted); }
   .key { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 12px; color: var(--bk-muted); }
+  .mode { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--bk-line); }
+  .mode .k { font: 11px var(--bk-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--bk-muted); }
+  .mode .v { margin-top: 2px; font-size: 17px; font-weight: 600; color: var(--bk-ink); }
   .key i { display: inline-block; width: 3px; height: 12px; margin-right: 5px; vertical-align: -2px; }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; padding-top: 12px;
     border-top: 1px solid var(--bk-line); }
@@ -244,11 +247,11 @@ class BalkonautCard extends HTMLElement {
       </svg>
       <div><div class="val">${this._fmt(g.soc)}<span class="unit">%</span></div>
         <div class="sub">${state}${Math.abs(batt) > 5 ? ` mit ${this._fmt(Math.abs(batt))} W` : ""}</div>
-        ${g.rest ? `<div class="sub">${this._fmt(g.rest.target)} % in ca. ${m >= 60 ? `${Math.floor(m / 60)} h ` : ""}${m % 60} min</div>` : ""}
-        ${mode ? `<div class="sub">${esc(MODES[mode] || mode)}</div>` : ""}</div>
+        ${g.rest ? `<div class="sub">${this._fmt(g.rest.target)} % in ca. ${m >= 60 ? `${Math.floor(m / 60)} h ` : ""}${m % 60} min</div>` : ""}</div>
     </div>
     ${g.marks.length ? `<div class="key">${g.marks.map(([k, p, name]) =>
-      `<span><i style="background:${color(k)}"></i>${name} ${this._fmt(p)} %</span>`).join("")}</div>` : ""}`;
+      `<span><i style="background:${color(k)}"></i>${name} ${this._fmt(p)} %</span>`).join("")}</div>` : ""}
+    ${mode ? `<div class="mode"><div class="k">Szenario</div><div class="v">${esc(MODES[mode] || mode)}</div></div>` : ""}`;
   }
 
   _stats() {
