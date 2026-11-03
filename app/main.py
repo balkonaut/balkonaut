@@ -68,23 +68,38 @@ templates.env.filters.update(
     komma=lambda v: v if isinstance(v, str) else f"{v:g}".replace(".", ","),  # Eingabefelder: 50,1 statt 50.1
     ago=lambda s: f"{s} s" if s < 120 else f"{s // 60} min" if s < 7200 else f"{s // 3600} h",
 )
+def bar(x, y, w, h, down=False):
+    """Pfad eines Diagramm-Balkens mit leicht gerundeten Ecken am freien Ende (oben, bei down unten)."""
+    if h <= 0:
+        return ""
+    r = min(2, w / 2, h)
+    if down:
+        return f"M{x:g} {y:g}V{y + h - r:g}Q{x:g} {y + h:g} {x + r:g} {y + h:g}H{x + w - r:g}Q{x + w:g} {y + h:g} {x + w:g} {y + h - r:g}V{y:g}Z"
+    return f"M{x:g} {y + h:g}V{y + r:g}Q{x:g} {y:g} {x + r:g} {y:g}H{x + w - r:g}Q{x + w:g} {y:g} {x + w:g} {y + r:g}V{y + h:g}Z"
+
+
 templates.env.globals["version"] = importlib.metadata.version("balkonaut")
-templates.env.globals.update(kacheln=views.KACHELN, guete=views.guete)
+templates.env.globals.update(kacheln=views.KACHELN, guete=views.guete, bar=bar)
 PERIODS = [("tag", "Heute"), ("monat", "Monat"), ("jahr", "Jahr"), ("gesamt", "Gesamt")]
+
+
+def axis_ticks(peak, count):
+    """Hilfslinien bis peak: höchstens count beschriftete mit runden Werten (1, 2, 5 × 10^n), dazwischen je eine blasse
+    Linie ohne Zahl, z. B. Zahlen alle 0,2, Linien alle 0,1. Liste aus (Wert, Beschriftung oder "")."""
+    if not peak:
+        return []
+    raw = peak / count
+    mag = 10 ** math.floor(math.log10(raw))
+    step = next(m * mag for m in (1, 2, 5, 10) if m * mag >= raw)
+    digits = max(0, -math.floor(math.log10(step)))
+    return [(i * step / 2, "" if i % 2 else de(i * step / 2, digits)) for i in range(1, int(2 * peak / step + 1e-9) + 1)]
 
 
 def chart(bars):
     """Balken, Maßstab (Höhe 140 Einheiten), Beschriftung der y-Achse in kWh und Prognose als Punkte der Linie
     (Mitte jedes Zeitabschnitts) für das SVG-Diagramm."""
     peak = max((max(b["own"], b["grid"], b["gen"], b.get("fc") or 0) for b in bars), default=0)
-    ticks = []
-    if peak:
-        raw = peak / 12  # höchstens 12 beschriftete Hilfslinien mit runden Werten (1, 2, 5 × 10^n)
-        mag = 10 ** math.floor(math.log10(raw))
-        step = next(m * mag for m in (1, 2, 5, 10) if m * mag >= raw)
-        digits = max(0, -math.floor(math.log10(step)))
-        # dazwischen je eine blasse Linie ohne Zahl, z. B. Zahlen alle 0,2, Linien alle 0,1
-        ticks = [(i * step / 2, "" if i % 2 else de(i * step / 2, digits)) for i in range(1, int(2 * peak / step + 1e-9) + 1)]
+    ticks = axis_ticks(peak, 12)
     scale, w = (140 / peak if peak else 0), (480 - 36) / max(len(bars), 1)
     forecast = " ".join(f"{36 + (i + 0.5) * w:.1f},{150 - (b.get('fc') or 0) * scale:.1f}" for i, b in enumerate(bars))
     return {"bars": bars, "scale": scale, "ticks": ticks,
@@ -98,7 +113,7 @@ def battery_chart(bars):
     if not peak and all(b["soc"] is None for b in bars):
         return None
     w = (480 - 36) / len(bars)
-    return {"bars": bars, "scale": 40 / peak if peak else 0, "peak": de(peak, 2 if peak < 1 else 1),
+    return {"bars": bars, "scale": 40 / peak if peak else 0, "ticks": axis_ticks(peak, 4),
             "soc": " ".join(f"{36 + (i + 0.5) * w:.1f},{70 - b['soc'] * 0.6:.1f}"
                             for i, b in enumerate(bars) if b["soc"] is not None)}
 

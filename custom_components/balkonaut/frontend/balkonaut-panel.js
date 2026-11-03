@@ -7,6 +7,12 @@ const PERIODS = [["tag", "Heute"], ["monat", "Monat"], ["jahr", "Jahr"], ["gesam
 const VIEWS = [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["jahr", "Jahr"]];
 const HANDBUCH = "https://balkonaut.github.io/balkonaut/";
 // Texte aus Antworten (auch der konfigurierten App) nie als HTML einsetzen
+// Diagramm-Balken mit leicht gerundeten Ecken am freien Ende (oben, bei down unten), wie bar() in app/main.py
+const bar = (x, y, w, h, down = false) => {
+  if (!(h > 0)) return "";
+  const r = Math.min(2, w / 2, h), e = down ? y + h : y, s = down ? -r : r, b = down ? y : y + h;
+  return `M${x} ${b}V${e + s}Q${x} ${e} ${x + r} ${e}H${x + w - r}Q${x + w} ${e} ${x + w} ${e + s}V${b}Z`;
+};
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 const PANEL_STYLE = `
@@ -201,26 +207,28 @@ class BalkonautPanel extends HTMLElement {
     }));
   }
 
+  // Hilfslinien wie app.main.axis_ticks: höchstens count beschriftete mit runden Werten, dazwischen je eine blasse
+  _ticks(peak, count) {
+    if (!peak) return [];
+    const raw = peak / count, mag = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw);
+    const digits = Math.max(0, -Math.floor(Math.log10(step))), ticks = [];
+    for (let i = 1; i * step / 2 <= peak + 1e-9; i++) ticks.push([i * step / 2, i % 2 ? "" : this._fmt(i * step / 2, digits)]);
+    return ticks;
+  }
+
   // Balkendiagramm wie app/templates/_chart.html: Eigenverbrauch grün, Netzbezug blau, Erzeugung gelber Strich
   _chart(bars, dayLink = false) {  // dayLink: jeder Balken öffnet den Tag im Verlauf
     const n = bars.length, left = 36, w = (480 - left) / Math.max(n, 1), every = Math.ceil(n / 12);
     const peak = Math.max(0, ...bars.map((b) => Math.max(b.own, b.grid, b.gen, b.fc || 0)));
-    let ticks = [], scale = 0;
-    if (peak) {
-      const raw = peak / 12, mag = 10 ** Math.floor(Math.log10(raw));  // höchstens 12 beschriftete Hilfslinien
-      const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw);
-      const digits = Math.max(0, -Math.floor(Math.log10(step)));
-      // dazwischen je eine blasse Linie ohne Zahl, z. B. Zahlen alle 0,2, Linien alle 0,1
-      for (let i = 1; i * step / 2 <= peak + 1e-9; i++) ticks.push([i * step / 2, i % 2 ? "" : this._fmt(i * step / 2, digits)]);
-      scale = 140 / peak;
-    }
+    const ticks = this._ticks(peak, 12), scale = peak ? 140 / peak : 0;
     const grid = ticks.map(([v, l]) => `<line x1="${left}" x2="480" y1="${150 - v * scale}" y2="${150 - v * scale}" stroke="var(--bk-line)"${l ? "" : ` stroke-opacity=".45"`}/>
       ${l ? `<text x="${left - 4}" y="${153 - v * scale}" font-size="9" text-anchor="end" fill="var(--bk-muted)">${l}</text>` : ""}`).join("");
     // je Abschnitt Balkonkraftwerk und Netz nebeneinander, Erzeugung als gelber Strich darüber, wie app/templates/_chart.html
     const cols = bars.map((h, i) => {
       const x = left + i * w;
-      return `${dayLink ? `<a class="day" href="#" data-day="${esc(h.datum)}" aria-label="${esc(h.datum)} im Verlauf öffnen"><rect class="hit" x="${x}" y="0" width="${w}" height="150"/>` : ""}<rect x="${x + w * 0.1}" y="${150 - h.own * scale}" width="${w * 0.38}" height="${h.own * scale}" fill="var(--bk-leaf)"><title>${esc(h.label)}: ${this._fmt(h.own, 2)} kWh vom Balkonkraftwerk</title></rect>
-        <rect x="${x + w * 0.52}" y="${150 - h.grid * scale}" width="${w * 0.38}" height="${h.grid * scale}" fill="var(--bk-sky)"><title>${esc(h.label)}: ${this._fmt(h.grid, 2)} kWh aus dem Netz</title></rect>
+      return `${dayLink ? `<a class="day" href="#" data-day="${esc(h.datum)}" aria-label="${esc(h.datum)} im Verlauf öffnen"><rect class="hit" x="${x}" y="0" width="${w}" height="150"/>` : ""}<path d="${bar(x + w * 0.1, 150 - h.own * scale, w * 0.38, h.own * scale)}" fill="var(--bk-leaf)"><title>${esc(h.label)}: ${this._fmt(h.own, 2)} kWh vom Balkonkraftwerk</title></path>
+        <path d="${bar(x + w * 0.52, 150 - h.grid * scale, w * 0.38, h.grid * scale)}" fill="var(--bk-sky)"><title>${esc(h.label)}: ${this._fmt(h.grid, 2)} kWh aus dem Netz</title></path>
         ${h.gen ? `<rect x="${x + w * 0.1}" y="${149 - h.gen * scale}" width="${w * 0.8}" height="3" fill="var(--bk-sun)"><title>${esc(h.label)}: ${this._fmt(h.gen, 2)} kWh erzeugt</title></rect>` : ""}
         ${dayLink ? "</a>" : ""}${i % every === 0 ? `<text x="${x + w * 0.5}" y="166" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${esc(h.label)}</text>` : ""}`;
     }).join("");
@@ -242,24 +250,29 @@ class BalkonautPanel extends HTMLElement {
     const peak = Math.max(0, ...bars.map((b) => Math.max(b.charge, b.discharge)));
     if (!peak && bars.every((b) => b.soc == null)) return "";
     const n = bars.length, left = 36, w = (480 - left) / n, every = Math.ceil(n / 12), scale = peak ? 40 / peak : 0;
-    const p = this._fmt(peak, peak < 1 ? 2 : 1), help = this._kacheln?.diagramm?.akku?.[0];
+    const help = this._kacheln?.diagramm?.akku?.[0];
+    const line = (y, faint) => `<line x1="${left}" x2="480" y1="${y}" y2="${y}" stroke="var(--bk-line)"${faint ? ` stroke-opacity=".45"` : ""}/>`;
+    const label = (y, text) => `<text x="${left - 4}" y="${y + 3}" font-size="9" text-anchor="end" fill="var(--bk-muted)">${text}</text>`;
+    // Hilfslinien wie im Diagramm darüber: Ladestand Zahlen alle 20 %, kWh nach oben und unten gespiegelt
+    const socGrid = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((v) => line(70 - v * 0.6, v % 20)).join("")
+      + [0, 20, 40, 60, 80, 100].map((v) => label(70 - v * 0.6, v)).join("");
+    const kwhGrid = this._ticks(peak, 4).map(([v, l]) => [1, -1].map((sign) =>
+      line(120 - sign * v * scale, !l) + (l ? label(120 - sign * v * scale, (sign > 0 ? "" : "−") + l) : "")).join("")).join("");
     const soc = bars.map((b, i) => b.soc == null ? "" : `${(left + (i + 0.5) * w).toFixed(1)},${(70 - b.soc * 0.6).toFixed(1)}`).filter(Boolean).join(" ");
     const cols = bars.map((h, i) => {
       const x = left + i * w;
       return `<g><title>${esc(h.label)}: ${this._fmt(h.charge, 2)} kWh geladen, ${this._fmt(h.discharge, 2)} kWh entladen${h.soc == null ? "" : `, Ladestand ${this._fmt(h.soc, 0)} %`}</title>
-        <rect x="${x + w * 0.15}" y="${120 - h.charge * scale}" width="${w * 0.7}" height="${h.charge * scale}" fill="var(--bk-batt-flow)"/>
-        <rect x="${x + w * 0.15}" y="120" width="${w * 0.7}" height="${h.discharge * scale}" fill="var(--bk-warn)"/></g>
+        <path d="${bar(x + w * 0.31, 120 - h.charge * scale, w * 0.38, h.charge * scale)}" fill="var(--bk-batt-flow)"/>
+        <path d="${bar(x + w * 0.31, 120, w * 0.38, h.discharge * scale, true)}" fill="var(--bk-warn)"/></g>
         ${i % every === 0 ? `<text x="${x + w * 0.5}" y="174" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${esc(h.label)}</text>` : ""}`;
     }).join("");
     return `<h2>Akku</h2><div class="card">${help ? `<button class="info" type="button" aria-expanded="false" aria-controls="hilfe-akku" aria-label="Erklärung zum Akku-Diagramm">i</button>` : ""}
       <svg class="chart" viewBox="0 0 480 176" role="img" aria-label="Akku je Zeitabschnitt: Ladestand, geladen und entladen">
       <text x="0" y="8" font-size="9" fill="var(--bk-muted)">%</text>
-      <rect x="${left}" y="10" width="${480 - left}" height="60" fill="none" stroke="var(--bk-line)"/>
-      ${[0, 50, 100].map((v) => `<text x="${left - 4}" y="${73 - v * 0.6}" font-size="9" text-anchor="end" fill="var(--bk-muted)">${v}</text>`).join("")}
+      ${socGrid}<line x1="${left}" x2="480" y1="70" y2="70" stroke="var(--bk-muted)"/>
       ${soc ? `<polyline points="${soc}" fill="none" stroke="var(--bk-sun)" stroke-width="2"><title>Ladestand am Ende des Zeitabschnitts</title></polyline>` : ""}
       <text x="0" y="104" font-size="9" fill="var(--bk-muted)">kWh</text>
-      <text x="${left - 4}" y="83" font-size="9" text-anchor="end" fill="var(--bk-muted)">${p}</text>
-      <text x="${left - 4}" y="163" font-size="9" text-anchor="end" fill="var(--bk-muted)">−${p}</text>
+      ${kwhGrid}
       <line x1="${left}" x2="480" y1="120" y2="120" stroke="var(--bk-muted)"/>${cols}</svg>
       <div class="legend"><span><i style="background:var(--bk-batt-flow)"></i>Geladen</span><span><i style="background:var(--bk-warn)"></i>Entladen</span>
       <span><i style="background:none;height:0;border-top:2px solid var(--bk-sun);vertical-align:3px"></i>Ladestand (%, oben)</span></div>
@@ -376,7 +389,7 @@ class BalkonautPanel extends HTMLElement {
       const bh = peak ? h.vermeidbarer_netzbezug * 50 / peak : 0;
       return `<rect x="${x + 1}" y="6" width="${w - 2}" height="30" rx="3" ${s === null ? `fill="var(--bk-line)" fill-opacity=".4"` : `fill="hsl(${Math.round(s * 130)} 60% 42%)"`}>${tip}</rect>
         ${s === null ? "" : `<text x="${x + w * 0.5}" y="25" font-size="8" text-anchor="middle" fill="var(--bk-card)" font-family="var(--bk-mono)">${Math.round(a * 100)}</text>`}
-        <rect x="${x + w * 0.2}" y="${100 - bh}" width="${w * 0.6}" height="${bh}" fill="var(--bk-sky)">${tip}</rect>
+        <path d="${bar(x + w * 0.2, 100 - bh, w * 0.6, bh)}" fill="var(--bk-sky)">${tip}</path>
         ${i % 3 === 0 ? `<text x="${x + w * 0.5}" y="115" font-size="10" text-anchor="middle" fill="var(--bk-muted)">${h.stunde}</text>` : ""}`;
     }).join("");
     const help = this._kacheln?.diagramm?.uhrzeit?.[0];

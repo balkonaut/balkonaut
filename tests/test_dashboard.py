@@ -3,7 +3,7 @@ import time
 
 from fastapi.testclient import TestClient
 
-from app.main import app, de, path_length, round_corners
+from app.main import app, bar, de, path_length, round_corners
 
 
 def test_de():
@@ -70,7 +70,7 @@ def test_chart_ticks():
 def test_battery_chart():
     from app.main import battery_chart
     c = battery_chart([{"charge": 0.4, "discharge": 0, "soc": None}, {"charge": 0, "discharge": 0.2, "soc": 50}])
-    assert c["scale"] == 100 and c["peak"] == "0,40" and c["soc"] == "369.0,40.0"  # 50 % in der Mitte der oberen Fläche
+    assert c["scale"] == 100 and [l for _, l in c["ticks"] if l] == ["0,1", "0,2", "0,3", "0,4"] and c["soc"] == "369.0,40.0"  # 50 % in der Mitte der oberen Fläche
     assert battery_chart([{"charge": 0, "discharge": 0, "soc": None}]) is None
 
 
@@ -168,3 +168,9 @@ def test_flow_names(client, tmp_path):
     app.state.storage.add(int(time.time()) - 5, {"pv_power": 400, "pv_ac_power": 300, "battery_power": 200, "battery_soc": 50})
     page = client.get("/").text
     assert ">EZHI</text>" in page and ">Phylion lädt</text>" in page and ">EZ1-M</text>" in page
+
+
+def test_bar():
+    assert bar(0, 10, 10, 20) == "M0 30V12Q0 10 2 10H8Q10 10 10 12V30Z"  # oben rund, unten eckig
+    assert bar(0, 10, 10, 20, True) == "M0 10V28Q0 30 2 30H8Q10 30 10 28V10Z"  # nach unten: unten rund
+    assert bar(0, 10, 10, 0) == ""
