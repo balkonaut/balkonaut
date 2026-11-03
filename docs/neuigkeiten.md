@@ -17,12 +17,14 @@ Schon in der Docker-App (`:latest`), in der Home-Assistant-Integration ab der n�
   übernommen ist (02.11.2026)
 - Kachel *Akku*: Abschnitt *Szenario* unter den Grenzwerten (02.11.2026)
 - Formulare nimmt die App nur noch von der eigenen Seite an, `config.yaml` ist nur für den Besitzer lesbar (02.11.2026)
+- Energiefluss: statt wandernder Pfeile ein leuchtender Schweif, der nach hinten ausblendet, Leitungen mit runden Ecken (03.11.2026)
 
 **Home-Assistant-Integration**
 
 - Neue optionale Messgröße *Betriebsart (Szenario)*: Karte und Panel zeigen das Szenario des Speichers unter den
   Grenzwerten des Akkus, beim APsystems EZHI aus der Integration *APsystems EZHI Local API* automatisch zugeordnet
   (02.11.2026)
+- Karte, Energiefluss: statt wandernder Pfeile ein leuchtender Schweif, der nach hinten ausblendet, Leitungen mit runden Ecken (03.11.2026)
 
 ## 1.0.2-beta.6 · 01.11.2026 (Vorabversion)
 

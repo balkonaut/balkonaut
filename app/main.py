@@ -45,9 +45,28 @@ def path_length(d):
     return length
 
 
+
+def round_corners(d: str, r: float = 8) -> str:
+    """Leitung aus M, H und V mit abgerundeten Ecken (Radius r, höchstens halbe Nachbarstrecke)."""
+    pts = []
+    for cmd, nums in re.findall(r"([MHV])\s*([\d.\s]+)", d):
+        v = [float(n) for n in nums.split()]
+        x, y = pts[-1] if pts else (0.0, 0.0)
+        pts.append(tuple(v) if cmd == "M" else (v[0], y) if cmd == "H" else (x, v[0]))
+    out = f"M{pts[0][0]:g} {pts[0][1]:g}"
+    for (ax, ay), (px, py), (bx, by) in zip(pts, pts[1:], pts[2:]):
+        la, lb = abs(px - ax) + abs(py - ay), abs(bx - px) + abs(by - py)
+        k = min(r, la / 2, lb / 2)
+        sx, sy = px - (px - ax) / la * k, py - (py - ay) / la * k
+        ex, ey = px + (bx - px) / lb * k, py + (by - py) / lb * k
+        out += f" L{sx:g} {sy:g} Q{px:g} {py:g} {ex:g} {ey:g}"
+    return out + f" L{pts[-1][0]:g} {pts[-1][1]:g}"
+
+
 templates.env.filters.update(
     de=de,
     pathlen=path_length,
+    rund=round_corners,
     abs_de=lambda v, d=1: de(abs(v) if isinstance(v, (int, float)) else None, d),
     pct=lambda v: "–" if v is None else de(v * 100, 0) + " %",
     komma=lambda v: v if isinstance(v, str) else f"{v:g}".replace(".", ","),  # Eingabefelder: 50,1 statt 50.1

@@ -26,7 +26,7 @@ const STYLE = `
     text-transform: uppercase; letter-spacing: .08em; color: var(--bk-muted); }
   .flow { display: block; width: 100%; max-width: 520px; height: auto; margin: 8px auto; }  /* breit nicht riesig */
   .lane { fill: none; stroke: color-mix(in srgb, var(--bk-muted) 30%, transparent); }  /* ruhend, in hell und dunkel sichtbar */
-  .tips { fill: currentColor; filter: drop-shadow(0 0 4px currentColor); }  /* Pfeilstriche per animateMotion */
+  .tips { fill: none; stroke: currentColor; }  /* Schweif je Leitung, Leuchten als breiter blasser Strich (Filter ruckelt) */
   .pulse { display: none; fill: none; stroke: currentColor; stroke-dasharray: 8 16; }
   .node > rect:first-child { fill: var(--bk-bg); stroke-width: 1.5; }
   .node .ico { fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -125,26 +125,39 @@ class BalkonautCard extends HTMLElement {
     const sig = JSON.stringify([v, mppt, this._data.status?.bilanz?.tag, this._data.battery_mode]);
     if (sig === this._last) return; // nur neu zeichnen, wenn sich ein Wert geändert hat
     this._last = sig;
+    const t = this.shadowRoot.querySelector("svg.flow")?.getCurrentTime();
     this.shadowRoot.innerHTML = `<style>${STYLE}</style><ha-card>${this._flow(v)}${this._battery(v)}${this._stats()}</ha-card>`;
+    if (t) this.shadowRoot.querySelector("svg.flow")?.setCurrentTime(t);  // Schweife laufen weiter statt neu zu starten
   }
 
   _line(d, watts, color, reverse = false) {
     const a = Math.abs(watts || 0);
     const width = (2 + Math.min(8, a / 80)).toFixed(1);
-    if (a < 5) return `<path class="lane" d="${d}" stroke-width="${width}"/>`;
-    // alle 24 Einheiten ein Pfeil: vorn spitz, hinten eingekerbt; Pfade bestehen nur aus M, H und V
+    // Pfade bestehen nur aus M, H und V: Länge messen, dann Ecken abrunden (Radius 8, höchstens halbe Nachbarstrecke)
     let x = 0, y = 0, len = 0;
+    const pts = [];
     for (const [, cmd, n, m] of d.matchAll(/([MHV])\s*([\d.]+)(?:\s+([\d.]+))?/g)) {
       if (cmd === "M") { x = +n; y = +m; }
       else if (cmd === "H") { len += Math.abs(n - x); x = +n; }
       else { len += Math.abs(n - y); y = +n; }
+      pts.push([x, y]);
     }
-    const count = Math.max(1, Math.round(len / 24));
-    const dur = Math.max(0.5, 2.4 - a / 400) * len / 24;
-    const h = width / 2;
-    const motion = reverse ? 'rotate="auto-reverse" keyPoints="1;0" keyTimes="0;1" calcMode="linear"' : 'rotate="auto"';
-    const tips = Array.from({ length: count }, (_, k) => `<path d="M-7 ${-h} H1 L${(1 + width * 0.9).toFixed(2)} 0 L1 ${h} H-7 L${(-7 + width * 0.45).toFixed(2)} 0 Z">
-      <animateMotion path="${d}" dur="${dur.toFixed(2)}s" begin="${(-k * dur / count).toFixed(2)}s" repeatCount="indefinite" ${motion}/></path>`).join("");
+    d = `M${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const [[ax, ay], [px, py], [bx, by]] = [pts[i - 1], pts[i], pts[i + 1]];
+      const la = Math.abs(px - ax) + Math.abs(py - ay), lb = Math.abs(bx - px) + Math.abs(by - py);
+      const k = Math.min(8, la / 2, lb / 2);
+      d += ` L${px - (px - ax) / la * k} ${py - (py - ay) / la * k} Q${px} ${py} ${px + (bx - px) / lb * k} ${py + (by - py) / lb * k}`;
+    }
+    d += ` L${x} ${y}`;
+    if (a < 5) return `<path class="lane" d="${d}" stroke-width="${width}"/>`;
+    // Schweif aus zwölf übereinanderliegenden Strichen (3 bis 36 Einheiten) mit gemeinsamem Kopf: vorn hell, nach hinten blasser
+    const dur = ((len + 36) / (40 + Math.min(120, a / 5))).toFixed(2);
+    const tips = Array.from({ length: 13 }, (_, k) => k < 12 ? [3 * k + 3, width, 0.2] : [12, +width + 6, 0.15]).map(([l, w, o]) => {
+      const [from, to] = reverse ? [-len, 36] : [l, l - len - 36];
+      return `<path d="${d}" stroke-width="${w}" stroke-opacity="${o}" stroke-dasharray="${l} ${len + 60}">
+      <animate attributeName="stroke-dashoffset" from="${from}" to="${to}" dur="${dur}s" repeatCount="indefinite"/></path>`;
+    }).join("");
     return `<path class="lane" d="${d}" stroke-width="${width}"/><path class="pulse" d="${d}" stroke-width="${width}" style="color:${color}"/>`
       + `<g class="tips" style="color:${color}">${tips}</g>`;
   }

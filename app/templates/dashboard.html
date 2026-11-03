@@ -21,8 +21,8 @@
 
   .flow svg { margin: 8px 0; }
   .lane { fill: none; stroke: var(--line); }
-  /* Pfeilstriche laufen per animateMotion; ruhende Striche nur bei reduzierter Bewegung */
-  .tips { fill: currentColor; filter: drop-shadow(0 0 4px currentColor); }
+  /* ein leuchtender Schweif je Leitung, Kopf hell, nach hinten blasser; ruhende Striche nur bei reduzierter Bewegung */
+  .tips { fill: none; stroke: currentColor; }  /* Leuchten als breiter blasser Strich, ein Filter ruckelt */
   .pulse { display: none; fill: none; stroke: currentColor; stroke-dasharray: 8 16; }
   @media (prefers-reduced-motion: reduce) { .pulse { display: inline; } .tips { display: none; } }
   .node > rect:first-child { fill: var(--card); stroke: var(--c); stroke-width: 1.5; rx: 6px; }
@@ -96,13 +96,13 @@
 {% endif %}
 {% for w in warnings %}<p class="note err">{{ w.text }}</p>{% endfor %}
 
-{% macro line(d, watts, color, reverse=false) %}{% set a = (watts or 0)|abs %}{% set width = (2 + [8, a / 80]|min)|round(1) %}
+{% macro line(d, watts, color, reverse=false) %}{% set len = d|pathlen %}{% set d = d|rund %}{% set a = (watts or 0)|abs %}{% set width = (2 + [8, a / 80]|min)|round(1) %}
   <path class="lane" d="{{ d }}" stroke-width="{{ width }}"/>
   {% if a >= 5 %}<path class="pulse" d="{{ d }}" stroke-width="{{ width }}" style="color:{{ color }}"/>
-  {# alle 24 Einheiten ein Pfeil: vorn spitz, hinten eingekerbt; Tempo wie früher die Striche #}
-  {% set len = d|pathlen %}{% set n = [1, (len / 24)|round|int]|max %}{% set dur = [0.5, 2.4 - a / 400]|max * len / 24 %}{% set h = width / 2 %}
-  <g class="tips" style="color:{{ color }}">{% for k in range(n) %}<path d="M-7 {{ -h }} H1 L{{ (1 + width * 0.9)|round(2) }} 0 L1 {{ h }} H-7 L{{ (-7 + width * 0.45)|round(2) }} 0 Z">
-    <animateMotion path="{{ d }}" dur="{{ dur|round(2) }}s" begin="{{ (-k * dur / n)|round(2) }}s" repeatCount="indefinite"{% if reverse %} rotate="auto-reverse" keyPoints="1;0" keyTimes="0;1" calcMode="linear"{% else %} rotate="auto"{% endif %}/></path>{% endfor %}</g>{% endif %}
+  {# Schweif aus zwölf übereinanderliegenden Strichen (3 bis 36 Einheiten) mit gemeinsamem Kopf: vorn hell, nach hinten blasser; mehr Leistung, schneller #}
+  {% set dur = ((len + 36) / (40 + [120, a / 5]|min))|round(2) %}
+  <g class="tips" style="color:{{ color }}">{% for k in range(1, 14) %}{% set l = 3 * k if k < 13 else 12 %}<path d="{{ d }}" stroke-width="{{ width if k < 13 else width + 6 }}" stroke-opacity="{{ 0.2 if k < 13 else 0.15 }}" stroke-dasharray="{{ l }} {{ len + 60 }}">
+    <animate attributeName="stroke-dashoffset" {% if reverse %}from="{{ -len }}" to="36"{% else %}from="{{ l }}" to="{{ l - len - 36 }}"{% endif %} dur="{{ dur }}s" repeatCount="indefinite"/></path>{% endfor %}</g>{% endif %}
 {% endmacro %}
 {% macro node(x, y, color, label, watts, icon) %}
   <g class="node" transform="translate({{ x }} {{ y }})" style="--c:{{ color }}"><rect width="120" height="56"/>
@@ -274,7 +274,9 @@
       const neu = r.ok && new DOMParser().parseFromString(await r.text(), "text/html").getElementById("uebersicht");
       if (!neu) return;
       const offen = [...document.querySelectorAll('.info[aria-expanded="true"]')].map((k) => k.getAttribute("aria-controls"));
+      const t = document.querySelector(".flow > svg")?.getCurrentTime();
       document.getElementById("uebersicht").replaceWith(neu);
+      if (t) document.querySelector(".flow > svg")?.setCurrentTime(t);  // Schweife laufen weiter statt neu zu starten
       for (const id of offen) {  // aufgeklappte Erklärungen bleiben offen
         document.getElementById(id).hidden = false;
         document.querySelector(`[aria-controls="${id}"]`).setAttribute("aria-expanded", true);
