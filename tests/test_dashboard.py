@@ -3,7 +3,7 @@ import time
 
 from fastapi.testclient import TestClient
 
-from app.main import app, de, path_length
+from app.main import app, de, path_length, round_corners
 
 
 def test_de():
@@ -15,6 +15,12 @@ def test_de():
 def test_path_length():
     assert path_length("M300 144 V182 H210 V222") == 38 + 90 + 40
     assert path_length("M150 242 H124") == 26
+
+
+def test_round_corners():
+    assert round_corners("M124 38 H192 V222") == "M124 38 L184 38 Q192 38 192 46 L192 222"
+    assert round_corners("M0 0 H10 V4") == "M0 0 L8 0 Q10 0 10 2 L10 4"  # Radius höchstens halbe Nachbarstrecke
+    assert round_corners("M200 66 V222") == "M200 66 L200 222"
 
 
 def test_dashboard(client):

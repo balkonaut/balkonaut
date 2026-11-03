@@ -31,28 +31,24 @@ def de(value, digits=1):
     return f"{value:,.{digits}f}".replace(",", " ").replace(".", ",").replace(" ", ".")
 
 
-def path_length(d):
-    """Länge eines Pfads aus M, H und V, wie ihn die Leitungen im Energiefluss nutzen."""
-    x = y = length = 0.0
-    for cmd, nums in re.findall(r"([MHV])\s*([\d.\s]+)", d):
-        v = [float(n) for n in nums.split()]
-        if cmd == "M":
-            x, y = v
-        elif cmd == "H":
-            length, x = length + abs(v[0] - x), v[0]
-        else:
-            length, y = length + abs(v[0] - y), v[0]
-    return length
-
-
-
-def round_corners(d: str, r: float = 8) -> str:
-    """Leitung aus M, H und V mit abgerundeten Ecken (Radius r, höchstens halbe Nachbarstrecke)."""
+def _points(d):
+    """Eckpunkte eines Pfads aus M, H und V, wie ihn die Leitungen im Energiefluss nutzen."""
     pts = []
     for cmd, nums in re.findall(r"([MHV])\s*([\d.\s]+)", d):
         v = [float(n) for n in nums.split()]
         x, y = pts[-1] if pts else (0.0, 0.0)
         pts.append(tuple(v) if cmd == "M" else (v[0], y) if cmd == "H" else (x, v[0]))
+    return pts
+
+
+def path_length(d):
+    pts = _points(d)
+    return sum(abs(bx - ax) + abs(by - ay) for (ax, ay), (bx, by) in zip(pts, pts[1:]))
+
+
+def round_corners(d: str, r: float = 8) -> str:
+    """Leitung mit abgerundeten Ecken (Radius r, höchstens halbe Nachbarstrecke)."""
+    pts = _points(d)
     out = f"M{pts[0][0]:g} {pts[0][1]:g}"
     for (ax, ay), (px, py), (bx, by) in zip(pts, pts[1:], pts[2:]):
         la, lb = abs(px - ax) + abs(py - ay), abs(bx - px) + abs(by - py)
@@ -405,11 +401,10 @@ def device_values(dev):
 
 async def settings_page(request, cfg, status_code=200, **errors):
     live = await asyncio.to_thread(lambda: [device_values(d) for d in cfg.get("devices") or []])
-    state = request.app.state
+    state, c = request.app.state, cfg.get("apsystems_cloud") or {}
     return templates.TemplateResponse(request, "settings.html", {
         "cfg": cfg, "live": live, "names": DEVICE_NAMES, "invertible": INVERTIBLE, "battery_fields": BATTERY_FIELDS,
-        "cloud": {"on": bool(cfg.get("apsystems_cloud")), "user": (cfg.get("apsystems_cloud") or {}).get("username"),
-                  "device_id": (cfg.get("apsystems_cloud") or {}).get("device_id"), "werte": state.cloud_values,
+        "cloud": {"on": bool(c), "user": c.get("username"), "device_id": c.get("device_id"), "werte": state.cloud_values,
                   "error": state.cloud_error, "modes": [(m, apcloud.MODES[m]) for m in apcloud.SELECTABLE]},
         **errors}, status_code=status_code)
 
