@@ -5,23 +5,59 @@ direkt nach dem Speichern im Repository, die Home-Assistant-Integration mit der 
 Vorabversionen (Beta) zeigt HACS nur, wenn bei Balkonaut die Entität *Vorabversion* eingeschaltet ist.
 Was noch kommt, steht unter [Geplant](geplant.md).
 
-## Noch ohne Version
+## 1.0.2 · 04.11.2026
 
-Schon in der Docker-App (`:latest`), in der Home-Assistant-Integration ab der nächsten Version.
+Fasst die Vorabversionen 1.0.2-beta.1 bis beta.7 zusammen (Einzelheiten weiter unten). Das Add-on gibt es nicht
+mehr: Balkonaut läuft als Docker-App oder als Home-Assistant-Integration (siehe [Installation](index.md)).
 
-**Docker-App und Home-Assistant-Integration (Panel)**
+**Neu seit beta.7**
 
-- Verlauf, Diagramm *Akku*: feinere Hilfslinien wie im Diagramm darüber (Ladestand alle 20 %, kWh mit runden Werten),
-  Balken so schmal wie dort (03.11.2026)
-- Alle Balkendiagramme: Balken mit leicht gerundeten Ecken am Ende (03.11.2026)
-
-**Docker-App**
-
-- Zeitzone einstellbar über die Variable `TZ` (Vorgabe `Europe/Berlin`), siehe [Docker-App](docker.md) (04.11.2026)
+- Tag, Monat und Jahr beginnen in der Zeitzone von Home Assistant statt fest in `Europe/Berlin`; die Docker-App nimmt
+  die Variable `TZ` (Vorgabe `Europe/Berlin`), siehe [Docker-App](docker.md)
+- Verlauf, Diagramm *Akku*: feinere Hilfslinien (Ladestand alle 20 %, kWh mit runden Werten), schmalere Balken
+- Alle Balkendiagramme: Balken mit leicht gerundeten Ecken am Ende
 
 **Home-Assistant-Integration**
 
-- Tag, Monat und Jahr beginnen in der Zeitzone von Home Assistant statt fest in `Europe/Berlin` (04.11.2026)
+- Geräte direkt per Adresse, ohne die Integrationen der Hersteller: APsystems EZHI, Shelly (Pro 3EM, EM, Plug),
+  OpenDTU, AhoyDTU, Victron GX (MQTT oder Modbus TCP) und Deye; OpenDTU, AhoyDTU, Victron und Deye nur gegen einen
+  Nachbau getestet. Zugeordnete Entitäten gehen vor, nicht erreichbare Geräte melden sich als Reparaturhinweis
+- Die Betriebsart *Mit einer Balkonaut-App* entfällt, ein solcher Eintrag meldet sich als Reparaturhinweis; den
+  Verlauf einer Docker-App übernimmt weiterhin die Aktion *Aus Balkonaut-App übernehmen*
+- Einrichtung beginnt direkt ohne Auswahlmenü, *Geräte direkt abfragen* steht in Schritt 2 oben, aktuelle Werte bei
+  *Vorzeichen drehen*
+- Neue optionale Messgröße *Betriebsart (Szenario)*, beim APsystems EZHI automatisch zugeordnet
+- Karte holt ihre Werte alle 10 Sekunden selbst, Panel mit Kachel *Einrichtung*, solange etwas fehlt
+- Tagesprognose aus Flächen: ein Abruf je Fläche zur vollen und halben Stunde; für Wechselrichter mit
+  Prognose-Entität kein eigener Abruf
+
+**Docker-App**
+
+- [APsystems-Cloud (optional)](einstellungen.md#apsystems-cloud-optional) für den APsystems EZHI: Szenario,
+  Ladegrenzen, Entladeschutz und Ein/Aus lesen und setzen. Ab Werk aus, nicht offiziell, Nutzung auf eigenes Risiko
+- Geräte direkt: dazu Victron GX und Deye (nur gegen einen Nachbau getestet)
+- Akku-Werte von Hand eintragen, wenn das Gerät sie nicht liefert (Einstellungen, Kachel *Akku*)
+- Übersicht aktualisiert sich alle 10 Sekunden ohne Neuladen
+- Formulare nur von der eigenen Seite, `config.yaml` nur für den Besitzer lesbar
+
+**Docker-App und Home-Assistant-Integration (Karte und Panel)**
+
+- Energiefluss mit leuchtendem Schweif und runden Ecken, gestauchten langen Namen, bei Victron über MQTT je
+  Laderegler ein Solarfeld
+- Neue Kacheln *Energiewege*, *Autarkie heute* und *Weiteres Akku-Modul*; alle Kacheln einheitlich mit Erklärung
+  (Knopf *i*) und Bewertung von rot bis grün; Szenario unter den Grenzwerten des Akkus
+- Diagramm *Woher kommt dein Strom*: Balkonkraftwerk und Netz nebeneinander, feinere Skala, erwartete Erzeugung als
+  Linie; neues Diagramm *Akku* mit Ladestand, Laden und Entladen
+- Nulleinspeisung: Karte *Nach Uhrzeit*; Monatsbericht: ein Klick auf einen Tag öffnet ihn im Verlauf
+- Akku: Kapazität und Ladegrenzen als letzter bekannter Wert, Wirkungsgrad mit dem Ladestand vom Beginn des Zeitraums
+- Handy: breite Kacheln passen in die Zeile, Überschriften mit Silbentrennung
+
+**Korrekturen**
+
+- Regelgüte und Ertragswächter rechnen Tage der Zeitumstellung richtig (23 bzw. 25 Stunden)
+- Statusberechnung deutlich schneller bei langer Historie, Übernahme des Verlaufs braucht viel weniger Speicher
+- Panel: beim schnellen Wechsel der Tabs erscheint nicht mehr der falsche Inhalt
+- MQTT-Abfrage mit Zeit- und Größengrenze
 
 ## 1.0.2-beta.7 · 03.11.2026 (Vorabversion)
 
