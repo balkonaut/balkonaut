@@ -42,14 +42,14 @@ def fake(monkeypatch):
 
 
 def test_login_encrypts_credentials():
-    p = apcloud.login_params("kay", "geheim", key="0" * 32, iv="1" * 16)
-    assert p["app_id"] == apcloud.APP_ID and "geheim" not in json.dumps(p) and "kay" not in json.dumps(p)
+    p = apcloud.login_params("nutzer", "geheim", key="0" * 32, iv="1" * 16)
+    assert p["app_id"] == apcloud.APP_ID and "geheim" not in json.dumps(p) and "nutzer" not in json.dumps(p)
     # Nullen auffüllen, bei vollem Block ein ganzer Block mehr (wie die App)
     assert len(p["username"]) == 32 and len(apcloud.login_params("a" * 16, "x", key="0" * 32, iv="1" * 16)["username"]) == 64
 
 
 def test_read_and_write_rules(fake):
-    cloud = apcloud.Cloud("kay", "geheim", "D02000000001")
+    cloud = apcloud.Cloud("nutzer", "geheim", "D02000000001")
     assert "geheim" not in repr(cloud)
     v = cloud.read()
     assert v["battery_mode"] == "KI-Modus" and v["battery_soc_min"] == 10 and v["inverter_on"] is True
@@ -73,7 +73,7 @@ def test_read_and_write_rules(fake):
 
 
 def test_relogin_after_refresh_token_expired(fake):
-    cloud = apcloud.Cloud("kay", "geheim", "D02000000001")
+    cloud = apcloud.Cloud("nutzer", "geheim", "D02000000001")
     cloud.read()
     fake.refresh_dead, cloud._expires = True, 0.0
     cloud.read()
@@ -82,10 +82,10 @@ def test_relogin_after_refresh_token_expired(fake):
 
 def test_settings_connect_control_disconnect(client, tmp_path, fake):
     assert "Nicht offiziell" in client.get("/einstellungen").text
-    r = client.post("/einstellungen", data={"bereich": "cloud", "aktion": "verbinden", "username": "kay",
+    r = client.post("/einstellungen", data={"bereich": "cloud", "aktion": "verbinden", "username": "nutzer",
                                             "password": "geheim", "device_id": ""})
     assert r.status_code == 400 and "Geräte-ID" in r.text  # kein direkt eingetragener EZHI
-    r = client.post("/einstellungen", data={"bereich": "cloud", "aktion": "verbinden", "username": "kay",
+    r = client.post("/einstellungen", data={"bereich": "cloud", "aktion": "verbinden", "username": "nutzer",
                                             "password": "geheim", "device_id": "D02000000001"})
     assert r.status_code == 200 and "Verbunden als" in r.text and "geheim" not in r.text
     assert (tmp_path / "config.yaml").stat().st_mode & 0o077 == 0
