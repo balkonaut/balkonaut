@@ -5,6 +5,15 @@ direkt nach dem Speichern im Repository, die Home-Assistant-Integration mit der 
 Vorabversionen (Beta) zeigt HACS nur, wenn bei Balkonaut die Entität *Vorabversion* eingeschaltet ist.
 Was noch kommt, steht unter [Geplant](geplant.md).
 
+## Noch ohne Version
+
+Schon in der Docker-App (`:latest`), in der Home-Assistant-Integration ab der nächsten Version.
+
+**Docker-App und Home-Assistant-Integration**
+
+- Übersicht und Status antworten auch beim ersten Aufruf nach längerer Pause sofort; bisher las jeder Aufruf alle
+  Rohwerte der letzten 14 Tage (04.11.2026)
+
 ## 1.0.2 · 04.11.2026
 
 Fasst die Vorabversionen 1.0.2-beta.1 bis beta.7 zusammen (Einzelheiten weiter unten). Das Add-on gibt es nicht

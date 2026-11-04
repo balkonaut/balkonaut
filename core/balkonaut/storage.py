@@ -15,6 +15,8 @@ RAW_DAYS = 14  # Vereinfachung: feste Aufbewahrung der Rohwerte, konfigurierbar 
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS raw (key TEXT, ts INTEGER, value REAL, PRIMARY KEY (key, ts)) WITHOUT ROWID;
+-- Zeitraum-Abfragen (laufende Stunde, Aggregation, Löschen) ohne die ganze Tabelle zu lesen
+CREATE INDEX IF NOT EXISTS raw_ts ON raw (ts);
 CREATE TABLE IF NOT EXISTS hourly (
     key TEXT, hour INTEGER, mean REAL, mean_pos REAL, mean_neg REAL, last REAL, n INTEGER,
     PRIMARY KEY (key, hour)) WITHOUT ROWID;
@@ -39,6 +41,9 @@ class Storage:
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.lock = threading.RLock()
         self.db.executescript(SCHEMA)
+        # letzter Rohwert je Messgröße {key: (ts, value)}: einmal beim Start lesen, danach in add() pflegen;
+        # SQLite: value gehört zur Zeile mit max(ts)
+        self._latest = {k: (ts, v) for k, ts, v in self.db.execute("SELECT key, max(ts), value FROM raw GROUP BY key")}
 
     @locked
     def add(self, ts, values):
@@ -48,6 +53,9 @@ class Storage:
             self.db.executemany("INSERT OR REPLACE INTO raw VALUES (?, ?, ?)", rows)
             if rows:
                 self.db.execute("INSERT OR IGNORE INTO meta VALUES ('first_raw', ?)", (ts,))
+        for k, t, v in rows:
+            if t >= self._latest.get(k, (t, None))[0]:
+                self._latest[k] = (t, v)
 
     @locked
     def aggregate(self, now):
@@ -68,6 +76,7 @@ class Storage:
                     AND raw.ts >= hourly.hour AND raw.ts < hourly.hour + 3600 ORDER BY ts DESC LIMIT 1)
                 WHERE hour >= ? AND hour < ?""", (start, end))
             self.db.execute("DELETE FROM raw WHERE ts < ?", (now - RAW_DAYS * 86400,))
+        self._latest = {k: tv for k, tv in self._latest.items() if tv[0] >= now - RAW_DAYS * 86400}
 
     @locked
     def hourly(self, now=None):
@@ -81,7 +90,7 @@ class Storage:
             for key, h, mean, pos, neg, last in self.db.execute("""
                     SELECT key, ?, avg(value), avg(max(value, 0)), avg(min(value, 0)),
                            (SELECT value FROM raw r WHERE r.key = raw.key AND r.ts >= ? ORDER BY ts DESC LIMIT 1)
-                    FROM raw WHERE ts >= ? GROUP BY key""", (hour, hour, hour)):
+                    FROM raw INDEXED BY raw_ts WHERE ts >= ? GROUP BY key""", (hour, hour, hour)):
                 k = f if key.endswith("_power") else 1
                 rows.append((key, h, mean * k, pos * k, neg * k, last))
         return sorted(rows, key=lambda r: (r[0], r[1]))
@@ -89,8 +98,7 @@ class Storage:
     @locked
     def latest(self):
         """Letzter Rohwert je Messgröße: {key: (ts, value)}."""
-        return {k: (ts, v) for k, ts, v in self.db.execute(
-            "SELECT key, max(ts), value FROM raw GROUP BY key")}  # SQLite: value gehört zur Zeile mit max(ts)
+        return dict(self._latest)
 
     @locked
     def first(self):

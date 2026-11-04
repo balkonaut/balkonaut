@@ -28,6 +28,18 @@ def test_hourly_includes_running_hour():
     assert rows == [("battery_soc", H, 95.0, 95.0, 0.0, 100.0), ("grid_power", H, 50.0, 100.0, -50.0, -200.0)]
 
 
+
+def test_latest(tmp_path):
+    """Letzter Wert je Messgröße ohne die ganze Tabelle zu lesen: ältere Nachträge ändern ihn nicht, nach einem
+    Neustart derselbe Stand, nach Ablauf der Aufbewahrung weg wie die Rohwerte."""
+    s = Storage(tmp_path / "b.db")
+    s.add(H + 10, {"grid_power": 5, "battery_soc": 50})
+    s.add(H, {"grid_power": 9})
+    assert s.latest() == {"grid_power": (H + 10, 5), "battery_soc": (H + 10, 50)}
+    assert Storage(tmp_path / "b.db").latest() == s.latest()
+    s.aggregate(H + 3600 + RAW_DAYS * 86400)
+    assert s.latest() == {}
+
 def test_merge_keeps_own_hours_after_raw_cleanup():
     """Eigene Stunden bleiben bei der Übernahme, auch wenn ihre Rohwerte nach RAW_DAYS gelöscht sind."""
     s = Storage(":memory:")
