@@ -6,13 +6,13 @@ const TABS = [["start", "Übersicht"], ["verlauf", "Verlauf"], ["nulleinspeisung
 const PERIODS = [["tag", "Heute"], ["monat", "Monat"], ["jahr", "Jahr"], ["gesamt", "Gesamt"]];
 const VIEWS = [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["jahr", "Jahr"]];
 const HANDBUCH = "https://balkonaut.github.io/balkonaut/";
-// Texte aus Antworten (auch der konfigurierten App) nie als HTML einsetzen
 // Diagramm-Balken mit leicht gerundeten Ecken am freien Ende (oben, bei down unten), wie bar() in app/main.py
 const bar = (x, y, w, h, down = false) => {
   if (!(h > 0)) return "";
   const r = Math.min(2, w / 2, h), e = down ? y + h : y, s = down ? -r : r, b = down ? y : y + h;
   return `M${x} ${b}V${e + s}Q${x} ${e} ${x + r} ${e}H${x + w - r}Q${x + w} ${e} ${x + w} ${e + s}V${b}Z`;
 };
+// Texte aus Antworten (auch der konfigurierten App) nie als HTML einsetzen
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 const PANEL_STYLE = `

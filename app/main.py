@@ -73,9 +73,8 @@ def bar(x, y, w, h, down=False):
     if h <= 0:
         return ""
     r = min(2, w / 2, h)
-    if down:
-        return f"M{x:g} {y:g}V{y + h - r:g}Q{x:g} {y + h:g} {x + r:g} {y + h:g}H{x + w - r:g}Q{x + w:g} {y + h:g} {x + w:g} {y + h - r:g}V{y:g}Z"
-    return f"M{x:g} {y + h:g}V{y + r:g}Q{x:g} {y:g} {x + r:g} {y:g}H{x + w - r:g}Q{x + w:g} {y:g} {x + w:g} {y + r:g}V{y + h:g}Z"
+    e, s, b = (y + h, -r, y) if down else (y, r, y + h)  # freies Ende, Richtung der Rundung, Grundlinie
+    return f"M{x:g} {b:g}V{e + s:g}Q{x:g} {e:g} {x + r:g} {e:g}H{x + w - r:g}Q{x + w:g} {e:g} {x + w:g} {e + s:g}V{b:g}Z"
 
 
 templates.env.globals["version"] = importlib.metadata.version("balkonaut")
