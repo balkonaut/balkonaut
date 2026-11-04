@@ -27,6 +27,7 @@ from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.loader import async_get_integration
+from homeassistant.util import dt as dt_util
 
 from .core import analytics, forecast, views
 from .core.devices import HUB_NAMES, LABELS, Devices
@@ -400,6 +401,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) ->
         ir.async_create_issue(hass, DOMAIN, f"app_mode_removed_{entry.entry_id}", is_fixable=False,
                               severity=ir.IssueSeverity.ERROR, translation_key="app_mode_removed")
         return False
+    analytics.TZ = dt_util.get_default_time_zone()  # Tages-, Monats- und Jahresgrenzen in der Ortszeit von HA
     storage = await hass.async_add_executor_job(_open_storage, Path(hass.config.path(DOMAIN, "balkonaut.db")))
     coordinator = BalkonautCoordinator(hass, entry, storage)
     await coordinator.async_sample()

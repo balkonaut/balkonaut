@@ -15,6 +15,14 @@ Schon in der Docker-App (`:latest`), in der Home-Assistant-Integration ab der n�
   Balken so schmal wie dort (03.11.2026)
 - Alle Balkendiagramme: Balken mit leicht gerundeten Ecken am Ende (03.11.2026)
 
+**Docker-App**
+
+- Zeitzone einstellbar über die Variable `TZ` (Vorgabe `Europe/Berlin`), siehe [Docker-App](docker.md) (04.11.2026)
+
+**Home-Assistant-Integration**
+
+- Tag, Monat und Jahr beginnen in der Zeitzone von Home Assistant statt fest in `Europe/Berlin` (04.11.2026)
+
 ## 1.0.2-beta.7 · 03.11.2026 (Vorabversion)
 
 **Docker-App**

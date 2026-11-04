@@ -349,7 +349,7 @@ async def test_hourly_forecast_from_forecast_solar(hass, monkeypatch):
     import types
     from datetime import datetime
     from custom_components.balkonaut import _hourly_forecast
-    from custom_components.balkonaut.core.analytics import TZ
+    from custom_components.balkonaut.core import analytics
     solar = MockConfigEntry(domain="forecast_solar")
     solar.add_to_hass(hass)
     er.async_get(hass).async_get_or_create("sensor", "forecast_solar", f"{solar.entry_id}_energy_production_today",
@@ -359,7 +359,8 @@ async def test_hourly_forecast_from_forecast_solar(hass, monkeypatch):
                             data={"entities": {"grid_power": "sensor.netz", "pv_forecast_today": "sensor.prognose"}, "invert": []})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
-    nine = datetime.now(TZ).replace(hour=9, minute=0, second=0, microsecond=0)
+    assert analytics.TZ.key == hass.config.time_zone  # Ortszeit von Home Assistant, nicht fest Europe/Berlin
+    nine = datetime.now(analytics.TZ).replace(hour=9, minute=0, second=0, microsecond=0)
 
     async def solar_forecast(hass, entry_id):  # Energie-Plattform der Forecast.Solar-Integration
         return {"wh_hours": {nine.isoformat(): 210}} if entry_id == solar.entry_id else None

@@ -18,6 +18,8 @@ Aus dem Handbuch geht es über *Zurück zu Balkonaut* im Menü oder über das Lo
         image: ghcr.io/balkonaut/balkonaut:latest
         ports:
           - "${BALKONAUT_PORT:-8000}:8000"
+        environment:
+          - TZ=${TZ:-Europe/Berlin}
         volumes:
           - ./data:/data
         restart: unless-stopped
@@ -36,6 +38,10 @@ Ist Port 8000 auf dem Rechner schon belegt, neben der `docker-compose.yml` eine 
 [`.env.example`](https://github.com/balkonaut/balkonaut/blob/main/.env.example)) mit zum Beispiel
 `BALKONAUT_PORT=8080` (in Dockhand als Variable des Stacks). Balkonaut ist dann unter `http://<adresse>:8080/`
 erreichbar.
+
+Tag, Monat und Jahr beginnen in der Zeitzone aus der Variable `TZ`, ohne Angabe `Europe/Berlin`. Wer woanders
+wohnt, trägt in der `.env` zum Beispiel `TZ=Europe/London` ein (Namen wie in der
+[Liste der Zeitzonen](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)).
 
 Das Image gibt es für amd64 und arm64. Jede Version trägt zusätzlich einen Tag `sha-<commit>`, mit dem sich bei
 Problemen eine ältere Version festhalten lässt.

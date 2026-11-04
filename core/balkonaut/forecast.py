@@ -6,7 +6,7 @@ import logging
 import time
 import urllib.request
 
-from .analytics import TZ
+from . import analytics
 
 URL = "https://api.forecast.solar/estimate"
 SLOT = 1800  # Abruf zur vollen und halben Stunde: bei zwei Flächen 4 der 12 Abrufe je Stunde und IP-Adresse
@@ -22,7 +22,7 @@ def estimate(lat, lon, tilt, azimuth, kwp):
         result = json.load(r)["result"]
     days = result["watt_hours_day"]  # {"2026-10-23": Wh, "2026-10-24": Wh}, Datum in Ortszeit des Standorts
     first = min(days)
-    periods = {datetime.fromisoformat(k).replace(tzinfo=TZ): wh for k, wh in result.get("watt_hours_period", {}).items()}
+    periods = {datetime.fromisoformat(k).replace(tzinfo=analytics.TZ): wh for k, wh in result.get("watt_hours_period", {}).items()}
     return days[first] / 1000, per_hour(periods, datetime.fromisoformat(first).date())
 
 
@@ -31,7 +31,7 @@ def per_hour(periods, day):
     Ein Wert gilt bis zur Uhrzeit des Schlüssels: 08:00 gehört zur Stunde ab 07:00, 16:46 (Sonnenuntergang) zu 16:00."""
     hours = {}
     for end, wh in periods.items():
-        start = (end.astimezone(TZ) - timedelta(seconds=1)).replace(minute=0, second=0, microsecond=0)
+        start = (end.astimezone(analytics.TZ) - timedelta(seconds=1)).replace(minute=0, second=0, microsecond=0)
         if start.date() == day:
             hours[start.timestamp()] = hours.get(start.timestamp(), 0.0) + wh / 1000
     return hours
@@ -54,7 +54,7 @@ class Planes:
 
     def read(self):
         """{pv_forecast_today: kWh, ...}; bei Fehlern die letzte Prognose desselben Tages."""
-        now = datetime.now(TZ)
+        now = datetime.now(analytics.TZ)
         if self.location and self.due():
             self.next = now.timestamp() // SLOT * SLOT + SLOT  # Ortszeit weicht um ganze Stunden ab: :00 und :30
             try:
@@ -73,11 +73,11 @@ class Planes:
 
     def current(self):
         """Letzte Prognose ohne Abruf; keine von gestern als heutige."""
-        return self.values if self.day == datetime.now(TZ).date() else {}
+        return self.values if self.day == datetime.now(analytics.TZ).date() else {}
 
     def current_hours(self):
         """Erwartete Erzeugung je Stunde heute, alle Flächen zusammen: {Stundenbeginn als Unix-Zeit: kWh}."""
-        return self.hours if self.day == datetime.now(TZ).date() else {}
+        return self.hours if self.day == datetime.now(analytics.TZ).date() else {}
 
     def solar_planes(self):
         """(lat, lon, [(neigung, azimut, kwp)]) für PVGIS; ohne Standort oder Flächen (0.0, 0.0, [])."""

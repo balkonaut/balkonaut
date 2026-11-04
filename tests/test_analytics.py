@@ -51,6 +51,16 @@ def test_periods():
     assert p["jahr"] == datetime(2026, 1, 1, tzinfo=TZ).timestamp()
 
 
+def test_zone():
+    """Tagesgrenze in der eingestellten Zeitzone, leerer oder unbekannter Name fällt auf Europe/Berlin zurück."""
+    from unittest import mock
+    from balkonaut import analytics
+    ny = analytics._zone("America/New_York")
+    with mock.patch.object(analytics, "TZ", ny):
+        assert periods(datetime(2026, 10, 20, 2, 0, tzinfo=ny).timestamp())["tag"] == datetime(2026, 10, 20, tzinfo=ny).timestamp()
+    assert analytics._zone(None).key == analytics._zone("Mars/Olympus").key == "Europe/Berlin"
+
+
 def test_battery():
     rows = []
     for h in range(3):

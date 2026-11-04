@@ -132,6 +132,8 @@ services:
     image: ghcr.io/balkonaut/balkonaut:latest
     ports:
       - "${BALKONAUT_PORT:-8000}:8000"
+    environment:
+      - TZ=${TZ:-Europe/Berlin}
     volumes:
       - ./data:/data
     restart: unless-stopped

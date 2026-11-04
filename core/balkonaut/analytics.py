@@ -5,10 +5,22 @@ Begriffe und Formeln: docs/auswertung.md
 import statistics
 from collections import defaultdict
 import calendar
+import os
 from datetime import date, datetime, time, timedelta
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-TZ = ZoneInfo("Europe/Berlin")  # Vereinfachung: feste Zeitzone, konfigurierbar machen für Nutzer außerhalb DE/AT
+
+def _zone(name):
+    """Zeitzone nach IANA-Name, bei leerem oder unbekanntem Namen Europe/Berlin."""
+    try:
+        return ZoneInfo(name)
+    except (TypeError, ValueError, ZoneInfoNotFoundError):
+        return ZoneInfo("Europe/Berlin")
+
+
+# Ortszeit für Tages-, Monats- und Jahresgrenzen: Docker-App aus TZ, die Home-Assistant-Integration setzt die von HA
+TZ = _zone(os.environ.get("TZ"))
+
 MAX_KWH_PER_DAY = 1.2 * 24  # Vereinfachung: Höchstwert EZHI (1200 W), fängt nur grobe Datumsfehler; Limit aus HA lesen, falls nötig
 
 
