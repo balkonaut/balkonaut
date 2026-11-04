@@ -4,7 +4,7 @@ __pycache__/
 *.pyc
 .venv/
 data/
-.ha-token
+.ha-token*
 .pytest_cache/
 *.egg-info/
 build/

@@ -69,7 +69,7 @@ Pflicht ist nur eine einzige Messgröße oder ein Gerät. Fehlt eine, entfällt 
     1. *Integration hinzufügen → Balkonaut → Eigenständig in Home Assistant*.
     2. *Geräte wählen*: alles leer lassen, *OK*.
     3. *Entitäten prüfen*: unter *Geräte direkt abfragen* die Adressen eintragen, z. B.
-       `192.168.178.11, 192.168.178.168, 192.168.178.38` (Speicher, Netzmessung, Zwischenstecker). Die Abschnitte
+       `192.168.1.20, 192.168.1.21, 192.168.1.22` (Speicher, Netzmessung, Zwischenstecker). Die Abschnitte
        darunter bleiben leer, auch *Prognose*, wenn keine Forecast.Solar-Integration installiert ist. *OK*.
     4. *Zusammenfassung*: Sie zeigt, welche Funktionen verfügbar sind. Zum Prüfen der Richtungen *Zuordnung ändern*:
        Schritt 2 zeigt jetzt unten bei *Vorzeichen drehen* die aktuellen Werte der Geräte mit „(Gerät)“. Stimmt eine Richtung nicht, unter
@@ -191,6 +191,8 @@ Die Karte holt ihre Werte alle 10 Sekunden selbst aus der letzten Messung. Optio
 - Unter *⋮ → Neu konfigurieren*: die Zuordnung der Entitäten und die direkt abgefragten Geräte ändern (Schritte 2
   und 3 der [geführten Einrichtung](#gefuhrte-einrichtung)). Eintrag und Messdaten bleiben erhalten.
   Für neu zugeordnete Entitäten übernimmt Balkonaut keinen Verlauf aus dem Recorder, sie zählen ab der Änderung.
+  Welche Entität in welches Feld gehört, zeigt für den APsystems EZHI die Tabelle unter
+  [Unterstützte Geräte](geraete.md#apsystems-ezhi-zuordnung-im-einzelnen).
 - Gibt es eine zugeordnete Entität nicht mehr oder ist sie deaktiviert, etwa weil die Integration des Geräts sie
   umbenannt hat, erscheint unter *Einstellungen → Reparaturen* ein Hinweis mit den betroffenen Entitäten und einem
   Link zu Balkonaut, dort über *Neu konfigurieren* neu zuordnen. Kurz nicht verfügbare Entitäten (Neustart, WLAN)

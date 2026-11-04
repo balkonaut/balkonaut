@@ -47,6 +47,43 @@ nicht; dann in der Einrichtung auf die aktuellen Werte achten, siehe [Richtung p
 | Sungrow SH*RT, SH*K | Modbus-Vorlage von mkaiser (YAML) | PV und Akku mit Zählern, Kapazität und Ladegrenzen, Netz, Abgabe | belegt | nein | nicht geprüft |
 | SolaX X1, X3 | SolaX Modbus (HACS) | PV mit Zähler, Akku mit Zählern, Netz, Abgabe | belegt | nein | nicht geprüft |
 
+### APsystems EZHI: Zuordnung im Einzelnen
+
+Für eine Zuordnung von Hand, etwa unter *⋮ → Neu konfigurieren* nach einer später installierten Integration
+„APsystems EZHI Local API“ oder einem später eingerichteten Cloudzugriff. Die Werte aus der APsystems-Cloud legt die
+Integration erst an, wenn der Cloudzugriff eingerichtet ist; danach Balkonaut neu konfigurieren. Die Entitäts-IDs
+hängen vom Gerätenamen ab (hier „EZHI“), Cloud-Werte zusätzlich vom Bereich (hier „Balkon“); im Auswahlfeld
+findet man sie über den Namen.
+
+| Abschnitt | Feld in Balkonaut | Entität: Name und Beispiel-ID | Quelle |
+|---|---|---|---|
+| Erzeugung | PV-Leistung Wechselrichter 1 mit Speicher | Photovoltaic Power<br>`sensor.ezhi_photovoltaic_power` | lokal |
+| Erzeugung | Zähler PV | Photovoltaic Energy<br>`sensor.ezhi_photovoltaic_energy` | lokal |
+| Erzeugung | PV-Leistung zusätzlicher Wechselrichter 2 | Off-Grid Power (nur mit Gerät am Off-Grid-Port, z. B. EZ1-M)<br>`sensor.ezhi_off_grid_power` | lokal |
+| Akku | Akkuleistung | Battery Power<br>`sensor.ezhi_battery_power` | lokal |
+| Akku | Ladestand | Battery State of Charge<br>`sensor.ezhi_battery_state_of_charge` | lokal |
+| Akku | Zähler Akku laden | Battery Total Charge Energy<br>`sensor.ezhi_battery_total_charge_energy` | lokal |
+| Akku | Zähler Akku entladen | Battery Total Discharge Energy<br>`sensor.ezhi_battery_total_discharge_energy` | lokal |
+| Akku | Akkukapazität | Battery Capacity<br>`sensor.ezhi_battery_capacity` | lokal |
+| Akku | Akku-Gesundheit | Battery State of Health<br>`sensor.ezhi_battery_state_of_health` | lokal |
+| Akku | Ladestand Minimum | SOC Minimum<br>`number.balkon_ezhi_soc_minimum` | Cloud |
+| Akku | Ladestand Maximum | SOC Maximum<br>`number.balkon_ezhi_soc_maximum` | Cloud |
+| Akku | Entladeschutz | Discharge Protection<br>`number.balkon_ezhi_discharge_protection` | Cloud |
+| Akku | Betriebsart (Szenario) | System Mode<br>`select.balkon_ezhi_system_mode` | Cloud |
+| Abgabe ins Haus | Abgabe ins Haus | On-Grid Power (Sensor), unter *Vorzeichen drehen* anhaken<br>`sensor.ezhi_on_grid_power` | lokal |
+| Abgabe ins Haus | Zähler Abgabe | On-Grid Output Energy<br>`sensor.ezhi_on_grid_output_energy` | lokal, nicht direkt |
+| Abgabe ins Haus | Abgabelimit | Power Limit<br>`sensor.balkon_ezhi_power_limit` | Cloud |
+
+- *lokal*: liefert der EZHI auch, wenn Balkonaut ihn direkt per Adresse abfragt (außer *Zähler Abgabe*). *Cloud*:
+  nur über die Integration mit eingerichtetem Cloudzugriff.
+- *Netz* und *Prognose* kommen nicht vom EZHI, sondern z. B. vom Shelly Pro 3EM und von Forecast.Solar.
+- *On-Grid Power* gibt es zweimal: als Sensor (Messwert, richtig) und als Zahl `number.ezhi_on_grid_power` (Steuerung
+  der Abgabe, nicht zuordnen).
+- *On-Grid Output Energy* zeigt bei manchen Firmware-Ständen `unbekannt`. Dann den Zähler am Einspeisepunkt nehmen,
+  z. B. vom Shelly Plug; er ist ohnehin maßgeblich (siehe [Messquellen](messquellen.md)).
+- Wird der EZHI zusätzlich direkt per Adresse abgefragt, gehen zugeordnete Entitäten vor. Die Cloud-Werte lassen
+  sich so ergänzen, ohne die Adresse zu entfernen.
+
 ## Netzmessung und Einspeisepunkt
 
 | Gerät | Integration in Home Assistant | Messgrößen | Vorzeichen | Direkt per Adresse | Stand |
