@@ -5,6 +5,16 @@ direkt nach dem Speichern im Repository, die Home-Assistant-Integration mit der 
 Vorabversionen (Beta) zeigt HACS nur, wenn bei Balkonaut die Entität *Vorabversion* eingeschaltet ist.
 Was noch kommt, steht unter [Geplant](geplant.md).
 
+## Noch ohne Version
+
+Schon in der Docker-App (`:latest`), in der Home-Assistant-Integration ab der nächsten Version.
+
+**Docker-App und Home-Assistant-Integration**
+
+- Warnung *Ungleich*: Tage, an denen die Prognose anders auf die Flächen verteilt war (etwa vor einer Änderung der
+  Flächen oder Prognose-Entitäten), zählen nicht mehr zum üblichen Verhältnis; sonst konnte die Warnung danach
+  fälschlich erscheinen (08.11.2026)
+
 ## 1.0.3-beta.1 · 08.11.2026 (Vorabversion)
 
 **Docker-App und Home-Assistant-Integration**

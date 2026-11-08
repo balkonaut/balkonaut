@@ -181,15 +181,16 @@ def test_yield_watch():
     assert w["wechselrichter"]["speicher"]["tage"] == 2 and abs(w["wechselrichter"]["speicher"]["quote"] - 1) < 0.01
 
 
-def _two_planes(days, ac_share, full=()):
+def _two_planes(days, ac_share, full=(), ac_forecast=lambda d: 2.0):
     """Stundenwerte für days Tage bis zum 18.10.: Speicher 2 kWh, zweiter Wechselrichter ac_share(Tag) mal 4 kWh
-    bei je 2 kWh Prognose (andere Ausrichtung); an Tagen in full ist der Akku voll und der Speicher abgeregelt."""
+    bei 2 kWh Prognose je Fläche (andere Ausrichtung); an Tagen in full ist der Akku voll und der Speicher abgeregelt."""
     day0 = datetime(2026, 10, 18, tzinfo=TZ).timestamp() - days * 86400
     rows, counter = [], 100.0
     for h in range(24 * days):
         t, d = day0 + h * 3600, h // 24
         counter += (0.5 if d in full else 2.0) / 24
-        rows += [("pv_forecast_today", t, 2.0, 2.0, 0, 2.0), ("pv_ac_forecast_today", t, 2.0, 2.0, 0, 2.0),
+        fa = ac_forecast(d)
+        rows += [("pv_forecast_today", t, 2.0, 2.0, 0, 2.0), ("pv_ac_forecast_today", t, fa, fa, 0, fa),
                  ("pv_energy", t, 0, 0, 0, counter), ("battery_soc", t, 50, 50, 0, 100 if d in full else 50),
                  ("pv_ac_power", t, 0, ac_share(d) * 4 / 24 * 1000, 0, None)]
     return sorted(rows), datetime(2026, 10, 18, 12, tzinfo=TZ).timestamp()
@@ -206,6 +207,9 @@ def test_yield_watch_usual_ratio():
     rows, now = _two_planes(30, lambda d: 1.0, full=range(23, 30))  # Speicher abgeregelt, weil Akku voll
     w = yield_watch(rows, now)
     assert w["warnungen"] == [] and w["wechselrichter"]["speicher"]["tage"] == 0
+    # anfangs war die Prognose des zweiten doppelt so hoch (andere Fläche eingetragen): diese Tage zählen nicht
+    rows, now = _two_planes(30, lambda d: 1.0, ac_forecast=lambda d: 4.0 if d < 16 else 2.0)
+    assert yield_watch(rows, now)["warnungen"] == []
 
 
 def test_combine_regulation():

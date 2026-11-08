@@ -128,7 +128,9 @@ verschiedene Richtungen, haben unterschiedlich viele Module, oder ein Baum wirft
 Auch die Prognose trifft Ost und West nicht gleich gut. Balkonaut lernt deshalb, wie die beiden Wechselrichter bei
 deiner Anlage üblicherweise zueinander stehen (aus bis zu 60 Tagen), und warnt nur, wenn einer in den letzten 7 Tagen
 um mehr als ein Viertel davon abfällt. Das deutet auf etwas Neues hin: Verschmutzung, neuer Schatten oder ein Defekt.
-Die Warnung erscheint deshalb erst, wenn Balkonaut mindestens 14 vergleichbare Tage kennt.
+Vergleichbar sind nur Tage, an denen die Prognose ähnlich auf die beiden Flächen verteilt war: Hast du Flächen
+oder Prognose-Entitäten geändert, zählen die Tage davor nicht mehr. Die Warnung erscheint erst, wenn Balkonaut
+mindestens 14 vergleichbare Tage kennt.
 
 **Voller Akku:** Ist der Akku voll, regelt der Speicher-Wechselrichter die Module ab. Solche Tage zählen für ihn
 nicht mit, weder bei „Ertrag niedrig“ noch bei „Ungleich“. Im Sommer prüft Balkonaut ihn deshalb vor allem an Tagen,

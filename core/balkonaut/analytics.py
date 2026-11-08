@@ -406,18 +406,22 @@ def yield_watch(rows, now, known=None):
             warnings.append({"code": "ertrag_niedrig", "wechselrichter": name,
                              "text": f"{label[name]}: {r['quote']:.0%} der Prognose in den letzten {r['tage']} Tagen"})
 
-    def ratios(a, b):  # je Tag: Prognosetreue Speicher geteilt durch die des zweiten Wechselrichters
-        return [(d["speicher"][0] / d["speicher"][1]) / (d["ac"][0] / d["ac"][1]) for day, d in days.items()
-                if a <= day < b and not d["voll"] and "speicher" in d and "ac" in d
-                and min(d["speicher"][1], d["ac"][1]) >= 0.5 and d["speicher"][0] > 0 and d["ac"][0] > 0]
-    usual, current = ratios(first, week), ratios(week, today)
-    if len(usual) >= BASELINE_MIN and len(current) >= 3:
-        change = statistics.median(current) / statistics.median(usual)
-        weak = "speicher" if change < UNEVEN else "ac" if change > 1 / UNEVEN else None
-        if weak:
-            warnings.append({"code": "ungleich", "wechselrichter": weak,
-                             "text": f"{label[weak]} liefert im Vergleich zum anderen deutlich weniger als sonst "
-                                     "(neuer Schatten, Verschmutzung, Defekt?)"})
+    # je Tag: Prognosetreue Speicher geteilt durch die des zweiten Wechselrichters, dazu die Aufteilung der Prognose
+    pairs = [(day, (s[0] / s[1]) / (c[0] / c[1]), s[1] / c[1]) for day, d in days.items()
+             if not d["voll"] and (s := d.get("speicher")) and (c := d.get("ac"))
+             and min(s[1], c[1]) >= 0.5 and s[0] > 0 and c[0] > 0]
+    current = [(r, f) for day, r, f in pairs if day >= week]
+    if len(current) >= 3:
+        split = statistics.median(f for _, f in current)
+        # nur Tage mit ähnlich aufgeteilter Prognose: nach geänderten Flächen oder Prognose-Entitäten gilt das Alte nicht
+        usual = [r for day, r, f in pairs if day < week and abs(f / split - 1) < 0.3]
+        if len(usual) >= BASELINE_MIN:
+            change = statistics.median(r for r, _ in current) / statistics.median(usual)
+            weak = "speicher" if change < UNEVEN else "ac" if change > 1 / UNEVEN else None
+            if weak:
+                warnings.append({"code": "ungleich", "wechselrichter": weak,
+                                 "text": f"{label[weak]} liefert im Vergleich zum anderen deutlich weniger als sonst "
+                                         "(neuer Schatten, Verschmutzung, Defekt?)"})
     return {"wechselrichter": result, "warnungen": warnings}
 
 
