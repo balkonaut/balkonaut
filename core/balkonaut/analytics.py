@@ -344,46 +344,80 @@ def history(rows, bars, prices, forecast=None):
 
 
 LOW = 0.6  # Ertrag unter 60 % der Prognose gilt als niedrig
-UNEVEN = 0.7  # ein Wechselrichter erreicht weniger als 70 % der Prognosetreue des anderen
+UNEVEN = 0.75  # Verhältnis der beiden Prognosetreuen fällt unter 75 % des für diese Anlage üblichen
+BASELINE_DAYS, BASELINE_MIN = 60, 14  # übliches Verhältnis aus bis zu 60 Tagen, frühestens ab 14 Tagen
 INVERTERS = {  # Name: (Erzeugung als Zähler, als Leistung, Prognose für heute)
     "speicher": ("pv_energy", "pv_power", "pv_forecast_today"),
     "ac": ("", "pv_ac_power", "pv_ac_forecast_today"),
 }
 
 
-def yield_watch(rows, now):
-    """Ertrag je Wechselrichter gegen die Tagesprognose seiner Fläche über die letzten vollen Tage.
+def _days(rows, start, end, soc_max):
+    """Je Tag (Ortszeit) von start bis end: (Ertrag, Prognose) in kWh je Wechselrichter mit Prognose und „voll“, wenn
+    der Akku an diesem Tag sein Maximum erreichte. Die Prognose eines Tages ist der Mittelwert des Sensors
+    „Erzeugung heute“ über die Stunden des Tages."""
+    wanted = {k for ks in INVERTERS.values() for k in ks if k} | {"battery_soc"}
+    values, prev = defaultdict(lambda: defaultdict(list)), {}
+    for key, hour, mean, pos, _, last in rows:
+        if key not in wanted:
+            continue
+        value = pos
+        if key.endswith("_energy"):  # Zählerzuwachs, Rücksetzungen ignorieren
+            if last is None:
+                continue
+            value, prev[key] = last - prev[key] if key in prev and last > prev[key] else 0.0, last
+        elif key.endswith("_forecast_today"):
+            value = mean
+        elif key == "battery_soc":
+            value = mean if last is None else last
+        if start <= hour < end:
+            values[datetime.fromtimestamp(hour, TZ).date()][key].append(value)
+    out = {}
+    for day, v in values.items():
+        out[day] = {"voll": max(v["battery_soc"], default=0) >= soc_max - 2}
+        for name, (counter_key, power_key, forecast_key) in INVERTERS.items():
+            if v[forecast_key]:
+                actual = sum(v[counter_key]) if v.get(counter_key) else sum(v[power_key]) / 1000
+                out[day][name] = (actual, sum(v[forecast_key]) / len(v[forecast_key]))
+    return out
 
-    Die Prognose eines Tages ist der Mittelwert des Sensors „Erzeugung heute“ über die Stunden des Tages.
+
+def yield_watch(rows, now, known=None):
+    """Ertrag je Wechselrichter gegen die Tagesprognose seiner Fläche über die letzten 7 vollen Tage.
+
+    „Ungleich“ vergleicht das Verhältnis der beiden Prognosetreuen mit dem für diese Anlage üblichen (Median der Tage
+    davor): Ausrichtung, Modulgröße und dauerhafter Schatten fallen so heraus, nur Veränderungen fallen auf. Tage, an
+    denen der Akku voll war, zählen für den Speicher-Wechselrichter nicht, weil er dann die PV abregelt.
+    known: Ergebnis von _known(alle Stundenwerte), wenn schon vorhanden.
     """
-    # Vereinfachung: ein voller Akku regelt die PV am Speicher ab und senkt dessen Ertrag; Tage mit vollem Akku ausklammern, falls das stört
-    end = periods(now)["tag"]
-    start = datetime.combine(datetime.fromtimestamp(end, TZ).date() - timedelta(days=7), time(), TZ).timestamp()
-    rows = _recent(rows, start, end)  # nur die letzten 7 Tage, nicht für jeden Tag die ganze Historie
-    hours = _collect(rows, start)[2]
+    today = datetime.fromtimestamp(periods(now)["tag"], TZ).date()
+    week, first = today - timedelta(days=7), today - timedelta(days=BASELINE_DAYS)
+    soc_max = (_known(rows) if known is None else known).get("battery_soc_max") or 100
+    days = _days(_recent(rows, _ts(first), _ts(today)), _ts(first), _ts(today), soc_max)
     result, warnings = {}, []
-    for name, (counter_key, power_key, forecast_key) in INVERTERS.items():
-        by_day = defaultdict(list)
-        for hour, (mean, *_) in hours.get(forecast_key, {}).items():
-            by_day[datetime.fromtimestamp(hour, TZ).date()].append(mean)
-        forecast = sum(sum(v) / len(v) for v in by_day.values())
-        actual = 0.0  # nur Tage mit Prognose vergleichen, sonst verzerrt eine junge Prognose die Quote
-        for day in by_day:
-            day_end = _ts(day + timedelta(days=1))  # Ortszeit: 23 oder 25 Stunden bei Zeitumstellung
-            w, c, _, _ = _collect([r for r in rows if r[1] < day_end], _ts(day))
-            actual += c[counter_key] if counter_key in c else w[power_key + "+"] / 1000
-        result[name] = {"ertrag": actual, "prognose": forecast, "tage": len(by_day),
+    for name in INVERTERS:
+        use = [d[name] for day, d in days.items() if day >= week and name in d and not (name == "speicher" and d["voll"])]
+        actual, forecast = sum(a for a, _ in use), sum(f for _, f in use)
+        result[name] = {"ertrag": actual, "prognose": forecast, "tage": len(use),
                         "quote": actual / forecast if forecast >= 1 else None}
     label = {"speicher": "Speicher-Wechselrichter", "ac": "zweiter Wechselrichter"}
     for name, r in result.items():
         if r["quote"] is not None and r["tage"] >= 3 and r["quote"] < LOW:
             warnings.append({"code": "ertrag_niedrig", "wechselrichter": name,
                              "text": f"{label[name]}: {r['quote']:.0%} der Prognose in den letzten {r['tage']} Tagen"})
-    q = [r["quote"] for r in result.values() if r["quote"] and r["tage"] >= 3]
-    if len(q) == 2 and min(q) / max(q) < UNEVEN:
-        weak = min(result, key=lambda n: result[n]["quote"] or 0)
-        warnings.append({"code": "ungleich", "wechselrichter": weak,
-                         "text": f"{label[weak]} bleibt deutlich hinter dem anderen zurück (Verschattung, Verschmutzung, Defekt?)"})
+
+    def ratios(a, b):  # je Tag: Prognosetreue Speicher geteilt durch die des zweiten Wechselrichters
+        return [(d["speicher"][0] / d["speicher"][1]) / (d["ac"][0] / d["ac"][1]) for day, d in days.items()
+                if a <= day < b and not d["voll"] and "speicher" in d and "ac" in d
+                and min(d["speicher"][1], d["ac"][1]) >= 0.5 and d["speicher"][0] > 0 and d["ac"][0] > 0]
+    usual, current = ratios(first, week), ratios(week, today)
+    if len(usual) >= BASELINE_MIN and len(current) >= 3:
+        change = statistics.median(current) / statistics.median(usual)
+        weak = "speicher" if change < UNEVEN else "ac" if change > 1 / UNEVEN else None
+        if weak:
+            warnings.append({"code": "ungleich", "wechselrichter": weak,
+                             "text": f"{label[weak]} liefert im Vergleich zum anderen deutlich weniger als sonst "
+                                     "(neuer Schatten, Verschmutzung, Defekt?)"})
     return {"wechselrichter": result, "warnungen": warnings}
 
 
@@ -441,7 +475,7 @@ def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
     recent = {name: (r := _recent(rows, start), start, _collect(r, start)) for name, start in periods(now).items()}
     bilanz = {name: balance(r, start, prices, c) for name, (r, start, c) in recent.items()}
     known = _known(rows)
-    watch = yield_watch(rows, now)
+    watch = yield_watch(rows, now, known)
     warnings = watch["warnungen"]
     # Prognosen kommen auch, wenn alle Geräte ausfallen, und zählen deshalb nicht als Messwert
     stand = max((ts for key, (ts, _) in latest.items() if not key.endswith("_forecast_today")), default=None)

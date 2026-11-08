@@ -17,6 +17,7 @@ Eine technische Übersicht aller Abfragen liefert `http://<adresse>:8000/docs`.
 
 - `warnungen`: Liste mit `code` (`keine_messwerte`, `ertrag_niedrig`, `ungleich`), `text` und ggf. `wechselrichter`
 - `ertrag.speicher|ac`: `ertrag` und `prognose` (kWh) der letzten 7 vollen Tage, `quote` (Anteil), `tage`
+  (beim Speicher ohne Tage mit vollem Akku)
 - `stand`: Zeitpunkt des letzten Messwerts
 - `live`: letzter Wert je Messgröße (Namen wie unter [Messgrößen](messquellen.md#messgroen), Leistung in W)
 - `bilanz.tag|monat|jahr|gesamt`: `erzeugung`, `abgabe`, `netzbezug`, `einspeisung`, `eigenverbrauch`,

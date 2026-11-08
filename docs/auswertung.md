@@ -118,11 +118,21 @@ Die Übersicht zeigt Warnungen oben an, die Schnittstelle liefert sie unter `war
 |---|---|
 | Keine Messwerte | Seit über 2 Minuten kam nichts von Home Assistant |
 | Ertrag niedrig | Ein Wechselrichter lieferte in den letzten 7 Tagen weniger als 60 % der Prognose seiner Fläche |
-| Ungleich | Ein Wechselrichter erreicht seine Prognose deutlich schlechter als der andere. Weil beide unter demselben Wetter arbeiten, deutet das auf Verschattung, Verschmutzung oder einen Defekt an einem Modulpaar |
+| Ungleich | Ein Wechselrichter liefert im Vergleich zum anderen deutlich weniger als sonst, siehe unten |
 
 Für die Ertragswarnungen braucht Balkonaut die Prognose je Fläche (`pv_forecast_today`, `pv_ac_forecast_today`,
-siehe [Einstellungen](einstellungen.md)) und mindestens 3 Tage Daten. Ein voller Akku kann die Erzeugung am Speicher
-abregeln und so eine Warnung „Ertrag niedrig“ auslösen, obwohl alles in Ordnung ist.
+siehe [Einstellungen](einstellungen.md)) und mindestens 3 Tage Daten.
+
+**Wie „Ungleich“ entscheidet:** Zwei Flächen liefern selten gleich viel, auch wenn alles sauber ist. Sie zeigen in
+verschiedene Richtungen, haben unterschiedlich viele Module, oder ein Baum wirft schon immer am Nachmittag Schatten.
+Auch die Prognose trifft Ost und West nicht gleich gut. Balkonaut lernt deshalb, wie die beiden Wechselrichter bei
+deiner Anlage üblicherweise zueinander stehen (aus bis zu 60 Tagen), und warnt nur, wenn einer in den letzten 7 Tagen
+um mehr als ein Viertel davon abfällt. Das deutet auf etwas Neues hin: Verschmutzung, neuer Schatten oder ein Defekt.
+Die Warnung erscheint deshalb erst, wenn Balkonaut mindestens 14 vergleichbare Tage kennt.
+
+**Voller Akku:** Ist der Akku voll, regelt der Speicher-Wechselrichter die Module ab. Solche Tage zählen für ihn
+nicht mit, weder bei „Ertrag niedrig“ noch bei „Ungleich“. Im Sommer prüft Balkonaut ihn deshalb vor allem an Tagen,
+an denen der Akku nicht voll wird.
 
 ## Begriffe
 

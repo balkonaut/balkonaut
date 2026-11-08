@@ -11,6 +11,10 @@ Schon in der Docker-App (`:latest`), in der Home-Assistant-Integration ab der n�
 
 **Docker-App und Home-Assistant-Integration**
 
+- Warnung *Ungleich*: vergleicht mit dem für die eigene Anlage üblichen Verhältnis der beiden Wechselrichter statt
+  mit fester Schwelle. Flächen mit verschiedener Ausrichtung oder Modulzahl lösen sie nicht mehr aus, nur noch eine
+  Veränderung; sie erscheint frühestens nach 14 vergleichbaren Tagen. Tage mit vollem Akku zählen für den
+  Speicher-Wechselrichter nicht mehr, siehe [Warnungen](auswertung.md#warnungen) (08.11.2026)
 - Übersicht und Status antworten auch beim ersten Aufruf nach längerer Pause sofort; bisher las jeder Aufruf alle
   Rohwerte der letzten 14 Tage (04.11.2026)
 
