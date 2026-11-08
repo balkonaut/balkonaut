@@ -1,5 +1,8 @@
-# Docker-Image für amd64 und arm64 nach ghcr.io: bei Änderungen an App, Kern oder Handbuch als latest und
-# sha-<commit>, bei einem Release (ohne Vorabversionen) zusätzlich mit der Version als Tag, z. B. 1.0.2.
+# Docker-Image für amd64 und arm64 nach ghcr.io.
+# - Push auf main mit Änderungen an App, Kern oder Handbuch: Tag latest
+# - Release (ohne Vorabversionen): Tag mit der Version, z. B. 1.0.2
+# Danach räumt der Job "cleanup" verwaiste Versionen in ghcr.io weg (z. B. das vorherige latest).
+# Einmalig alte sha-<commit>-Tags entfernen: Workflow manuell starten und "sha_tags_loeschen" anhaken.
 name: Docker
 
 on:
@@ -9,6 +12,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      sha_tags_loeschen:
+        description: Alte sha-<commit>-Tags aus ghcr.io löschen
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -22,30 +30,59 @@ jobs:
   tests:
     if: github.event_name != 'release' || !github.event.release.prerelease
     uses: ./.github/workflows/tests.yml
+
   image:
     needs: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
       - id: v
         run: |
           image=ghcr.io/${GITHUB_REPOSITORY,,}
           if [ "$GITHUB_EVENT_NAME" = release ]; then
             echo "tags=$image:${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
           else
-            echo "tags=$image:latest,$image:sha-$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+            echo "tags=$image:latest" >> "$GITHUB_OUTPUT"
           fi
+
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
+
       - uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
+          # Keine Attestations: die tauchen in ghcr.io sonst als zusätzliche "unknown/unknown"-Versionen auf
+          provenance: false
+          sbom: false
           tags: ${{ steps.v.outputs.tags }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          # Build-Cache im Actions-Cache (nicht in ghcr.io), beschleunigt vor allem den arm64-Build unter QEMU
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  cleanup:
+    needs: image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Alte sha-Tags löschen (nur auf Wunsch)
+        if: github.event_name == 'workflow_dispatch' && inputs.sha_tags_loeschen
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          delete-tags: sha-*
+
+      # Kennt Multi-Arch-Images: die Plattform-Images von latest und den Versionen bleiben erhalten
+      - name: Verwaiste Versionen löschen
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          delete-untagged: true
