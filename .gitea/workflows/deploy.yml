@@ -20,3 +20,8 @@ jobs:
       # Das Image für Docker und NAS baut GitHub (ghcr.io/balkonaut/balkonaut:latest), hier nur das Handbuch prüfen
       - name: Handbuch
         run: docker build --target docs .
+      - name: Aufräumen
+        if: always()
+        run: |
+          docker image prune -f
+          docker builder prune -f --filter until=72h
