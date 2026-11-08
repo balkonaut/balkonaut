@@ -14,7 +14,7 @@ Das Energy-Dashboard von Home Assistant zeigt, wie viel Strom geflossen ist. Bal
 Fragen dahinter: Wie viel spare ich wirklich? Wann hat sich die Anlage bezahlt gemacht? Arbeitet der Akku
 gut, und regelt die Nulleinspeisung sauber?
 
-![Balkonaut in der Seitenleiste von Home Assistant: Energiefluss, Akku-Ring und Bilanz](https://raw.githubusercontent.com/balkonaut/balkonaut/main/docs/assets/panel.png)
+![Balkonaut in der Seitenleiste von Home Assistant: Energiefluss und Akku-Ring](https://raw.githubusercontent.com/balkonaut/balkonaut/main/docs/assets/panel.png)
 
 ## Was Balkonaut kann
 

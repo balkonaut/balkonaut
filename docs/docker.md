@@ -6,6 +6,8 @@ andere Geräte auf Wunsch über Home Assistant, speichert die Messwerte selbst u
 Weboberfläche. Wer Home Assistant ohnehin nutzt, ist mit der [Home-Assistant-Integration](integration.md) meist
 einfacher dran.
 
+![Übersicht der Docker-App: Ersparnis, Akku, Autarkie und Energiefluss](assets/docker.png)
+
 Aus dem Handbuch geht es über *Zurück zu Balkonaut* im Menü oder über das Logo zurück zur Übersicht.
 
 ## Installation mit dem fertigen Image

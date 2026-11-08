@@ -4,6 +4,8 @@ Die Home-Assistant-Integration bringt Balkonaut nach Home Assistant: 22 Sensoren
 Amortisation, Akku), einen Problem-Sensor und ein Ereignis für Warnungen, dazu eigene Ansichten in der Seitenleiste
 und eine Karte für das Dashboard. Sie läuft auch unter Home Assistant OS, ohne eigenen Server.
 
+![Balkonaut in der Seitenleiste von Home Assistant: Energiefluss und Akku-Ring](assets/panel.png)
+
 Die Home-Assistant-Integration misst selbst. Balkonaut liest die Werte alle 10 Sekunden, aus Entitäten anderer Integrationen oder
 direkt von den Geräten im Heimnetz, und speichert sie in `balkonaut/balkonaut.db` im Konfigurationsordner von Home
 Assistant. Die [Docker-App](docker.md) braucht es dafür nicht. Beim ersten Start übernimmt Balkonaut einmalig den
