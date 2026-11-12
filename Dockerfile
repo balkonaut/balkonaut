@@ -22,27 +22,12 @@ RUN pip install --no-cache-dir ".[docs]"
 COPY docs docs
 RUN mkdocs build --strict -d /site
 
+# Tests des Kerns; die Docker-App liegt in github.com/balkonaut/balkonaut-docker und testet dort gegen diesen Kern
 FROM python:3.12-slim AS test
 
 WORKDIR /build
 COPY pyproject.toml LICENSE ./
 COPY core core
-RUN pip install --no-cache-dir ".[app,dev]"
-COPY app app
+RUN pip install --no-cache-dir ".[dev]"
 COPY tests tests
 RUN python -m pytest -q
-
-FROM python:3.12-slim
-
-WORKDIR /srv
-COPY pyproject.toml LICENSE ./
-COPY core core
-RUN pip install --no-cache-dir ".[app]"
-COPY app app
-COPY --from=docs /site handbuch
-
-ENV BALKONAUT_DATA=/data
-VOLUME /data
-
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

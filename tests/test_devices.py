@@ -54,15 +54,6 @@ def test_invert(monkeypatch):
     assert plug.read()["output_power"] == 6.7
 
 
-def test_config_adapter():
-    """config.yaml mit devices nimmt die Geräte direkt, sonst Home Assistant, ohne beides keinen Adapter."""
-    from app.config import adapter
-    from balkonaut.homeassistant import HomeAssistant
-    assert isinstance(adapter({"devices": CONFIG}), Devices)
-    assert isinstance(adapter({"home_assistant": {"url": "http://ha", "token": "t", "entities": {}}}), HomeAssistant)
-    assert adapter({}) is None
-
-
 def test_forecast_and_planes(monkeypatch):
     """Prognose je Wechselrichter aus den Flächen, höchstens einmal je Stunde; Flächen für den Jahresverlauf."""
     calls = []

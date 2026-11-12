@@ -120,7 +120,7 @@ type: custom:balkonaut-card
 
 ## Ohne Home Assistant: die Docker-App
 
-Balkonaut gibt es auch als eigenständige Docker-App, getrennt von der Home-Assistant-Integration, ohne Home Assistant, etwa auf einer NAS oder einem Raspberry Pi,
+Balkonaut gibt es auch als eigenständige Docker-App ([balkonaut-docker](https://github.com/balkonaut/balkonaut-docker)), getrennt von der Home-Assistant-Integration, ohne Home Assistant, etwa auf einer NAS oder einem Raspberry Pi,
 mit eigener Web-Oberfläche. Sie liest APsystems EZHI, Shelly-Zähler und Shelly Plug, Hoymiles über OpenDTU oder
 AhoyDTU, Deye über den Logger-Stick sowie Victron GX (MQTT, Modbus TCP) direkt im Heimnetz und holt Prognose und Jahresverlauf aus Standort und Flächen. Andere Geräte liest die
 Docker-App über Home Assistant, oder man nutzt gleich die Home-Assistant-Integration, die viele Hersteller kennt
@@ -129,7 +129,7 @@ Docker-App über Home Assistant, oder man nutzt gleich die Home-Assistant-Integr
 ```yaml
 services:
   balkonaut:
-    image: ghcr.io/balkonaut/balkonaut:latest
+    image: ghcr.io/balkonaut/balkonaut-docker:latest
     ports:
       - "${BALKONAUT_PORT:-8000}:8000"
     environment:

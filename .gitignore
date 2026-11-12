@@ -13,4 +13,5 @@ site/
 handbuch/
 .venv-ha/
 .github-token
+.github-token-docker
 tools/victron-mock/test-data/

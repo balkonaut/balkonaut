@@ -17,7 +17,7 @@ jobs:
         run: docker build --target ha-test .
       - name: hassfest
         run: docker build --target hassfest .
-      # Das Image für Docker und NAS baut GitHub (ghcr.io/balkonaut/balkonaut:latest), hier nur das Handbuch prüfen
+      # Die Docker-App liegt in einem eigenen Repository (Balkonaut-Docker), hier nur Kern, Integration und Handbuch
       - name: Handbuch
         run: docker build --target docs .
       - name: Aufräumen

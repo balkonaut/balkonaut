@@ -17,7 +17,7 @@ Aus dem Handbuch geht es über *Zurück zu Balkonaut* im Menü oder über das Lo
     ```yaml
     services:
       balkonaut:
-        image: ghcr.io/balkonaut/balkonaut:latest
+        image: ghcr.io/balkonaut/balkonaut-docker:latest
         ports:
           - "${BALKONAUT_PORT:-8000}:8000"
         environment:
@@ -33,11 +33,11 @@ Aus dem Handbuch geht es über *Zurück zu Balkonaut* im Menü oder über das Lo
 4. Neue Versionen holen: `docker compose pull && docker compose up -d`. Die Messdaten im Ordner `data/` bleiben.
 
 In Dockhand geht das als neuer Stack mit diesem Inhalt oder als Git-Stack direkt aus dem Repository
-`https://github.com/balkonaut/balkonaut`, dessen `docker-compose.yml` ebenfalls das fertige Image nutzt.
+`https://github.com/balkonaut/balkonaut-docker`, dessen `docker-compose.yml` ebenfalls das fertige Image nutzt.
 Aktualisiert wird dort über *Nach Updates suchen*.
 
 Ist Port 8000 auf dem Rechner schon belegt, neben der `docker-compose.yml` eine Datei `.env` anlegen (Vorlage:
-[`.env.example`](https://github.com/balkonaut/balkonaut/blob/main/.env.example)) mit zum Beispiel
+[`.env.example`](https://github.com/balkonaut/balkonaut-docker/blob/main/.env.example)) mit zum Beispiel
 `BALKONAUT_PORT=8080` (in Dockhand als Variable des Stacks). Balkonaut ist dann unter `http://<adresse>:8080/`
 erreichbar.
 
@@ -45,12 +45,19 @@ Tag, Monat und Jahr beginnen in der Zeitzone aus der Variable `TZ`, ohne Angabe 
 wohnt, trägt in der `.env` zum Beispiel `TZ=Europe/London` ein (Namen wie in der
 [Liste der Zeitzonen](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)).
 
-Das Image gibt es für amd64 und arm64. Jede Version trägt zusätzlich einen Tag `sha-<commit>`, mit dem sich bei
+Das Image gibt es für amd64 und arm64. Jede Version hat einen eigenen Tag (z. B. `:1.0.3`), mit dem sich bei
 Problemen eine ältere Version festhalten lässt.
+
+!!! note "Neuer Image-Name"
+    Bis Version 1.0.2 hieß das Image `ghcr.io/balkonaut/balkonaut`. Es bekommt keine Updates mehr. Wer es noch nutzt,
+    trägt in der `docker-compose.yml` `ghcr.io/balkonaut/balkonaut-docker:latest` ein und holt es mit
+    `docker compose pull && docker compose up -d`. Die Daten im Ordner `data/` bleiben.
 
 ## Selbst bauen
 
-1. Repository herunterladen und in das Verzeichnis wechseln.
+1. Repository [balkonaut-docker](https://github.com/balkonaut/balkonaut-docker) herunterladen und in das
+   Verzeichnis wechseln. Kern und Handbuch liegen im Repository der Home-Assistant-Integration und gehören in den
+   Ordner `kern/`: `git clone --depth 1 https://github.com/balkonaut/balkonaut kern`
 2. In `docker-compose.yml` die Zeile `# build: .` aktivieren (Raute entfernen), dann Container bauen und starten:
 
     ```bash
@@ -102,8 +109,8 @@ Die gespeicherten Messdaten der Docker-App lassen sich in die Home-Assistant-Int
 ## Tests bei jedem Push (Gitea Actions)
 
 Liegt das Repository in einer eigenen Gitea-Instanz, kann ein Gitea Runner auf der NAS bei jedem Push auf `main`
-Tests, Integrationstests, hassfest und das Handbuch prüfen (`.gitea/workflows/deploy.yml`). Das Image selbst baut
-GitHub nur bei einer neuen Version, als `ghcr.io/balkonaut/balkonaut:latest` und mit der Version als Tag (z. B. `:1.0.0`); aktualisiert wird mit `docker compose pull && docker compose up -d`
+die Tests und das Handbuch prüfen (`.gitea/workflows/deploy.yml`). Das Image selbst baut
+GitHub nur bei einer neuen Version, als `ghcr.io/balkonaut/balkonaut-docker:latest` und mit der Version als Tag (z. B. `:1.0.3`); aktualisiert wird mit `docker compose pull && docker compose up -d`
 oder in Dockhand über *Nach Updates suchen*.
 
 1. In Gitea im Repository unter *Einstellungen → Actions → Runner* einen Runner anlegen und das Registrierungs-Token kopieren.

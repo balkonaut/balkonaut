@@ -5,6 +5,15 @@ Home-Assistant-Integration (über HACS) bekommen Neuerungen mit der nächsten Ve
 Vorabversionen (Beta) zeigt HACS nur, wenn bei Balkonaut die Entität *Vorabversion* eingeschaltet ist.
 Was noch kommt, steht unter [Geplant](geplant.md).
 
+## Noch ohne Version
+
+**Docker-App**
+
+- Eigenes Repository [balkonaut-docker](https://github.com/balkonaut/balkonaut-docker) und neuer Image-Name
+  `ghcr.io/balkonaut/balkonaut-docker`. Das alte Image `ghcr.io/balkonaut/balkonaut` bekommt keine Updates mehr,
+  bitte in der `docker-compose.yml` umstellen ([Docker-App](docker.md#installation-mit-dem-fertigen-image)).
+- Neue Images gibt es nur noch mit einer neuen Version, nicht mehr nach jeder Änderung.
+
 ## 1.0.3-beta.2 · 08.11.2026 (Vorabversion)
 
 **Docker-App und Home-Assistant-Integration**
