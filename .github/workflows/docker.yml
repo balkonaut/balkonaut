@@ -1,14 +1,10 @@
-# Docker-Image für amd64 und arm64 nach ghcr.io.
-# - Push auf main mit Änderungen an App, Kern oder Handbuch: Tag latest
-# - Release (ohne Vorabversionen): Tag mit der Version, z. B. 1.0.2
+# Docker-Image für amd64 und arm64 nach ghcr.io, nur bei einem Release (ohne Vorabversionen):
+# Tags mit der Version (z. B. 1.0.2) und latest. Ein Push auf main baut kein Image.
 # Danach räumt der Job "cleanup" verwaiste Versionen in ghcr.io weg (z. B. das vorherige latest).
 # Einmalig alte sha-<commit>-Tags entfernen: Workflow manuell starten und "sha_tags_loeschen" anhaken.
 name: Docker
 
 on:
-  push:
-    branches: [main]
-    paths: [app/**, core/**, docs/**, Dockerfile, mkdocs.yml, pyproject.toml]
   release:
     types: [published]
   workflow_dispatch:
@@ -28,7 +24,7 @@ concurrency:
 
 jobs:
   tests:
-    if: github.event_name != 'release' || !github.event.release.prerelease
+    if: github.event_name == 'release' && !github.event.release.prerelease
     uses: ./.github/workflows/tests.yml
 
   image:
@@ -40,11 +36,7 @@ jobs:
       - id: v
         run: |
           image=ghcr.io/${GITHUB_REPOSITORY,,}
-          if [ "$GITHUB_EVENT_NAME" = release ]; then
-            echo "tags=$image:${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tags=$image:latest" >> "$GITHUB_OUTPUT"
-          fi
+          echo "tags=$image:${GITHUB_REF_NAME#v},$image:latest" >> "$GITHUB_OUTPUT"
 
       - uses: docker/login-action@v4
         with:
@@ -71,6 +63,8 @@ jobs:
 
   cleanup:
     needs: image
+    # Läuft auch beim manuellen Start, wenn kein Image gebaut wurde
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - name: Alte sha-Tags löschen (nur auf Wunsch)

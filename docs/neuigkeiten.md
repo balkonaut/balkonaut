@@ -1,7 +1,7 @@
 # Neuigkeiten
 
-Was sich in Balkonaut geändert hat, die neueste Änderung oben. Die Docker-App (`:latest`) bekommt Neuerungen
-direkt nach dem Speichern im Repository, die Home-Assistant-Integration mit der nächsten Version über HACS.
+Was sich in Balkonaut geändert hat, die neueste Änderung oben. Docker-App (`:latest`) und
+Home-Assistant-Integration (über HACS) bekommen Neuerungen mit der nächsten Version.
 Vorabversionen (Beta) zeigt HACS nur, wenn bei Balkonaut die Entität *Vorabversion* eingeschaltet ist.
 Was noch kommt, steht unter [Geplant](geplant.md).
 

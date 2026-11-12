@@ -103,7 +103,7 @@ Die gespeicherten Messdaten der Docker-App lassen sich in die Home-Assistant-Int
 
 Liegt das Repository in einer eigenen Gitea-Instanz, kann ein Gitea Runner auf der NAS bei jedem Push auf `main`
 Tests, Integrationstests, hassfest und das Handbuch prüfen (`.gitea/workflows/deploy.yml`). Das Image selbst baut
-GitHub als `ghcr.io/balkonaut/balkonaut:latest`, jede Release-Version zusätzlich mit eigenem Tag (z. B. `:1.0.0`); aktualisiert wird mit `docker compose pull && docker compose up -d`
+GitHub nur bei einer neuen Version, als `ghcr.io/balkonaut/balkonaut:latest` und mit der Version als Tag (z. B. `:1.0.0`); aktualisiert wird mit `docker compose pull && docker compose up -d`
 oder in Dockhand über *Nach Updates suchen*.
 
 1. In Gitea im Repository unter *Einstellungen → Actions → Runner* einen Runner anlegen und das Registrierungs-Token kopieren.
