@@ -1,10 +1,11 @@
 # Handbuch aus docs/ als Website auf GitHub Pages: https://balkonaut.github.io/balkonaut/
+# Nur bei einem Release (ohne Vorabversionen), wie das Docker-Image; ein Push auf main veröffentlicht nichts.
+# Die Umgebung github-pages muss dafür Tags v* zulassen (Einstellungen → Environments).
 name: Handbuch
 
 on:
-  push:
-    branches: [main]
-    paths: [docs/**, mkdocs.yml, mkdocs-pages.yml]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -18,6 +19,7 @@ concurrency:
 
 jobs:
   pages:
+    if: github.event_name != 'release' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     environment:
       name: github-pages
