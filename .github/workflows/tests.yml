@@ -1,4 +1,4 @@
-# Tests des Kerns und der Home-Assistant-Integration, wie in den Teststufen des Dockerfile.
+# Tests des Kerns und der Home-Assistant-Integration sowie Bau des Handbuchs, wie in den Stufen des Dockerfile.
 # release.yml ruft diesen Workflow auf und hängt das Zip nur an, wenn er bestanden ist.
 name: Tests
 
@@ -22,3 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: docker build --target ha-test .
+  handbuch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build --target docs .

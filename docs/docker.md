@@ -106,26 +106,8 @@ Dann muss Balkonaut ebenfalls über HTTPS erreichbar sein, zum Beispiel über ei
 Die gespeicherten Messdaten der Docker-App lassen sich in die Home-Assistant-Integration übernehmen, siehe
 [Umzug von der Docker-App](integration.md#umzug-von-der-docker-app).
 
-## Tests bei jedem Push (Gitea Actions)
+## Neue Versionen
 
-Liegt das Repository in einer eigenen Gitea-Instanz, kann ein Gitea Runner auf der NAS bei jedem Push auf `main`
-die Tests und das Handbuch prüfen (`.gitea/workflows/deploy.yml`). Das Image selbst baut
-GitHub nur bei einer neuen Version, als `ghcr.io/balkonaut/balkonaut-docker:latest` und mit der Version als Tag (z. B. `:1.0.3`); aktualisiert wird mit `docker compose pull && docker compose up -d`
-oder in Dockhand über *Nach Updates suchen*.
-
-1. In Gitea im Repository unter *Einstellungen → Actions → Runner* einen Runner anlegen und das Registrierungs-Token kopieren.
-2. Den Runner auf der NAS starten:
-
-    ```bash
-    docker run -d --name gitea-runner --restart unless-stopped \
-      -e GITEA_INSTANCE_URL=http://<gitea-adresse> \
-      -e GITEA_RUNNER_REGISTRATION_TOKEN=<token> \
-      -e GITEA_RUNNER_NAME=nas \
-      -v <ordner>/gitea-runner:/data \
-      -v /var/run/docker.sock:/var/run/docker.sock \
-      docker.io/gitea/runner:3
-    ```
-
-!!! warning "Zugriff auf Docker"
-    Der Runner hat über `/var/run/docker.sock` vollen Zugriff auf Docker und damit auf die NAS. Nur für eigene,
-    private Repositories verwenden.
+Das Image baut GitHub nur bei einer neuen Version, als `ghcr.io/balkonaut/balkonaut-docker:latest` und mit der
+Version als Tag (z. B. `:1.0.3`). Aktualisiert wird mit `docker compose pull && docker compose up -d` oder in Dockhand
+über *Nach Updates suchen*. Die Tests laufen bei jeder Änderung auf GitHub (`.github/workflows/tests.yml`).
