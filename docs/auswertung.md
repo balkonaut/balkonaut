@@ -283,7 +283,8 @@ der Modus Vorrang. Die Karte gibt es in der Docker-App und im Panel der Home-Ass
 
 ## Simulator
 
-Nur in der Docker-App, unter *Simulator*: Was wäre, wenn deine Anlage anders aussähe? Balkonaut spielt dafür ein Jahr
+In der Docker-App und im Panel der Home-Assistant-Integration unter *Simulator*: Was wäre, wenn deine Anlage anders
+aussähe? Balkonaut spielt dafür ein Jahr
 Stunde für Stunde durch, einmal mit der heutigen Anlage, einmal mit der Variante, und vergleicht Ersparnis, Netzbezug,
 Abgabe ins Haus, Einspeisung, Abregelung und Ladung.
 
@@ -295,8 +296,9 @@ Abgabe ins Haus, Einspeisung, Abregelung und Ladung.
 - **Regelung:** *Nulleinspeisung* folgt dem Hausverbrauch (wie der Speicher heute); *feste Grundlast* gibt immer
   gleich viel ab, was das Haus gerade nicht braucht, geht ins Netz.
 
-Gerechnet wird wie bei [Lohnt sich ein größerer Akku?](#lohnt-sich-ein-groerer-akku): mit Standort und Flächen ein
-ganzes Jahr nach PVGIS, sonst aus den gemessenen Tagen hochgerechnet; Hausverbrauch wie an den gemessenen Tagen,
+Gerechnet wird wie bei [Lohnt sich ein größerer Akku?](#lohnt-sich-ein-groerer-akku): in der Docker-App mit Standort
+und Flächen ein ganzes Jahr nach PVGIS, sonst und in der Home-Assistant-Integration aus den gemessenen Tagen
+hochgerechnet; Hausverbrauch wie an den gemessenen Tagen,
 ohne Jahreszeiten; Ladevorrang des Speichers aus der Messung. Mehr Module skalieren die gemessene Erzeugung, die
 Ausrichtung bleibt gleich. Die Ergebnisse sind Schätzungen für den Vergleich, keine Zusage.
 

@@ -15,12 +15,14 @@ Was noch kommt, steht unter [Geplant](geplant.md).
   ([Lohnt sich ein größerer Akku?](auswertung.md#lohnt-sich-ein-groerer-akku)). Die Docker-App rechnet mit Standort
   und Flächen ein ganzes Jahr nach PVGIS.
 - Der Monatsbericht zeigt die Kachel nicht mehr, sie gilt fürs ganze Jahr.
+- Neue Seite *Simulator* (in der Home-Assistant-Integration als eigener Reiter im Panel): heutige Anlage gegen eine
+  Variante mit anderem Akku, mehr oder weniger Modulen, anderem Abgabelimit, fester Grundlast statt
+  Nulleinspeisung, anderen Ladegrenzen oder Preisen, dazu fertige Vergleiche ([Simulator](auswertung.md#simulator)).
+  Die Home-Assistant-Integration rechnet dabei ohne PVGIS über die gemessenen Tage.
 
 **Docker-App**
 
-- Neue Seite *Simulator*: heutige Anlage gegen eine Variante mit anderem Akku, mehr oder weniger Modulen, anderem
-  Abgabelimit, fester Grundlast statt Nulleinspeisung, anderen Ladegrenzen oder Preisen, dazu fertige Vergleiche
-  ([Simulator](auswertung.md#simulator)).
+- Kachel *Akku*: Das Szenario steht auch dann darunter, wenn noch kein Ladestand gemeldet ist.
 - Navigation: Zwischen 720 und 1100 Pixeln Breite zeigt sie nur noch Symbole, damit alle Einträge in eine Zeile
   passen.
 - Schnittstelle: `akku_modul` neu, `zusatz_kapazitaet`, `groesserer_akku` und `groesserer_akku_jahr` unter `akku`

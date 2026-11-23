@@ -1,8 +1,8 @@
-// Balkonaut-Panel in der Seitenleiste: Übersicht, Verlauf, Nulleinspeisung und Monatsbericht wie in der Docker-App.
-// Daten über die WebSocket-Befehle balkonaut/status, /verlauf, /bericht, /nulleinspeisung; die Übersicht nutzt die
+// Balkonaut-Panel in der Seitenleiste: Übersicht, Verlauf, Nulleinspeisung, Monatsbericht und Simulator wie in der
+// Docker-App. Daten über die WebSocket-Befehle balkonaut/status, /verlauf, /bericht, /nulleinspeisung, /simulator; die Übersicht nutzt die
 // Karte balkonaut-card, die die Integration global lädt. Keine Abhängigkeiten, kein Build-Schritt.
 
-const TABS = [["start", "Übersicht"], ["verlauf", "Verlauf"], ["nulleinspeisung", "Nulleinspeisung"], ["bericht", "Bericht"]];
+const TABS = [["start", "Übersicht"], ["verlauf", "Verlauf"], ["nulleinspeisung", "Nulleinspeisung"], ["bericht", "Bericht"], ["simulator", "Simulator"]];
 const PERIODS = [["tag", "Heute"], ["monat", "Monat"], ["jahr", "Jahr"], ["gesamt", "Gesamt"]];
 const VIEWS = [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["jahr", "Jahr"]];
 const HANDBUCH = "https://balkonaut.github.io/balkonaut/";
@@ -54,6 +54,23 @@ const PANEL_STYLE = `
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   th, td { padding: 6px 8px; border-bottom: 1px solid var(--bk-line); text-align: right; }
   th:first-child, td:first-child { text-align: left; }
+  .sim { display: grid; gap: 16px; grid-template-columns: minmax(16rem, 22rem) 1fr; align-items: start; }
+  @media (max-width: 48rem) { .sim { grid-template-columns: 1fr; } }
+  .simform label { display: block; margin: 12px 0 4px; font-size: 14px; }
+  .simform input, .simform select { font: inherit; width: 100%; box-sizing: border-box; min-height: 40px; padding: 8px;
+    border: 1px solid var(--bk-line); border-radius: 6px; background: var(--bk-card); color: var(--bk-ink); }
+  .simform fieldset { border: 1px solid var(--bk-line); border-radius: 6px; margin: 14px 0 0; padding: 8px 12px 12px; }
+  .simform .radio { display: flex; gap: 8px; align-items: center; margin: 8px 0 0; }
+  .simform .radio input[type=radio] { width: auto; min-height: 0; margin: 0; }
+  .simform .radio input[type=number] { width: 6em; }
+  .simform .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .simform button { margin-top: 16px; width: 100%; min-height: 44px; border: 0; border-radius: 6px; cursor: pointer;
+    background: var(--primary-color); color: var(--text-primary-color, #fff); font: 600 15px inherit; }
+  .preset { text-align: left; font: inherit; color: var(--bk-ink); cursor: pointer; }
+  .preset:hover { border-color: var(--primary-color); }
+  .pos { color: var(--bk-leaf); } .neg { color: var(--bk-warn); }
+  .big { font: 700 40px var(--bk-mono); margin: 6px 0; } .big span { font-size: 16px; color: var(--bk-muted); font-weight: 500; }
+  .cmp-wrap { overflow-x: auto; } .cmp td { white-space: nowrap; }
   .ways { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
   .ways .head { display: flex; align-items: baseline; font-weight: 600; margin-bottom: 6px; }
   .ways .head b, .ways .row b { margin-left: auto; font: 600 18px var(--bk-mono); font-variant-numeric: tabular-nums; }
@@ -168,6 +185,7 @@ class BalkonautPanel extends HTMLElement {
       if (tab === "start") body = this._start(await this._ws("status"), await this._ws("verlauf", { ansicht: "tag" }));
       else if (tab === "verlauf") body = this._history(await this._ws("verlauf", { ansicht: this._view, datum: this._datum }));
       else if (tab === "nulleinspeisung") body = this._regulation(await this._ws("nulleinspeisung"));
+      else if (tab === "simulator") body = this._simulator(await this._ws("simulator", this._sim || {}));
       else body = this._report(await this._ws("bericht", { monat: this._monat }));
     } catch (err) {
       body = `<p class="note">Balkonaut ist nicht verfügbar: ${esc(err.message || err)}</p>`;
@@ -201,6 +219,21 @@ class BalkonautPanel extends HTMLElement {
       [this._view, this._datum] = ["tag", a.dataset.day];
       this._show("verlauf");
     }));
+    this.shadowRoot.querySelectorAll("[data-sim]").forEach((b) => b.addEventListener("click", () => {
+      this._sim = JSON.parse(b.dataset.sim);
+      this._show("simulator");
+    }));
+    this.shadowRoot.querySelector("form.simform")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const values = {};
+      for (const [key, value] of new FormData(e.target)) {
+        const text = String(value).trim().replace(",", ".");
+        if (key === "regelung") values[key] = text;
+        else if (text !== "" && Number.isFinite(Number(text))) values[key] = Number(text);
+      }
+      this._sim = values;
+      this._show("simulator");
+    });
     this.shadowRoot.querySelectorAll("[data-set]").forEach((b) => b.addEventListener("click", () => {
       const [key, value] = b.dataset.set.split("=");
       this[key] = value;
@@ -428,6 +461,50 @@ class BalkonautPanel extends HTMLElement {
         ${this._kachel("nulleinspeisung", "anteil_nahe_null", "Davon nahe 0 W", this._pct(n.anteil_nahe_null), n.anteil_nahe_null)}
         ${this._kachel("nulleinspeisung", "vermeidbarer_netzbezug", "Vermeidbarer Netzbezug", `${this._fmt(n.vermeidbarer_netzbezug)} kWh`, null, `${this._fmt(n.vermeidbare_kosten, 2)} €`)}
         ${this._kachel("nulleinspeisung", "anteil_ueber_limit", "Abgabe über Limit", this._pct(n.anteil_ueber_limit), n.anteil_ueber_limit, `höchster Wert ${this._fmt(n.max_abgabe, 0)} W`)}</div>` : ""}`;
+  }
+
+  // Simulator wie app/templates/simulator.html; ohne PVGIS über die gemessenen Tage aufs Jahr hochgerechnet
+  _simulator(r) {
+    if (!r) return `<p class="note">Noch keine Messwerte.</p>`;
+    const f = r.form, sign = (x) => (x >= 0 ? "+" : "−"), euro = (x) => `${sign(x)}${this._fmt(Math.abs(x), 0)} €`;
+    const quick = r.quick.map((q) => `<button type="button" class="card preset" data-sim="${esc(JSON.stringify(q.aenderung))}">
+      <div class="label">${esc(q.name)}</div><div class="value ${q.mehr >= 0 ? "pos" : "neg"}">${euro(q.mehr)}</div>
+      <div class="label">im Jahr gegenüber heute</div></button>`).join("");
+    const akku = r.modul ? `<select id="akku" name="akku">${[0, 1, 2, 3, 4].map((n) => {
+      const c = Math.round(r.modul * n * 100) / 100;
+      return `<option value="${c}"${Math.abs(c - f.akku) < 0.01 ? " selected" : ""}>${this._fmt(c, 2)} (${n ? `${n} Modul${n > 1 ? "e" : ""}` : "ohne"}${
+        Math.abs(c - r.kapazitaet) < 0.01 ? ", heute" : ""})</option>`;
+    }).join("")}</select>` : `<input id="akku" name="akku" inputmode="decimal" value="${this._fmt(f.akku, 2)}">`;
+    const rows = [["Ersparnis", "ersparnis", "€"], ["Netzbezug", "netzbezug", "kWh"], ["Ins Haus abgegeben", "ins_haus", "kWh"],
+      ["Eingespeist", "einspeisung", "kWh"], ["Abgeregelt", "abgeregelt", "kWh"], ["In den Akku geladen", "geladen", "kWh"]]
+      .map(([name, k, u]) => {
+        const d = r.variante[k] - r.heute[k];
+        return `<tr><td>${name}</td><td>${this._fmt(r.heute[k], 0)} ${u}</td><td>${this._fmt(r.variante[k], 0)} ${u}</td>
+          <td>${sign(d)}${this._fmt(Math.abs(d), 0)} ${u}</td></tr>`;
+      }).join("");
+    const num = (id, label, value, attrs = "") => `<label for="${id}">${label}</label><input id="${id}" name="${id}" type="number" ${attrs} value="${Math.round(value)}">`;
+    return `<p class="label">Was wäre, wenn deine Anlage anders aussähe? Gerechnet Stunde für Stunde mit deinen Messwerten, aus den
+      gemessenen Stunden aufs Jahr hochgerechnet (ohne Jahresverlauf, im Winter eher zu wenig Sonne).
+      <a href="${HANDBUCH}auswertung/#simulator" target="_blank" rel="noreferrer">Wie gerechnet wird</a></p>
+      <h2>Schnell vergleichen</h2><div class="grid">${quick}</div>
+      <h2>Eigene Variante</h2><div class="sim">
+      <form class="card simform"><div class="label">Variante</div>
+        <label for="akku">Akku (kWh)</label>${akku}
+        ${num("module", "Module (% von heute)", f.module, 'min="0" max="500" step="25"')}
+        ${num("limit", "Abgabelimit (W)", f.limit, 'min="0" max="10000" step="100"')}
+        <fieldset><legend>Regelung</legend>
+          <label class="radio"><input type="radio" name="regelung" value="null"${r.fixed ? "" : " checked"}> Nulleinspeisung (dem Verbrauch folgen)</label>
+          <label class="radio"><input type="radio" name="regelung" value="grundlast"${r.fixed ? " checked" : ""}> feste Grundlast
+            <input type="number" name="grundlast" min="0" max="5000" step="10" value="${Math.round(f.grundlast)}" aria-label="Grundlast in W"> W</label>
+        </fieldset>
+        <div class="two"><div>${num("unten", "Untergrenze (%)", f.unten, 'min="0" max="100"')}</div><div>${num("oben", "Obergrenze (%)", f.oben, 'min="0" max="100"')}</div></div>
+        <div class="two"><div><label for="preis">Arbeitspreis (€/kWh)</label><input id="preis" name="preis" inputmode="decimal" value="${this._fmt(f.preis, 2)}"></div>
+          <div><label for="verguetung">Einspeisevergütung (€/kWh)</label><input id="verguetung" name="verguetung" inputmode="decimal" value="${this._fmt(f.verguetung, 3)}"></div></div>
+        <button>Berechnen</button></form>
+      <div class="card"><div class="label">Mehrersparnis der Variante</div>
+        <div class="big ${r.mehr >= 0 ? "pos" : "neg"}">${euro(r.mehr)} <span>im Jahr</span></div>
+        <div class="cmp-wrap"><table class="cmp"><thead><tr><th></th><th>heute</th><th>Variante</th><th>Unterschied</th></tr></thead>
+        <tbody>${rows}</tbody></table></div></div></div>`;
   }
 }
 

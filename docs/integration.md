@@ -165,7 +165,7 @@ Zahl der übernommenen Stunden. Danach kann die App abgeschaltet werden. Die App
 ## Balkonaut in der Seitenleiste
 
 Sobald Balkonaut eingerichtet ist, erscheint *Balkonaut* in der Seitenleiste von Home Assistant. Dort gibt es dieselben Ansichten wie in der Docker-App: Übersicht mit Energiefluss, Bilanz, Akku,
-heutigem Verlauf und Amortisation, außerdem *Verlauf*, *Nulleinspeisung* und den Monatsbericht zum Drucken.
+heutigem Verlauf und Amortisation, außerdem *Verlauf*, *Nulleinspeisung*, den Monatsbericht zum Drucken und den [Simulator](auswertung.md#simulator).
 *Einstellungen* führt zu den Optionen der Home-Assistant-Integration, *Handbuch* zu diesem Handbuch als Website
 (https://balkonaut.github.io/balkonaut/).
 

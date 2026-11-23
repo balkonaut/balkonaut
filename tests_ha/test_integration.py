@@ -302,6 +302,10 @@ async def test_websocket_and_card(hass, hass_ws_client, hass_client):
         await ws.send_json({"id": i, "type": f"balkonaut/{cmd}"})
         msg = await ws.receive_json()
         assert msg["success"] and (key is None or key in msg["result"]), cmd
+    await ws.send_json({"id": 10, "type": "balkonaut/simulator", "akku": 1e9})  # Grenzen wie in der Docker-App
+    assert (await ws.receive_json())["error"]["code"] == "invalid_format"
+    await ws.send_json({"id": 11, "type": "balkonaut/simulator", "module": 150, "regelung": "grundlast"})
+    assert (await ws.receive_json())["success"]  # ohne Stundenwerte None, Panel zeigt „Noch keine Messwerte“
     device(hass, "hoymiles_wifi", "HMS", [("hoymiles_x_dtu_power", "sensor.hms", "80", {"unit_of_measurement": "W"})],
            model="HMS-800W-2T")  # eigenes Gerät am Zusatz: dessen Modell statt der Bezeichnung aus den Optionen
     solar = MockConfigEntry(domain="forecast_solar", subentries_data=[

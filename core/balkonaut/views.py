@@ -1,10 +1,11 @@
-"""Auswertungen für die Ansichten Verlauf, Bericht und Nulleinspeisung, gemeinsam für Docker-App und Integration.
+"""Auswertungen für die Ansichten Verlauf, Bericht, Nulleinspeisung und Simulator, gemeinsam für Docker-App und Integration.
 
 storage: balkonaut.storage.Storage, now: Unix-Zeit, prices: {"energy", "feed_in"} in €/kWh.
 """
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 
-from . import analytics
+from . import analytics, simulate
 from .storage import RAW_DAYS
 
 VIEWS = {"tag": "Tag", "woche": "Woche", "monat": "Monat", "jahr": "Jahr"}
@@ -152,3 +153,38 @@ def store_regulation_days(storage, prices, now):
             # Tagesende über Ortszeit: bei Zeitumstellung hat der Tag 23 oder 25 Stunden
             if r := regulation(storage, prices, analytics._ts(day), analytics._ts(day + timedelta(days=1))):
                 storage.save_regulation_day(day.isoformat(), r)
+
+
+# Simulator: Eingabe = (Bezeichnung, Minimum, Maximum), gleiche Grenzen in Docker-App und Home-Assistant-Integration
+SIM_FIELDS = {"akku": ("Akku", 0, 100), "module": ("Module", 0, 500), "limit": ("Abgabelimit", 0, 10000),
+              "grundlast": ("Grundlast", 0, 5000), "unten": ("Untergrenze", 0, 100), "oben": ("Obergrenze", 0, 100),
+              "preis": ("Arbeitspreis", 0, 10), "verguetung": ("Einspeisevergütung", 0, 10)}
+
+
+def simulator(storage, prices, now, values, fixed=False, profile=None, location=None):
+    """Was wäre, wenn: heutige Anlage gegen eine Variante und fertige Vergleiche, None ohne Messwerte.
+    values: geprüfte Zahlen je SIM_FIELDS (fehlende = heutige Anlage); fixed: feste Grundlast statt Nulleinspeisung."""
+    p = analytics.plant(storage.hourly(int(now)), now, profile, location)
+    if not p:
+        return None
+    anlage, series, factor, how = p
+    form = {"akku": anlage.capacity, "module": 100, "limit": anlage.limit, "grundlast": 200, "unten": anlage.soc_min,
+            "oben": anlage.soc_max, "preis": prices["energy"], "verguetung": prices["feed_in"]} | values
+
+    def variant(f, base_load):
+        return replace(anlage, capacity=f["akku"], pv_factor=f["module"] / 100, limit=f["limit"],
+                       soc_min=min(f["unten"], f["oben"]), soc_max=max(f["unten"], f["oben"]), base_load=base_load)
+
+    result = simulate.compare(series, anlage, variant(form, form["grundlast"] if fixed else None), prices,
+                              {"energy": form["preis"], "feed_in": form["verguetung"]}, factor)
+    today = {"akku": anlage.capacity, "module": 100, "limit": anlage.limit, "unten": anlage.soc_min, "oben": anlage.soc_max}
+    module = anlage.capacity / 2
+    other = 1200 if anlage.limit <= 800 else 800
+    presets = ([("Ohne Akku", {"akku": 0}), ("+1 Akku-Modul", {"akku": anlage.capacity + module})] if module else []) + [
+        ("+50 % Module", {"module": 150}), (f"Limit {other} W", {"limit": other}),
+        ("Grundlast 200 W", {"regelung": "grundlast", "grundlast": 200})]
+    quick = [{"name": name, "aenderung": change, "mehr": simulate.compare(
+        series, anlage, variant(today | change, change.get("grundlast")), prices, factor=factor)["mehr"]}
+        for name, change in presets]
+    return {**result, "form": form, "fixed": fixed, "quick": quick, "modul": module, "kapazitaet": anlage.capacity,
+            "hochrechnung": how}

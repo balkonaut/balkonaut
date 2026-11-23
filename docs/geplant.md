@@ -3,11 +3,6 @@
 Was als Nächstes kommt, ohne feste Termine. Erledigte Punkte verschwinden von dieser Seite und stehen dann im
 jeweiligen Kapitel des Handbuchs.
 
-## Simulator in Home Assistant
-
-Den [Simulator](auswertung.md#simulator) der Docker-App auch im Panel der Home-Assistant-Integration, dort ohne
-PVGIS über die gemessenen Tage.
-
 ## Früheren Verlauf übernehmen
 
 Balkonaut zählt ab dem Tag, an dem es läuft. Was die Anlage davor erzeugt hat, soll es nachtragen können, damit

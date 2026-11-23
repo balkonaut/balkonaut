@@ -240,7 +240,7 @@ def _open_storage(path: Path) -> Storage:
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """WebSocket-Befehl und Lovelace-Karte, unabhängig von den Einträgen."""
-    for command in (ws_status, ws_history, ws_report, ws_regulation, ws_tiles):
+    for command in (ws_status, ws_history, ws_report, ws_regulation, ws_simulator, ws_tiles):
         websocket_api.async_register_command(hass, command)
 
     async def import_from_app(call: ServiceCall) -> ServiceResponse:
@@ -395,6 +395,18 @@ def ws_tiles(hass: HomeAssistant, connection: websocket_api.ActiveConnection, ms
 @websocket_api.async_response
 async def ws_regulation(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
     await _view(hass, connection, msg, lambda storage, c, now: views.regulation_week(storage, c.prices, now))
+
+
+@websocket_api.websocket_command({vol.Required("type"): "balkonaut/simulator", vol.Optional("entry_id"): str,
+                                  vol.Optional("regelung", default="null"): vol.In(["null", "grundlast"]),
+                                  **{vol.Optional(key): vol.All(vol.Coerce(float), vol.Range(min=low, max=high))
+                                     for key, (_, low, high) in views.SIM_FIELDS.items()}})
+@websocket_api.async_response
+async def ws_simulator(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
+    """Simulator wie in der Docker-App, aber ohne PVGIS: über die gemessenen Tage aufs Jahr hochgerechnet."""
+    values = {key: msg[key] for key in views.SIM_FIELDS if key in msg}
+    await _view(hass, connection, msg, lambda storage, c, now: views.simulator(
+        storage, c.prices, now, values, msg["regelung"] == "grundlast"))
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: BalkonautConfigEntry) -> bool:
