@@ -23,7 +23,6 @@ class Anlage:
     soc_max: float = 100.0  # %
     limit: float = 800.0  # W Abgabelimit
     efficiency: float = 0.92  # je Richtung (Laden, Entladen)
-    standby: float = 0.0  # W, die der Wechselrichter ohne Abgabe aus dem Haus zieht
     pv_factor: float = 1.0  # Skalierung der Erzeugung (mehr oder weniger Module)
     charge_first: float = 0.0  # Anteil der direkt nutzbaren PV, den der Speicher trotzdem zuerst lädt
     base_load: float | None = None  # W fest abgeben statt Nulleinspeisung (None = dem Hausverbrauch folgen)
@@ -62,10 +61,9 @@ def simulate(series, anlage, soc0=None):
         soc -= discharge / a.efficiency
         out = direct + discharge + export
         to_house = min(out, house)  # bei fester Grundlast geht, was das Haus nicht braucht, ins Netz
-        standby = a.standby if out == 0 else 0.0
-        tot["netzbezug"] += house - to_house + standby
+        tot["netzbezug"] += house - to_house
         tot["einspeisung"] += out - to_house
-        tot["ins_haus"] += to_house - standby
+        tot["ins_haus"] += to_house
         tot["geladen"] += charge
         tot["entladen"] += discharge
         tot["abgeregelt"] += surplus - export
@@ -90,13 +88,13 @@ def measured(rows, start, end):
     return {k: v / 1000 for k, v in tot.items()}
 
 
-def calibrate(series, anlage, charged, soc0=None):
+def calibrate(series, anlage, charged):
     """Ladevorrang, bei dem die Simulation so viel lädt wie gemessen (charged in kWh); 0 ohne Akku oder Ladung.
     Vereinfachung: Suche in 5-%-Schritten, genauer geben Stundenwerte ohnehin nicht her."""
     if not anlage.capacity or not charged:
         return 0.0
     return min((k / 20 for k in range(20)), key=lambda share: abs(
-        simulate(series, replace(anlage, charge_first=share), soc0)["geladen"] - charged))
+        simulate(series, replace(anlage, charge_first=share))["geladen"] - charged))
 
 
 def days(series, tz):
