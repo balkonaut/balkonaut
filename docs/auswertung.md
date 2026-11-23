@@ -281,6 +281,25 @@ Assistant Netzleistung, Akkuleistung und Abgabe in diesem Fenster vergleichen: B
 während der Akku lädt, regelt der Zähler; lädt der Akku mit voller Sonnenleistung und das Haus bezieht Netzstrom, hat
 der Modus Vorrang. Die Karte gibt es in der Docker-App und im Panel der Home-Assistant-Integration.
 
+## Simulator
+
+Nur in der Docker-App, unter *Simulator*: Was wäre, wenn deine Anlage anders aussähe? Balkonaut spielt dafür ein Jahr
+Stunde für Stunde durch, einmal mit der heutigen Anlage, einmal mit der Variante, und vergleicht Ersparnis, Netzbezug,
+Abgabe ins Haus, Einspeisung, Abregelung und Ladung.
+
+- **Schnell vergleichen:** fertige Vergleiche als Kacheln, etwa ohne Akku, ein weiteres Akku-Modul, 50 % mehr
+  Module, ein anderes Abgabelimit oder eine feste Grundlast. Ein Klick übernimmt den Vergleich in das Formular.
+- **Eigene Variante:** Akku (in Modulen der heutigen Größe), Module in Prozent von heute, Abgabelimit, Regelung,
+  Ladegrenzen sowie Arbeitspreis und Einspeisevergütung frei wählen. Die Adresse der Seite enthält alle Angaben, ein
+  Ergebnis lässt sich also als Lesezeichen speichern.
+- **Regelung:** *Nulleinspeisung* folgt dem Hausverbrauch (wie der Speicher heute); *feste Grundlast* gibt immer
+  gleich viel ab, was das Haus gerade nicht braucht, geht ins Netz.
+
+Gerechnet wird wie bei [Lohnt sich ein größerer Akku?](#lohnt-sich-ein-groerer-akku): mit Standort und Flächen ein
+ganzes Jahr nach PVGIS, sonst aus den gemessenen Tagen hochgerechnet; Hausverbrauch wie an den gemessenen Tagen,
+ohne Jahreszeiten; Ladevorrang des Speichers aus der Messung. Mehr Module skalieren die gemessene Erzeugung, die
+Ausrichtung bleibt gleich. Die Ergebnisse sind Schätzungen für den Vergleich, keine Zusage.
+
 ## Bewertung der Kennzahlen
 
 Diese Kacheln haben eine Skala von Rot bis Grün, in der Docker-App und im Panel der Home-Assistant-Integration. Zwischen

@@ -3,15 +3,10 @@
 Was als Nächstes kommt, ohne feste Termine. Erledigte Punkte verschwinden von dieser Seite und stehen dann im
 jeweiligen Kapitel des Handbuchs.
 
-## Simulator: Was wäre, wenn …?
+## Simulator in Home Assistant
 
-Balkonaut rechnet dein echtes Jahr Stunde für Stunde mit geänderter Anlage nach und zeigt, was sich an Netzbezug,
-Einspeisung und Ersparnis ändert:
-
-- **Akku größer, kleiner oder ohne:** frei wählbar auf einer eigenen Seite. Ein weiteres Modul rechnet die Kachel
-  *Weiteres Akku-Modul* schon heute, siehe [Lohnt sich ein größerer Akku?](auswertung.md#lohnt-sich-ein-groerer-akku)
-- **Module und Abgabelimit:** mehr oder weniger Module, anderes Limit (z. B. 800 oder 1200 W).
-- **Regelung und Tarif:** Nulleinspeisung gegen eine feste Grundlast, andere Ladegrenzen, anderer Arbeitspreis.
+Den [Simulator](auswertung.md#simulator) der Docker-App auch im Panel der Home-Assistant-Integration, dort ohne
+PVGIS über die gemessenen Tage.
 
 ## Früheren Verlauf übernehmen
 

@@ -472,7 +472,7 @@ def plant(rows, now, profile=None, location=None, known=None):
     Jahr, Hochrechnung). Mit Ertragsprofil und Standort ein simuliertes Jahr, sonst die gemessenen Stunden aufs Jahr
     hochgerechnet (Vereinfachung: ohne Jahreszeiten). None ohne Messung. Je Stunde einmal gerechnet, die Übersicht
     fragt alle 10 s."""
-    key = (int(now) // 3600, tuple(profile or ()), tuple((location or {}).items()))
+    key = (int(now) // 3600, len(rows), tuple(profile or ()), tuple((location or {}).items()))  # neue Daten: neu rechnen
     if key not in _plant_cache:
         _plant_cache.clear()
         _plant_cache[key] = _plant(rows, profile, location, _known(rows) if known is None else known)
