@@ -15,8 +15,8 @@ Eine technische Übersicht aller Abfragen liefert `http://<adresse>:8000/docs`.
 
 ## Aufbau von `/api/v1/status`
 
-- `warnungen`: Liste mit `code` (`keine_messwerte`, `ertrag_niedrig`, `ungleich`, `akku_modul`), `text` und ggf.
-  `wechselrichter`
+- `warnungen`: Liste mit `code` (`keine_messwerte`, `ertrag_niedrig`, `ungleich`, `akku_modul`, `image_umgezogen`),
+  `text` und ggf. `wechselrichter`
 - `ertrag.speicher|ac`: `ertrag` und `prognose` (kWh) der letzten 7 vollen Tage, `quote` (Anteil), `tage`
   (beim Speicher ohne Tage mit vollem Akku)
 - `stand`: Zeitpunkt des letzten Messwerts

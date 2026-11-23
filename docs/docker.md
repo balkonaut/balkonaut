@@ -49,9 +49,10 @@ Das Image gibt es für amd64 und arm64. Jede Version hat einen eigenen Tag (z. B
 Problemen eine ältere Version festhalten lässt.
 
 !!! note "Neuer Image-Name"
-    Bis Version 1.0.2 hieß das Image `ghcr.io/balkonaut/balkonaut`. Es bekommt keine Updates mehr. Wer es noch nutzt,
-    trägt in der `docker-compose.yml` `ghcr.io/balkonaut/balkonaut-docker:latest` ein und holt es mit
-    `docker compose pull && docker compose up -d`. Die Daten im Ordner `data/` bleiben.
+    Bis Version 1.0.2 hieß das Image `ghcr.io/balkonaut/balkonaut`. Wer es noch nutzt, trägt in der
+    `docker-compose.yml` `ghcr.io/balkonaut/balkonaut-docker:latest` ein und holt es mit
+    `docker compose pull && docker compose up -d`. Die Daten im Ordner `data/` bleiben. Unter dem alten Namen gibt es
+    bis 31.03.2027 noch Updates; die Übersicht zeigt dort oben einen Hinweis auf den Umzug.
 
 ## Selbst bauen
 
