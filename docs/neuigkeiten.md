@@ -5,6 +5,18 @@ Home-Assistant-Integration (über HACS) bekommen Neuerungen mit der nächsten Ve
 Vorabversionen (Beta) zeigt HACS nur, wenn bei Balkonaut die Entität *Vorabversion* eingeschaltet ist.
 Was noch kommt, steht unter [Geplant](geplant.md).
 
+## Noch ohne Version
+
+**Docker-App und Home-Assistant-Integration**
+
+- Energiefluss: Schalten sich die Wechselrichter abends ab, zeigen ihre Felder „– W“ statt der zuletzt gemessenen
+  Erzeugung, und die Leitungen laufen nicht mehr weiter. Leistungswerte gelten nach 60 Sekunden ohne neue Messung
+  als nicht mehr aktuell.
+- Szenario *Ohne Batterie*: Der Akku erscheint im Energiefluss als abgeklemmt (gestricheltes Feld, unterbrochene
+  Leitung), die Kachel *Akku* zeigt einen Hinweis statt Ladestand und Grenzen. Die Docker-App erkennt das Szenario
+  über die [APsystems-Cloud](einstellungen.md#apsystems-cloud-optional), die Home-Assistant-Integration über die
+  zugeordnete Messgröße *Betriebsart (Szenario)*.
+
 ## 1.0.3 · 12.11.2026
 
 Fasst die Vorabversionen 1.0.3-beta.1 und beta.2 zusammen (Einzelheiten weiter unten): Warnung *Ungleich* misst

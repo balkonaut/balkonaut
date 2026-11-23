@@ -473,6 +473,9 @@ def combine_regulation(days):
     return out
 
 
+STALE = 60  # s; ältere Leistungswerte gelten als weg, z. B. Wechselrichter abends abgeschaltet (alle 10 s abgefragt)
+
+
 def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
     """Gesamtstand wie /api/v1/status: Warnungen, Ertrag, letzte Messwerte, Bilanz und Akku für heute, Monat,
     Jahr und gesamt sowie Amortisation. rows: Stundenwerte, latest: {Messgröße: (ts, wert)}."""
@@ -490,7 +493,9 @@ def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
         "warnungen": warnings,
         "ertrag": watch["wechselrichter"],
         "stand": datetime.fromtimestamp(stand, TZ) if stand is not None else None,
-        "live": {k: v for k, (_, v) in latest.items()},
+        # Kapazität, Ladegrenzen und Zähler kommen selten und bleiben, eine alte Leistung dagegen ist keine mehr: leer,
+        # aber mit Schlüssel, damit der Energiefluss seinen Aufbau (z. B. Feld für den zweiten Wechselrichter) behält
+        "live": {k: None if k.endswith("_power") and now - ts > STALE else v for k, (ts, v) in latest.items()},
         "bilanz": bilanz,
         "akku": {name: battery(r, start, prices, commissioned, c, known) for name, (r, start, c) in recent.items()},
         "amortisation": amortization(rows, prices, cost, commissioned, profile, bilanz["gesamt"]),

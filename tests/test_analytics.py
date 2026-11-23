@@ -233,6 +233,10 @@ def test_tiny_savings_and_stale_forecast():
     assert amortization(rows, PRICES, cost=800)["amortisiert_am"] is None
     s = status(rows, {"grid_power": (7200, 1.0), "pv_forecast_today": (9000, 3.0)}, 9000, PRICES, 800)
     assert s["warnungen"][0]["code"] == "keine_messwerte"
+    # Wechselrichter abends aus: alte Leistung wird leer, selten gemeldete Werte bleiben
+    live = status(rows, {"grid_power": (8990, 1.0), "pv_power": (8000, 400.0), "battery_capacity": (100, 1.9)},
+                  9000, PRICES, 800)["live"]
+    assert live == {"grid_power": 1.0, "pv_power": None, "battery_capacity": 1.9}
 
 
 def test_regulation_zero_limit(tmp_path):

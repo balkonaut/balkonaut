@@ -44,6 +44,16 @@ const STYLE = `
   .mode { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--bk-line); }
   .mode .k { font: 11px var(--bk-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--bk-muted); }
   .mode .v { margin-top: 2px; font-size: 17px; font-weight: 600; color: var(--bk-ink); }
+  /* Akku abgeklemmt (Szenario „Ohne Batterie“): Feld gestrichelt, Leitung unterbrochen, Hinweis statt Ladestand */
+  .off .node > rect:first-child { stroke: var(--bk-muted); stroke-dasharray: 4 3; fill: none; }
+  .off .ico { stroke: var(--bk-muted); }
+  .off .w { fill: var(--bk-muted); font-size: 15px; }
+  .lane.off { stroke-dasharray: 3 4; }
+  .cut { stroke: var(--bk-prot); stroke-width: 2.5; stroke-linecap: round; }
+  .unplugged { display: flex; gap: 12px; align-items: center; margin-top: 12px; padding: 12px;
+    border: 1.5px dashed var(--bk-line); border-radius: 8px; }
+  .unplugged svg { flex: none; width: 32px; height: 32px; color: var(--bk-muted); }
+  .unplugged .t { font-weight: 600; color: var(--bk-ink); }
   .key i { display: inline-block; width: 3px; height: 12px; margin-right: 5px; vertical-align: -2px; }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; padding-top: 12px;
     border-top: 1px solid var(--bk-line); }
@@ -166,7 +176,13 @@ class BalkonautCard extends HTMLElement {
     return `<g class="node" transform="translate(${x} ${y})"><rect width="120" height="56" rx="6" stroke="${color}"/>
       <text class="lbl" x="10" y="19"${label.length > 12 ? ' textLength="86" lengthAdjust="spacingAndGlyphs"' : ""}>${label}</text>
       <svg x="100" y="7" width="16" height="16" viewBox="0 0 24 24" class="ico" stroke="${color}">${ICONS[icon]}</svg>
-      <text class="w" x="10" y="41">${this._fmt(watts === null ? null : Math.abs(watts))} W</text>${extra}</g>`;
+      <text class="w" x="10" y="41">${typeof watts === "string" ? watts
+        : `${this._fmt(watts === null ? null : Math.abs(watts))} W`}</text>${extra}</g>`;
+  }
+
+  _off() {  // Szenario „Ohne Batterie“: Akku abgeklemmt
+    const mode = this._data.battery_mode;
+    return (MODES[mode] || mode) === "Ohne Batterie";
   }
 
   _gauge(v) {
@@ -189,6 +205,8 @@ class BalkonautCard extends HTMLElement {
 
   _flow(v) {
     const pvAc = v.pv_ac_power, batt = v.battery_power, grid = v.grid_power;
+    // zweiter Wechselrichter, sobald er je gemeldet hat; abends abgeschaltet ist der Wert leer, das Feld bleibt
+    const hasAc = "pv_ac_power" in (this._data.status?.live || {});
     const pv = (v.pv_power ?? 0) + (pvAc ?? 0);
     const house = v.output_power !== null && grid !== null ? v.output_power + grid : null;
     const g = this._gauge(v);
@@ -207,7 +225,7 @@ class BalkonautCard extends HTMLElement {
     const fields = Object.keys(this._data.status?.live || {}).filter((k) => k.startsWith("pv_mppt_"))
       .map((k) => [esc(names.fields?.[k] || `Laderegler ${k.split("_")[2]}`), this._value(k) ?? 0, "panel"])
       .sort((a, b) => b[1] - a[1]);
-    if (fields.length && pvAc !== null) fields.push([extraName, pvAc, "sun"]);
+    if (fields.length && hasAc) fields.push([extraName, pvAc, "sun"]);
     const shown = fields.length > 6 ? [...fields.slice(0, 5), ["weitere", fields.slice(5).reduce((s, f) => s + f[1], 0), "panel"]] : fields;
     const sun = "var(--bk-sun)";
     // je Feld eine Leitung, abwechselnd links und rechts, bis 3 je Seite, ohne Kreuzungen
@@ -219,7 +237,7 @@ class BalkonautCard extends HTMLElement {
           : this._line(`M124 ${y + 28} H${192 - row * 7} V222`, w, sun) + this._node(4, y, sun, name, w, icon);
       }).join("");
     // Module oben, je Wechselrichter ein Feld mit gemeinsamer Leistung (Werte je Modul liefern die Geräte nicht)
-    const pvPart = shown.length ? ladder : pvAc === null
+    const pvPart = shown.length ? ladder : !hasAc
       ? this._line("M200 66 V222", pv, "var(--bk-sun)") + this._node(140, 10, "var(--bk-sun)", modules("storage"), pv, "panel")
       : this._line("M100 66 V182 H190 V222", v.pv_power, "var(--bk-sun)") + this._line("M300 66 V88", pvAc, "var(--bk-sun)")
         + this._line("M300 144 V182 H210 V222", pvAc, "var(--bk-sun)")
@@ -228,18 +246,28 @@ class BalkonautCard extends HTMLElement {
     return `<div class="head"><span>${esc(this._config.title ?? "Energiefluss jetzt")}</span></div>
       <svg class="flow" viewBox="0 0 400 407" role="img"
         aria-label="Sonne ${this._fmt(pv)} W, Akku ${this._fmt(batt)} W, Haus ${this._fmt(house)} W, Netz ${this._fmt(grid)} W">
-        ${this._line("M150 242 H124", batt, "var(--bk-batt)", (batt || 0) < 0)}
+        ${this._off() ? `<path class="lane off" d="M150 242 H124" stroke-width="2"/>
+          <g class="cut"><line x1="133" y1="234" x2="133" y2="250"/><line x1="141" y1="234" x2="141" y2="250"/></g>`
+          : this._line("M150 242 H124", batt, "var(--bk-batt)", (batt || 0) < 0)}
         ${this._line("M250 242 H276", house, "var(--bk-leaf)")}
         ${this._line("M200 262 V341", grid, "var(--bk-sky)", (grid || 0) > 0)}
         ${pvPart}
         <g class="hub"><rect x="150" y="222" width="100" height="40" rx="4"/><text x="200" y="246">${hubName}</text></g>
-        ${this._node(4, 214, "var(--bk-batt)", battLabel, batt, "batt", meter)}
+        ${this._off() ? `<g class="off">${this._node(4, 214, "var(--bk-muted)", battName, "abgeklemmt", "batt")}</g>`
+          : this._node(4, 214, "var(--bk-batt)", battLabel, batt, "batt", meter)}
         ${this._node(276, 214, "var(--bk-leaf)", "Haus", house, "home")}
         ${this._node(140, 341, "var(--bk-sky)", (grid || 0) < -5 ? "Einspeisung" : "Netzbezug", grid, "pole")}
       </svg>`;
   }
 
   _battery(v) {
+    const mode = this._data.battery_mode;
+    const modeRow = mode ? `<div class="mode"><div class="k">Szenario</div><div class="v">${esc(MODES[mode] || mode)}</div></div>` : "";
+    if (this._off()) return `<div class="unplugged"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="7" width="15" height="10" rx="2"/>
+        <path d="M21 10v4"/><path d="M2 2l20 20"/></svg>
+      <div><div class="t">Akku abgeklemmt</div><div class="sub">Szenario „Ohne Batterie“: Der Wechselrichter arbeitet ohne
+        Speicher, Ladestand und Grenzen werden nicht angezeigt.</div></div></div>${modeRow}`;
     const g = this._gauge(v);
     if (!g) return "";
     const C = 2.639, batt = v.battery_power || 0;
@@ -249,7 +277,7 @@ class BalkonautCard extends HTMLElement {
       return `<line x1="${50 + 34 * c}" y1="${50 + 34 * s}" x2="${50 + 50 * c}" y2="${50 + 50 * s}" stroke="${color(k)}" stroke-width="3"/>`;
     }).join("");
     const state = batt > 5 ? "lädt" : batt < -5 ? "entlädt" : "ruht";
-    const m = g.rest?.minutes, mode = this._data.battery_mode;
+    const m = g.rest?.minutes;
     return `<div class="row">
       <svg class="ring" viewBox="0 0 100 100" role="img" aria-label="Ladestand ${this._fmt(g.soc)} %">
         <circle cx="50" cy="50" r="42" stroke="var(--bk-line)"/>
@@ -264,7 +292,7 @@ class BalkonautCard extends HTMLElement {
     </div>
     ${g.marks.length ? `<div class="key">${g.marks.map(([k, p, name]) =>
       `<span><i style="background:${color(k)}"></i>${name} ${this._fmt(p)} %</span>`).join("")}</div>` : ""}
-    ${mode ? `<div class="mode"><div class="k">Szenario</div><div class="v">${esc(MODES[mode] || mode)}</div></div>` : ""}`;
+    ${modeRow}`;
   }
 
   _stats() {
