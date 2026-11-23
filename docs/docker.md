@@ -45,7 +45,7 @@ Tag, Monat und Jahr beginnen in der Zeitzone aus der Variable `TZ`, ohne Angabe 
 wohnt, trägt in der `.env` zum Beispiel `TZ=Europe/London` ein (Namen wie in der
 [Liste der Zeitzonen](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)).
 
-Das Image gibt es für amd64 und arm64. Jede Version hat einen eigenen Tag (z. B. `:1.0.3`), mit dem sich bei
+Das Image gibt es für amd64 und arm64. Jede Version hat einen eigenen Tag (z. B. `:1.0.4`), mit dem sich bei
 Problemen eine ältere Version festhalten lässt.
 
 !!! note "Neuer Image-Name"
@@ -109,5 +109,5 @@ Die gespeicherten Messdaten der Docker-App lassen sich in die Home-Assistant-Int
 ## Neue Versionen
 
 Das Image baut GitHub nur bei einer neuen Version, als `ghcr.io/balkonaut/balkonaut-docker:latest` und mit der
-Version als Tag (z. B. `:1.0.3`). Aktualisiert wird mit `docker compose pull && docker compose up -d` oder in Dockhand
+Version als Tag (z. B. `:1.0.4`). Aktualisiert wird mit `docker compose pull && docker compose up -d` oder in Dockhand
 über *Nach Updates suchen*. Die Tests laufen bei jeder Änderung auf GitHub (`.github/workflows/tests.yml`).
