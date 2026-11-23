@@ -464,26 +464,26 @@ def combine_regulation(days):
 
 
 MODULE_YEARS = 10  # Hinweis „weiteres Akku-Modul“, wenn es sich in so vielen Jahren bezahlt macht
-_module_cache = {}
+_plant_cache = {}
 
 
-def module_option(rows, now, prices, cost=None, profile=None, location=None, known=None):
-    """Weiteres Akku-Modul (halbe heutige Kapazität) über die Simulation: Mehrersparnis im Jahr und Amortisation.
-    Mit Ertragsprofil und Standort über ein simuliertes Jahr, sonst über die gemessenen Stunden aufs Jahr
-    hochgerechnet (Vereinfachung: ohne Jahreszeiten). Je Stunde einmal gerechnet, die Übersicht fragt alle 10 s."""
-    key = (int(now) // 3600, tuple(sorted(prices.items())), cost, tuple(profile or ()), tuple((location or {}).items()))
-    if key not in _module_cache:
-        _module_cache.clear()
-        _module_cache[key] = _module_option(rows, prices, cost, profile, location,
-                                            _known(rows) if known is None else known)
-    return _module_cache[key]
+def plant(rows, now, profile=None, location=None, known=None):
+    """Heutige Anlage für den Simulator und die Stundenreihe, über die gerechnet wird: (Anlage, Reihe, Faktor aufs
+    Jahr, Hochrechnung). Mit Ertragsprofil und Standort ein simuliertes Jahr, sonst die gemessenen Stunden aufs Jahr
+    hochgerechnet (Vereinfachung: ohne Jahreszeiten). None ohne Messung. Je Stunde einmal gerechnet, die Übersicht
+    fragt alle 10 s."""
+    key = (int(now) // 3600, tuple(profile or ()), tuple((location or {}).items()))
+    if key not in _plant_cache:
+        _plant_cache.clear()
+        _plant_cache[key] = _plant(rows, profile, location, _known(rows) if known is None else known)
+    return _plant_cache[key]
 
 
-def _module_option(rows, prices, cost, profile, location, known):
-    cap = known.get("battery_capacity")
+def _plant(rows, profile, location, known):
     series = simulate.hours(rows)
-    if not cap or not series:
+    if not series:
         return None
+    cap = known.get("battery_capacity") or 0.0
     limit = max(((h, last) for k, h, *_, last in rows if k == "output_power_limit" and last), default=(0, 800))[1]
     anlage = simulate.Anlage(capacity=cap, soc_min=known.get("battery_soc_min") or 10,
                              soc_max=known.get("battery_soc_max") or 100, limit=limit)
@@ -494,18 +494,23 @@ def _module_option(rows, prices, cost, profile, location, known):
             charged[datetime.fromtimestamp(h, TZ).date()] += pos
     days = {d for d, wh in charged.items() if wh > 50}
     used = [x for x in series if datetime.fromtimestamp(x[0], TZ).date() in days]
-    anlage = replace(anlage, charge_first=simulate.calibrate(
-        used, anlage, sum(charged[d] for d in days) / 1000))
+    anlage = replace(anlage, charge_first=simulate.calibrate(used, anlage, sum(charged[d] for d in days) / 1000))
     full = simulate.days(series, TZ)
     if profile and location and full:
-        year, factor = simulate.year(full, profile, location["lat"], location["lon"], TZ), 1
-    else:
-        year, factor = series, 8760 / len(series)
-    now_, more = simulate.battery_options(year, anlage, prices, [cap, cap * 1.5])
-    gain = max(round((more["ersparnis"] - now_["ersparnis"]) * factor, 2), 0.0)  # Rundungsreste sind kein Gewinn
-    return {"kapazitaet": cap / 2, "mehr_jahr": gain, "jahre": cost / gain if cost and gain > 0 else None,
-            "hochrechnung": "pvgis" if factor == 1 else "messung"}
+        return anlage, simulate.year(full, profile, location["lat"], location["lon"], TZ), 1.0, "pvgis"
+    return anlage, series, 8760 / len(series), "messung"
 
+
+def module_option(rows, now, prices, cost=None, profile=None, location=None, known=None):
+    """Weiteres Akku-Modul (halbe heutige Kapazität) über die Simulation: Mehrersparnis im Jahr und Amortisation."""
+    p = plant(rows, now, profile, location, known)
+    if not p or not p[0].capacity:
+        return None
+    anlage, series, factor, how = p
+    r = simulate.compare(series, anlage, replace(anlage, capacity=anlage.capacity * 1.5), prices, factor=factor)
+    gain = max(round(r["mehr"], 2), 0.0)  # Rundungsreste sind kein Gewinn
+    return {"kapazitaet": anlage.capacity / 2, "mehr_jahr": gain, "jahre": cost / gain if cost and gain > 0 else None,
+            "hochrechnung": how}
 
 STALE = 60  # s; ältere Leistungswerte gelten als weg, z. B. Wechselrichter abends abgeschaltet (alle 10 s abgefragt)
 

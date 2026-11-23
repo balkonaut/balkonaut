@@ -26,6 +26,7 @@ class Anlage:
     standby: float = 0.0  # W, die der Wechselrichter ohne Abgabe aus dem Haus zieht
     pv_factor: float = 1.0  # Skalierung der Erzeugung (mehr oder weniger Module)
     charge_first: float = 0.0  # Anteil der direkt nutzbaren PV, den der Speicher trotzdem zuerst lädt
+    base_load: float | None = None  # W fest abgeben statt Nulleinspeisung (None = dem Hausverbrauch folgen)
 
 
 def hours(rows, start=None, end=None):
@@ -48,7 +49,8 @@ def simulate(series, anlage, soc0=None):
     tot = dict.fromkeys(("netzbezug", "einspeisung", "ins_haus", "geladen", "entladen", "abgeregelt"), 0.0)
     for _, pv, house in series:
         pv *= a.pv_factor
-        direct = min(pv, house, a.limit)
+        target = min(house if a.base_load is None else a.base_load, a.limit)
+        direct = min(pv, target)
         surplus = pv - direct
         charge = min(surplus + direct * a.charge_first, max(hi - soc, 0) / a.efficiency)
         direct -= max(charge - surplus, 0)
@@ -56,12 +58,14 @@ def simulate(series, anlage, soc0=None):
         soc += charge * a.efficiency
         export = min(surplus, a.limit - direct)
         # in einer Stunde mit Ladung entlädt der Speicher nicht, die Lücke deckt das Netz (so misst es sich beim EZHI)
-        discharge = 0.0 if charge else max(min(min(house, a.limit) - direct, (soc - lo) * a.efficiency), 0.0)
+        discharge = 0.0 if charge else max(min(target - direct, (soc - lo) * a.efficiency), 0.0)
         soc -= discharge / a.efficiency
-        standby = a.standby if direct + discharge + export == 0 else 0.0
-        tot["netzbezug"] += house - direct - discharge + standby
-        tot["einspeisung"] += export
-        tot["ins_haus"] += direct + discharge - standby
+        out = direct + discharge + export
+        to_house = min(out, house)  # bei fester Grundlast geht, was das Haus nicht braucht, ins Netz
+        standby = a.standby if out == 0 else 0.0
+        tot["netzbezug"] += house - to_house + standby
+        tot["einspeisung"] += out - to_house
+        tot["ins_haus"] += to_house - standby
         tot["geladen"] += charge
         tot["entladen"] += discharge
         tot["abgeregelt"] += surplus - export
@@ -132,12 +136,17 @@ def year(measured_days, profile, lat, lon, tz, start=date(2025, 1, 1)):
     return out
 
 
-def battery_options(series, anlage, prices, capacities):
-    """Was-wäre-wenn Akku: je Kapazität (kWh, 0 = ohne Akku) Summen, Ersparnis in € und Mehrersparnis gegenüber
-    anlage. series sollte ein Jahr sein (year()), sonst gilt alles für den Zeitraum der Reihe."""
-    def euro(r):
-        return r["ins_haus"] * prices["energy"] + r["einspeisung"] * prices.get("feed_in", 0)
+def euro(r, prices):
+    """Ersparnis in € aus Summen von simulate(): vermiedener Netzbezug plus Vergütung der Einspeisung."""
+    return r["ins_haus"] * prices["energy"] + r["einspeisung"] * prices.get("feed_in", 0)
 
-    now = euro(simulate(series, anlage))
-    return [{"kapazitaet": c, **r, "ersparnis": euro(r), "mehr": euro(r) - now}
-            for c in capacities for r in [simulate(series, replace(anlage, capacity=c))]]
+
+def compare(series, anlage, variant, prices, variant_prices=None, factor=1.0):
+    """Heutige Anlage gegen Variante (anderer Akku, Module, Limit, Regelung, Tarif): Summen und Ersparnis je Seite,
+    mit factor aufs Jahr hochgerechnet, dazu die Mehrersparnis der Variante."""
+    out = {}
+    for name, a, p in (("heute", anlage, prices), ("variante", variant, variant_prices or prices)):
+        r = {k: v * factor for k, v in simulate(series, a).items()}
+        out[name] = {**r, "ersparnis": euro(r, p)}
+    out["mehr"] = out["variante"]["ersparnis"] - out["heute"]["ersparnis"]
+    return out
