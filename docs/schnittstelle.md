@@ -15,7 +15,8 @@ Eine technische Übersicht aller Abfragen liefert `http://<adresse>:8000/docs`.
 
 ## Aufbau von `/api/v1/status`
 
-- `warnungen`: Liste mit `code` (`keine_messwerte`, `ertrag_niedrig`, `ungleich`), `text` und ggf. `wechselrichter`
+- `warnungen`: Liste mit `code` (`keine_messwerte`, `ertrag_niedrig`, `ungleich`, `akku_modul`), `text` und ggf.
+  `wechselrichter`
 - `ertrag.speicher|ac`: `ertrag` und `prognose` (kWh) der letzten 7 vollen Tage, `quote` (Anteil), `tage`
   (beim Speicher ohne Tage mit vollem Akku)
 - `stand`: Zeitpunkt des letzten Messwerts
@@ -24,8 +25,9 @@ Eine technische Übersicht aller Abfragen liefert `http://<adresse>:8000/docs`.
   `hausverbrauch` (kWh), `eigenverbrauchsquote`, `autarkiegrad` (Anteil 0 bis 1), `ersparnis` (€)
 - `akku.tag|monat|jahr|gesamt`: `zyklen`, `zyklen_gesamt`, `zyklen_pro_jahr`, `gesundheit` (%), `kapazitaet` (kWh),
   `wirkungsgrad`, `verluste_wechselrichter` (Anteil 0 bis 1), `stunden_voll`, `einspeisung_bei_vollem_akku`,
-  `stunden_leer`, `netzbezug_bei_leerem_akku` (kWh), `kosten_bei_leerem_akku` (€), `zusatz_kapazitaet`,
-  `groesserer_akku` (kWh), `groesserer_akku_jahr` (€, aufs Jahr hochgerechnet)
+  `stunden_leer`, `netzbezug_bei_leerem_akku` (kWh), `kosten_bei_leerem_akku` (€)
+- `akku_modul`: weiteres Akku-Modul aus der Simulation, `kapazitaet` (kWh), `mehr_jahr` (€ im Jahr), `jahre` (bis es
+  sich bezahlt macht, nur mit Modulpreis), `hochrechnung` (`pvgis` oder `messung`); `null` ohne Akku
 - `amortisation`: `kosten`, `bisher_gespart`, `ersparnis_pro_jahr`, `rest` (€), `basis` (`inbetriebnahme` oder
   `messtage`), `jahre_bis_amortisation`, `amortisiert_am` (Datum), `zaehler_plausibel`, `messtage`
 

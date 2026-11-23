@@ -9,6 +9,10 @@ import os
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from dataclasses import replace
+
+from . import simulate
+
 
 def _zone(name):
     """Zeitzone nach IANA-Name, bei leerem oder unbekanntem Namen Europe/Berlin."""
@@ -190,23 +194,14 @@ def battery(rows, start, prices, commissioned=None, collected=None, known=None):
     soc_min = latest("battery_soc_min") or known.get("battery_soc_min") or 0
     full = empty = 0
     export_full = import_empty = 0.0
-    # Größerer Akku: Nach Stunden mit vollem Akku hätte ein zusätzliches Modul (halbe Kapazität, nutzbar zwischen den
-    # Grenzen, 90 % Wirkungsgrad) den Netzbezug der folgenden leeren Stunden bis zu seinem Inhalt decken können.
-    # Vereinfachung: nur Obergrenze, der abgeregelte Überschuss ist nicht gemessen; genau rechnet später der Simulator.
-    extra = cap / 2 if cap else None
-    usable = extra * (soc_max - soc_min) / 100 * 0.9 if extra else 0.0
-    shifted = left = 0.0
     for hour, (soc, *_) in hours.get("battery_soc", {}).items():
         _, pos, neg, _ = hours["grid_power"].get(hour, (0, 0, 0, None))
         if soc >= soc_max - 2:
             full += 1
             export_full -= neg / 1000
-            left = usable
         elif soc <= soc_min + 2:
             empty += 1
             import_empty += pos / 1000
-            take = min(pos / 1000, left)
-            shifted, left = shifted + take, left - take
     return {
         "zyklen": discharge / cap if cap and discharge is not None else None,
         "zyklen_gesamt": latest("battery_discharge_energy") / cap if cap and latest("battery_discharge_energy") else None,
@@ -221,11 +216,6 @@ def battery(rows, start, prices, commissioned=None, collected=None, known=None):
         "stunden_leer": empty,
         "netzbezug_bei_leerem_akku": import_empty,
         "kosten_bei_leerem_akku": import_empty * prices["energy"],
-        "zusatz_kapazitaet": extra,
-        "groesserer_akku": shifted if extra else None,
-        # aufs Jahr hochgerechnet über die Stunden mit Ladestand; Vereinfachung: linear, ohne Jahreszeiten
-        "groesserer_akku_jahr": shifted * prices["energy"] * 8760 / len(hours["battery_soc"])
-        if extra and hours.get("battery_soc") else None,
         "geladen": charge if charge is not None else wh["battery_power+"] / 1000,
         "entladen": discharge if discharge is not None else wh["battery_power-"] / 1000,
         "entladen_ins_haus": to_house,
@@ -473,10 +463,54 @@ def combine_regulation(days):
     return out
 
 
+MODULE_YEARS = 10  # Hinweis „weiteres Akku-Modul“, wenn es sich in so vielen Jahren bezahlt macht
+_module_cache = {}
+
+
+def module_option(rows, now, prices, cost=None, profile=None, location=None, known=None):
+    """Weiteres Akku-Modul (halbe heutige Kapazität) über die Simulation: Mehrersparnis im Jahr und Amortisation.
+    Mit Ertragsprofil und Standort über ein simuliertes Jahr, sonst über die gemessenen Stunden aufs Jahr
+    hochgerechnet (Vereinfachung: ohne Jahreszeiten). Je Stunde einmal gerechnet, die Übersicht fragt alle 10 s."""
+    key = (int(now) // 3600, tuple(sorted(prices.items())), cost, tuple(profile or ()), tuple((location or {}).items()))
+    if key not in _module_cache:
+        _module_cache.clear()
+        _module_cache[key] = _module_option(rows, prices, cost, profile, location,
+                                            _known(rows) if known is None else known)
+    return _module_cache[key]
+
+
+def _module_option(rows, prices, cost, profile, location, known):
+    cap = known.get("battery_capacity")
+    series = simulate.hours(rows)
+    if not cap or not series:
+        return None
+    limit = max(((h, last) for k, h, *_, last in rows if k == "output_power_limit" and last), default=(0, 800))[1]
+    anlage = simulate.Anlage(capacity=cap, soc_min=known.get("battery_soc_min") or 10,
+                             soc_max=known.get("battery_soc_max") or 100, limit=limit)
+    # Ladevorrang nur aus Tagen, an denen der Akku geladen hat (nicht im Szenario „Ohne Batterie“)
+    charged = defaultdict(float)
+    for k, h, _, pos, *_ in rows:
+        if k == "battery_power" and pos:
+            charged[datetime.fromtimestamp(h, TZ).date()] += pos
+    days = {d for d, wh in charged.items() if wh > 50}
+    used = [x for x in series if datetime.fromtimestamp(x[0], TZ).date() in days]
+    anlage = replace(anlage, charge_first=simulate.calibrate(
+        used, anlage, sum(charged[d] for d in days) / 1000))
+    full = simulate.days(series, TZ)
+    if profile and location and full:
+        year, factor = simulate.year(full, profile, location["lat"], location["lon"], TZ), 1
+    else:
+        year, factor = series, 8760 / len(series)
+    now_, more = simulate.battery_options(year, anlage, prices, [cap, cap * 1.5])
+    gain = max(round((more["ersparnis"] - now_["ersparnis"]) * factor, 2), 0.0)  # Rundungsreste sind kein Gewinn
+    return {"kapazitaet": cap / 2, "mehr_jahr": gain, "jahre": cost / gain if cost and gain > 0 else None,
+            "hochrechnung": "pvgis" if factor == 1 else "messung"}
+
+
 STALE = 60  # s; ältere Leistungswerte gelten als weg, z. B. Wechselrichter abends abgeschaltet (alle 10 s abgefragt)
 
 
-def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
+def status(rows, latest, now, prices, cost, commissioned=None, profile=None, module_cost=None, location=None):
     """Gesamtstand wie /api/v1/status: Warnungen, Ertrag, letzte Messwerte, Bilanz und Akku für heute, Monat,
     Jahr und gesamt sowie Amortisation. rows: Stundenwerte, latest: {Messgröße: (ts, wert)}."""
     recent = {name: (r := _recent(rows, start), start, _collect(r, start)) for name, start in periods(now).items()}
@@ -484,6 +518,11 @@ def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
     known = _known(rows)
     watch = yield_watch(rows, now, known)
     warnings = watch["warnungen"]
+    module = module_option(rows, now, prices, module_cost, profile, location, known)
+    if module and module["jahre"] is not None and module["jahre"] <= MODULE_YEARS:
+        warnings = warnings + [{"code": "akku_modul", "text": (
+            f"Ein weiteres Akku-Modul würde etwa {module['mehr_jahr']:.0f} € im Jahr sparen und sich nach "
+            f"{module['jahre']:.0f} Jahren bezahlt machen")}]
     # Prognosen kommen auch, wenn alle Geräte ausfallen, und zählen deshalb nicht als Messwert
     stand = max((ts for key, (ts, _) in latest.items() if not key.endswith("_forecast_today")), default=None)
     if stand is not None and now - stand > 120:
@@ -499,4 +538,5 @@ def status(rows, latest, now, prices, cost, commissioned=None, profile=None):
         "bilanz": bilanz,
         "akku": {name: battery(r, start, prices, commissioned, c, known) for name, (r, start, c) in recent.items()},
         "amortisation": amortization(rows, prices, cost, commissioned, profile, bilanz["gesamt"]),
+        "akku_modul": module,
     }

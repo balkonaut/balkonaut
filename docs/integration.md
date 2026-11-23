@@ -186,7 +186,8 @@ Die Karte holt ihre Werte alle 10 Sekunden selbst aus der letzten Messung. Optio
 
 - Unter *Konfigurieren*: das Abfrageintervall (Standard 5 Minuten), die Bezeichnung des Akkus für den Energiefluss
   (optional, z. B. der Hersteller) und des zusätzlichen Wechselrichters (optional, z. B. EZ1-M), außerdem Preise,
-  Anschaffungskosten und Inbetriebnahme.
+  Anschaffungskosten, Inbetriebnahme und der Preis eines weiteren Akku-Moduls (optional, siehe
+  [Lohnt sich ein größerer Akku?](auswertung.md#lohnt-sich-ein-groerer-akku)).
 - Ebenfalls unter *Konfigurieren*: je eine Fläche am Speicher und am zweiten Wechselrichter mit Neigung,
   Ausrichtung und Leistung, für die Tagesprognose ohne Forecast.Solar-Integration, siehe
   [Tagesprognose](#tagesprognose-mit-oder-ohne-forecastsolar-integration).

@@ -5,6 +5,19 @@ Home-Assistant-Integration (über HACS) bekommen Neuerungen mit der nächsten Ve
 Vorabversionen (Beta) zeigt HACS nur, wenn bei Balkonaut die Entität *Vorabversion* eingeschaltet ist.
 Was noch kommt, steht unter [Geplant](geplant.md).
 
+## Noch ohne Version
+
+**Docker-App und Home-Assistant-Integration**
+
+- Kachel *Weiteres Akku-Modul* rechnet jetzt Stunde für Stunde mit deinen Messwerten nach, statt nur eine Obergrenze
+  abzuschätzen. Mit dem neuen, optionalen *Preis eines weiteren Akku-Moduls* zeigt sie auch, nach wie vielen Jahren
+  es sich bezahlt macht; bei höchstens 10 Jahren erscheint ein Hinweis bei den Warnungen
+  ([Lohnt sich ein größerer Akku?](auswertung.md#lohnt-sich-ein-groerer-akku)). Die Docker-App rechnet mit Standort
+  und Flächen ein ganzes Jahr nach PVGIS.
+- Der Monatsbericht zeigt die Kachel nicht mehr, sie gilt fürs ganze Jahr.
+- Schnittstelle: `akku_modul` neu, `zusatz_kapazitaet`, `groesserer_akku` und `groesserer_akku_jahr` unter `akku`
+  entfallen ([Schnittstelle](schnittstelle.md)).
+
 ## 1.0.4 · 23.11.2026
 
 **Docker-App und Home-Assistant-Integration**

@@ -137,7 +137,8 @@ class BalkonautCoordinator(DataUpdateCoordinator[dict]):
     async def _local_status(self) -> dict:
         def status(storage, now):
             return analytics.status(storage.hourly(int(now)), storage.latest(), now, self.prices,
-                                    self.config_entry.options.get("cost", 0.0), self.commissioned)
+                                    self.config_entry.options.get("cost", 0.0), self.commissioned,
+                                    module_cost=self.config_entry.options.get("module_cost"))
         return await self.async_compute(status, time.time())
 
     async def async_store_regulation(self, _now=None) -> None:

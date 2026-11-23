@@ -104,11 +104,13 @@
           "energy": "Arbeitspreis Netzstrom",
           "feed_in": "Einspeisevergütung",
           "cost": "Anschaffungskosten der Anlage",
+          "module_cost": "Preis eines weiteren Akku-Moduls",
           "commissioned": "Inbetriebnahme",
           "battery_name": "Bezeichnung des Akkus",
           "extra_name": "Bezeichnung des zusätzlichen Wechselrichters"
         },
         "data_description": {
+          "module_cost": "Optional. Damit zeigt die Kachel „Weiteres Akku-Modul“, nach wie vielen Jahren es sich bezahlt macht, und bei höchstens 10 Jahren erscheint ein Hinweis.",
           "commissioned": "Ab diesem Tag zählt der Abgabezähler, meist die Inbetriebnahme. Damit rechnet die Amortisation mit dem echten Durchschnitt statt einer Hochrechnung.",
           "battery_name": "Erscheint im Energiefluss statt „Akku“, z. B. der Hersteller. Den Hersteller melden die Geräte nicht verlässlich, daher von Hand.",
           "extra_name": "Erscheint im Energiefluss statt „Zusatz-WR“, z. B. EZ1-M. Ist der Wechselrichter in Home Assistant ein eigenes Gerät, nimmt Balkonaut dessen Modell."

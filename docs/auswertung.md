@@ -119,6 +119,7 @@ Die Übersicht zeigt Warnungen oben an, die Schnittstelle liefert sie unter `war
 | Keine Messwerte | Seit über 2 Minuten kam nichts von Home Assistant |
 | Ertrag niedrig | Ein Wechselrichter lieferte in den letzten 7 Tagen weniger als 60 % der Prognose seiner Fläche |
 | Ungleich | Ein Wechselrichter liefert im Vergleich zum anderen deutlich weniger als sonst, siehe unten |
+| Weiteres Akku-Modul | Ein zusätzliches Modul würde sich nach höchstens 10 Jahren bezahlt machen, siehe [Lohnt sich ein größerer Akku?](#lohnt-sich-ein-groerer-akku) |
 
 Für die Ertragswarnungen braucht Balkonaut die Prognose je Fläche (`pv_forecast_today`, `pv_ac_forecast_today`,
 siehe [Einstellungen](einstellungen.md)) und mindestens 3 Tage Daten.
@@ -179,36 +180,40 @@ verschiedenen Zählern stammen, ergeben die drei Wege der Sonne zusammen nicht i
 | Verluste Speicher-Wechselrichter | Anteil der Energie, die im Speicher-Wechselrichter verloren geht: Eingänge (PV, weitere Wechselrichter, Netzladung, Entladen) gegen Ausgänge (Abgabe, Laden) |
 | Stunden mit vollem Akku | Stunden mit Ladestand nahe der eingestellten Obergrenze. Bei Nulleinspeisung wird überschüssige PV-Leistung dann meist abgeregelt, ein größerer Akku könnte sie speichern |
 | Stunden mit leerem Akku | Stunden mit Ladestand nahe der Untergrenze. Der Netzbezug in diesen Stunden ist die Obergrenze dessen, was ein größerer Akku hätte abdecken können, sofern genug Überschuss da gewesen wäre |
-| Weiteres Akku-Modul | Was ein zusätzliches Modul (halbe Kapazität) höchstens im Jahr sparen würde, mit Bewertung von „lohnt nicht“ bis „lohnt sich“, siehe [unten](#lohnt-sich-ein-groerer-akku) |
+| Weiteres Akku-Modul | Was ein zusätzliches Modul (halbe Kapazität) im Jahr mehr sparen würde und nach wie vielen Jahren es sich bezahlt macht, mit Bewertung von „lohnt nicht“ bis „lohnt sich“, siehe [unten](#lohnt-sich-ein-groerer-akku) |
 
 Für Kapazität, Gesundheit und Ladegrenzen braucht Balkonaut die optionalen Messgrößen
 `battery_capacity`, `battery_soh`, `battery_soc_min` und `battery_soc_max` (siehe [Einstellungen](einstellungen.md)).
 
 ### Lohnt sich ein größerer Akku?
 
-Die Kachel **Weiteres Akku-Modul** schätzt das ab. Sie nimmt ein zusätzliches Modul mit der halben heutigen
-Kapazität an (bei zwei Modulen also ein drittes) und rechnet Stunde für Stunde: Nach Stunden mit vollem Akku hätte
-das Modul Überschuss speichern können. In den folgenden Stunden mit leerem Akku deckt es den Netzbezug, bis sein
-nutzbarer Inhalt aufgebraucht ist (zwischen Unter- und Obergrenze, 90 % Wirkungsgrad). Das Ergebnis steht in Euro,
-aufs Jahr hochgerechnet, mit Bewertung:
+Die Kachel **Weiteres Akku-Modul** rechnet das nach. Sie nimmt ein zusätzliches Modul mit der halben heutigen
+Kapazität an (bei zwei Modulen also ein drittes) und spielt die Anlage Stunde für Stunde mit deinen Messwerten durch:
+Hausverbrauch aus Abgabe und Netz, Erzeugung beider Wechselrichter, Akku mit seinen Grenzen, Abgabelimit und
+Nulleinspeisung. Verglichen wird mit der heutigen Anlage; das Ergebnis ist die Mehrersparnis in Euro im Jahr, mit
+Bewertung:
 
-| Etikett | aufs Jahr gerechnet | bedeutet |
+| Etikett | im Jahr | bedeutet |
 |---|---|---|
-| **lohnt sich** (grün) | ab 100 € | ein Modul für 600 bis 700 € hätte sich nach etwa 6 bis 7 Jahren bezahlt gemacht |
+| **lohnt sich** (grün) | ab 100 € | ein Modul für 600 bis 700 € macht sich nach etwa 6 bis 7 Jahren bezahlt |
 | **eher nicht** (gelb) | 30 bis 100 € | bezahlt sich erst spät, wenn überhaupt |
 | **lohnt nicht** (rot) | bis 30 € | bezahlt sich innerhalb der Lebensdauer kaum |
 
-Darunter stehen die angenommene zusätzliche Kapazität und die Kilowattstunden im gewählten Zeitraum.
+Ist der **Preis eines weiteren Moduls** eingetragen (Docker-App: [Einstellungen](einstellungen.md), Home-Assistant-Integration:
+*Konfigurieren*), zeigt die Kachel auch, nach wie vielen Jahren es sich bezahlt macht, und bewertet danach: bis
+10 Jahre **lohnt sich**, ab 20 Jahren **lohnt nicht**. Bei höchstens 10 Jahren erscheint zusätzlich ein Hinweis bei
+den [Warnungen](#warnungen).
 
-Die Abschätzung ist eine **Obergrenze**: Wie viel Überschuss bei vollem Akku abgeregelt wurde, misst niemand; war es
-weniger als der Inhalt des Moduls, hätte es auch weniger gebracht. Die Hochrechnung aufs Jahr ist linear: Ein
-Sommermonat übertreibt, im Herbst und Winter steht fast immer „lohnt nicht“. Am aussagekräftigsten ist der Zeitraum
-*Gesamt*, sobald ein ganzes Jahr gemessen ist. Für *Heute* fehlt die Kachel, solange die Kapazität des Tages noch
-nicht gemeldet ist.
+**Über welchen Zeitraum:** Die Docker-App rechnet mit Standort und Flächen ein ganzes Jahr: Ertrag je Monat nach
+PVGIS, Tagesverlauf nach dem Sonnenstand, das Wetter von Tag zu Tag wie an deinen gemessenen Tagen. Ohne Standort und
+in der Home-Assistant-Integration rechnet sie nur über die gemessenen Tage und rechnet aufs Jahr hoch; im Herbst und
+Winter, wenn der Akku selten voll wird, steht dann meist 0 €. Den Hausverbrauch nimmt Balkonaut in beiden Fällen von
+den gemessenen Tagen, ohne Jahreszeiten. Wer im Winter viel mehr verbraucht als im Sommer, sieht deshalb eher zu
+viel.
 
-Die Kachel beruht auf den beiden Stunden-Kennzahlen: Ein weiterer Akku lohnt sich nur, wenn der Akku oft voll *und*
-danach oft leer ist. Ist er nur oft voll, fehlt der Bedarf; ist er nur oft leer, fehlt der Überschuss. Eine genaue
-Rechnung mit dem Hausverbrauch ist [geplant](geplant.md).
+**Ladevorrang:** Manche Speicher laden auch dann, wenn das Haus den Strom gerade selbst bräuchte (der APsystems EZHI
+etwa). Balkonaut bestimmt diesen Anteil aus den Tagen, an denen der Akku geladen hat, damit die Rechnung so viel lädt
+wie gemessen. Gerechnet wird mit Stundenwerten; Lastspitzen innerhalb einer Stunde sind darin nicht zu sehen.
 
 ## Monatsbericht
 

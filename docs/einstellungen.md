@@ -10,6 +10,8 @@ Unter `http://<adresse>:8000/einstellungen` trägst du ein:
 - **Arbeitspreis Netzstrom** in €/kWh, also was eine Kilowattstunde aus dem Netz kostet (ohne Grundgebühr).
 - **Einspeisevergütung** in €/kWh. Bei den meisten Balkonkraftwerken 0.
 - **Anschaffungskosten** der Anlage in €, inklusive Speicher.
+- **Preis eines weiteren Akku-Moduls** in € (optional): Damit zeigt die Kachel *Weiteres Akku-Modul*, nach wie
+  vielen Jahren es sich bezahlt macht, siehe [Lohnt sich ein größerer Akku?](auswertung.md#lohnt-sich-ein-groerer-akku).
 - **Inbetriebnahme** (optional): Datum, ab dem der Abgabezähler am Einspeisepunkt zählt, meist die Inbetriebnahme. Verbessert die Amortisationsrechnung.
 
 ## Akku

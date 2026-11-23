@@ -131,11 +131,13 @@ class BalkonautPanel extends HTMLElement {
     return v === null || v === undefined ? "–" : `${this._fmt(v * 100, 0)} %`;
   }
 
-  // Abschätzung für ein zusätzliches Akku-Modul, wie in app/templates/dashboard.html
-  _bigger(k) {
-    return k.groesserer_akku_jahr != null ? this._kachel("akku", "groesserer_akku", "Weiteres Akku-Modul",
-      `bis ${this._fmt(k.groesserer_akku_jahr, 0)} € im Jahr`, k.groesserer_akku_jahr,
-      `mit ${this._fmt(k.zusatz_kapazitaet, 2)} kWh mehr; im Zeitraum bis ${this._fmt(k.groesserer_akku)} kWh`).replace('class="card"', 'class="card wide"') : "";
+  // Weiteres Akku-Modul aus der Simulation, wie in app/templates/dashboard.html
+  _module(m) {
+    const priced = m?.jahre != null;  // mit Modulpreis nach Jahren bewertet, sonst nach € im Jahr
+    return m ? this._kachel("akku", priced ? "modul_jahre" : "groesserer_akku", "Weiteres Akku-Modul",
+      `${this._fmt(m.mehr_jahr, 0)} € im Jahr`, priced ? m.jahre : m.mehr_jahr,
+      `mit ${this._fmt(m.kapazitaet, 2)} kWh mehr${m.jahre != null ? `; bezahlt nach ${this._fmt(m.jahre, 0)} Jahren` : ""}`
+      + (m.hochrechnung === "pvgis" ? "; Jahr nach PVGIS" : "; aus den gemessenen Tagen")).replace('class="card"', 'class="card wide"') : "";
   }
 
   // Kachel mit Erklärung (Knopf i) und, wo es eine Bewertung gibt, Skala von rot (links) bis grün, wie app/templates/_kachel.html
@@ -339,7 +341,7 @@ class BalkonautPanel extends HTMLElement {
         ${this._kachel("akku", "verluste_wechselrichter", "Verluste Speicher-Wechselrichter", this._pct(k.verluste_wechselrichter), k.verluste_wechselrichter)}
         ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", k.stunden_voll ?? "–", null, `dabei eingespeist ${this._fmt(k.einspeisung_bei_vollem_akku)} kWh`)}
         ${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", k.stunden_leer ?? "–", null, `dabei Netzbezug ${this._fmt(k.netzbezug_bei_leerem_akku)} kWh (${this._fmt(k.kosten_bei_leerem_akku, 2)} €)`)}
-        ${this._bigger(k)}</div>
+        ${this._module(st.akku_modul)}</div>
       <h2>Amortisation</h2><div class="card">
         <div class="label">Bisher gespart ${this._fmt(a.bisher_gespart, 0)} € von ${this._fmt(a.kosten, 0)} €</div>
         <div class="bar"><span style="width:${progress}%"></span></div>
@@ -419,7 +421,7 @@ class BalkonautPanel extends HTMLElement {
       <h2>Tageswerte</h2><div class="card">${this._chart(r.tage, true)}<p class="label noprint">Ein Klick auf einen Tag öffnet ihn im Verlauf.</p></div>
       <h2>Akku</h2><div class="grid">
         ${this._kachel("akku", "zyklen", "Vollzyklen", this._fmt(r.akku.zyklen))}${this._kachel("akku", "wirkungsgrad", "Wirkungsgrad", this._pct(r.akku.wirkungsgrad), r.akku.wirkungsgrad)}
-        ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", r.akku.stunden_voll ?? "–")}${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", r.akku.stunden_leer ?? "–")}${this._bigger(r.akku)}
+        ${this._kachel("akku", "stunden_voll", "Stunden mit vollem Akku", r.akku.stunden_voll ?? "–")}${this._kachel("akku", "stunden_leer", "Stunden mit leerem Akku", r.akku.stunden_leer ?? "–")}
         ${this._kachel("akku", "gesundheit", "Gesundheit (SoH)", `${this._fmt(r.akku.gesundheit, 0)} %`)}</div>
       ${n ? `<h2>Nulleinspeisung</h2><div class="grid">
         ${this._kachel("nulleinspeisung", "regelbereit_stunden", "Regelbereit", `${this._fmt(n.regelbereit_stunden, 0)} h`, null, `an ${n.tage} Tagen`)}

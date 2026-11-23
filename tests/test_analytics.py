@@ -77,8 +77,6 @@ def test_battery():
     assert abs(b["wirkungsgrad"] - (4 + (10 - 95) / 100 * 5) / 1) < 1e-9
     assert (b["stunden_voll"], b["einspeisung_bei_vollem_akku"]) == (1, 0.3)
     assert (b["stunden_leer"], b["netzbezug_bei_leerem_akku"]) == (1, 0.8)
-    # zusätzliches Modul 2,5 kWh, nutzbar 2,5 × 0,85 × 0,9 ≈ 1,9 kWh: deckt die 0,8 kWh nach dem vollen Akku
-    assert (b["zusatz_kapazitaet"], b["groesserer_akku"]) == (2.5, 0.8)
     # Kapazität und Grenzen nur vor dem Zeitraum gemeldet: letzter bekannter Wert gilt weiter
     late = battery(sorted(r for r in rows if not (r[0] in ("battery_capacity", "battery_soc_max", "battery_soc_min")
                                                   and r[1] == 7200)), 7200, PRICES)
@@ -270,3 +268,23 @@ def test_history_battery():
     assert (a["charge"], a["discharge"], a["soc"]) == (0.3, 0.4, 35)  # Ladestand: letzter Wert der Stunde
     assert (b["charge"], b["discharge"], b["soc"]) == (0.5, 0.0, 50)  # ohne letzten Wert der Mittelwert
     assert history(rows[:2], [("1", 3600, 7200)], PRICES)[0]["soc"] is None
+
+
+def test_module_option():
+    """Weiteres Akku-Modul über die Simulation: mittags Überschuss, abends Bedarf; Amortisation und Hinweis."""
+    from balkonaut.analytics import module_option, status
+    rows = [("battery_capacity", 0, 1.0, 1.0, 0, 1.0)]
+    for d in range(2):
+        for h in range(24):
+            t, sun = (d * 24 + h) * 3600, 10 <= h < 14
+            rows += [("pv_power", t, 1000.0 if sun else 0.0, 0, 0, None),
+                     ("output_power", t, 200.0 if sun else 0.0, 0, 0, None),
+                     ("grid_power", t, 0.0 if sun else 400.0, 0, 0, None)]
+    m = module_option(rows, 0, {"energy": 0.3}, cost=10.0)
+    # Akku 1 kWh ist mittags schnell voll; 0,5 kWh mehr (Wirkungsgrad 0,92²) bringen abends Strom ins Haus
+    assert m["kapazitaet"] == 0.5 and m["mehr_jahr"] > 0 and m["hochrechnung"] == "messung"
+    assert m["jahre"] == 10.0 / m["mehr_jahr"]
+    assert module_option(rows, 0, {"energy": 0.3})["jahre"] is None  # ohne Preis keine Amortisation
+    assert module_option(rows[1:], 3600, PRICES) is None  # ohne Kapazität kein Modul
+    s = status(rows, {"grid_power": (0, 1.0)}, 7200, {"energy": 0.3, "feed_in": 0}, 800, module_cost=10.0)
+    assert s["akku_modul"]["jahre"] <= 10 and s["warnungen"][-1]["code"] == "akku_modul"

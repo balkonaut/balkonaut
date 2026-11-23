@@ -239,6 +239,7 @@ class BalkonautOptionsFlow(OptionsFlowWithReload):
             schema |= {vol.Required("energy", default=0.0): number("€/kWh", "any"),
                        vol.Required("feed_in", default=0.0): number("€/kWh", "any"),
                        vol.Required("cost", default=0.0): number("€", 1),
+                       vol.Optional("module_cost"): number("€", 1, max=100000),
                        vol.Optional("commissioned"): DateSelector()}
             # Flächen für die Prognose ohne Forecast.Solar-Integration, je Wechselrichter eine
             # Vereinfachung: eine Fläche je Wechselrichter, mehrere bei Nachfrage, spätestens 31.01.2027 prüfen

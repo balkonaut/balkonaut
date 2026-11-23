@@ -38,11 +38,19 @@ KACHELN = {
                          "Akku könnte ihn speichern.",),
         "stunden_leer": ("Stunden mit Ladestand nahe der Untergrenze. Der Netzbezug dabei ist die Obergrenze dessen, was "
                          "ein größerer Akku hätte abdecken können.",),
-        "groesserer_akku": ("Was ein zusätzliches Akku-Modul (halbe heutige Kapazität) höchstens gebracht hätte: Netzbezug "
-                            "in Stunden mit leerem Akku, nachdem er vorher voll war, bis zum nutzbaren Inhalt des Moduls, "
-                            "aufs Jahr hochgerechnet. Obergrenze, weil der abgeregelte Überschuss nicht gemessen wird. Im "
-                            "Herbst und Winter fast immer „lohnt nicht“, aussagekräftig erst über Frühjahr und Sommer.",
+        "groesserer_akku": ("Was ein zusätzliches Akku-Modul (halbe heutige Kapazität) im Jahr mehr sparen würde, "
+                            "Stunde für Stunde mit deinen Messwerten nachgerechnet. Mit Standort und Flächen über ein "
+                            "ganzes Jahr (Ertrag je Monat nach PVGIS, Hausverbrauch wie an den gemessenen Tagen), sonst "
+                            "nur aus den gemessenen Tagen hochgerechnet; dann im Herbst und Winter meist 0 €. Mit dem Preis "
+                            "eines Moduls auch die Jahre, bis es sich bezahlt macht.",
                             100, 30, "≥ 100 € im Jahr", "≤ 30 € im Jahr", ("lohnt sich", "eher nicht", "lohnt nicht")),
+        # gleiche Kachel mit eingetragenem Modulpreis: bewertet nach den Jahren, bis es sich bezahlt macht
+        "modul_jahre": ("Was ein zusätzliches Akku-Modul (halbe heutige Kapazität) im Jahr mehr sparen würde und nach "
+                        "wie vielen Jahren es sich mit dem eingetragenen Preis bezahlt macht, Stunde für Stunde mit "
+                        "deinen Messwerten nachgerechnet. Mit Standort und Flächen über ein ganzes Jahr (Ertrag je Monat "
+                        "nach PVGIS, Hausverbrauch wie an den gemessenen Tagen), sonst nur aus den gemessenen Tagen "
+                        "hochgerechnet. Bei höchstens 10 Jahren erscheint ein Hinweis bei den Warnungen.",
+                        10, 20, "≤ 10 Jahre", "≥ 20 Jahre", ("lohnt sich", "eher nicht", "lohnt nicht")),
     },
     "diagramm": {
         "herkunft": ("Je Zeitabschnitt zwei Balken: grün, was das Balkonkraftwerk ins Haus abgegeben hat (direkt von der "
