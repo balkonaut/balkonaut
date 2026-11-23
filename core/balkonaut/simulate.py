@@ -8,7 +8,10 @@ aus der Messung bestimmt (calibrate), sonst trifft die Simulation zwar den Netzb
 Vereinfachung: Stundenmittel, Lastspitzen innerhalb einer Stunde sieht das Modell nicht; genauer ginge es nur mit den
 Rohwerten, die nach 14 Tagen gelöscht werden.
 """
+import calendar
+import math
 from dataclasses import dataclass, replace
+from datetime import date, datetime, timedelta
 
 KEYS = ("grid_power", "output_power", "pv_power", "pv_ac_power")
 
@@ -90,3 +93,51 @@ def calibrate(series, anlage, charged, soc0=None):
         return 0.0
     return min((k / 20 for k in range(20)), key=lambda share: abs(
         simulate(series, replace(anlage, charge_first=share), soc0)["geladen"] - charged))
+
+
+def days(series, tz):
+    """Vollständige Tage aus der Stundenreihe: [(Datum, PV[24], Haus[24])], nach Ortszeit (Sommerzeit-Tage fallen weg)."""
+    by = {}
+    for hour, pv, house in series:
+        t = datetime.fromtimestamp(hour, tz)
+        by.setdefault(t.date(), {})[t.hour] = (pv, house)
+    return [(day, [v[h][0] for h in range(24)], [v[h][1] for h in range(24)])
+            for day, v in sorted(by.items()) if len(v) == 24]
+
+
+def _sun(day, lat, lon, offset):
+    """Anteile der Tageserzeugung je Ortsstunde: Sinusbogen zwischen Sonnenauf- und -untergang.
+    Vereinfachung: ohne Ausrichtung der Flächen und ohne Wolken im Tagesverlauf."""
+    decl = math.radians(23.44) * math.sin(2 * math.pi * (284 + day.timetuple().tm_yday) / 365)
+    half = math.degrees(math.acos(max(-1.0, min(1.0, -math.tan(math.radians(lat)) * math.tan(decl))))) / 15
+    noon = 12 - lon / 15 + offset
+    w = [max(math.sin(math.pi * (h + 0.5 - noon + half) / (2 * half)), 0) if abs(h + 0.5 - noon) < half else 0.0
+         for h in range(24)]
+    return [x / sum(w) for x in w] if sum(w) else w
+
+
+def year(measured_days, profile, lat, lon, tz, start=date(2025, 1, 1)):
+    """Ein Jahr Stundenreihe: Hausverbrauch der gemessenen Tage der Reihe nach wiederholt (ohne Jahreszeiten),
+    PV je Monat aus profile (kWh, z. B. PVGIS), je Tag so schwankend wie an den gemessenen Tagen."""
+    mean = sum(sum(pv) for _, pv, _ in measured_days) / len(measured_days)
+    out = []
+    for i in range(365):
+        day = start + timedelta(days=i)
+        _, pv, house = measured_days[i % len(measured_days)]
+        weather = sum(pv) / mean if mean else 1.0
+        energy = profile[day.month - 1] * 1000 / calendar.monthrange(day.year, day.month)[1] * weather
+        t0 = int(datetime(day.year, day.month, day.day, tzinfo=tz).timestamp())
+        offset = datetime(day.year, day.month, day.day, 12, tzinfo=tz).utcoffset().total_seconds() / 3600
+        out += [(t0 + h * 3600, energy * s, house[h]) for h, s in enumerate(_sun(day, lat, lon, offset))]
+    return out
+
+
+def battery_options(series, anlage, prices, capacities):
+    """Was-wäre-wenn Akku: je Kapazität (kWh, 0 = ohne Akku) Summen, Ersparnis in € und Mehrersparnis gegenüber
+    anlage. series sollte ein Jahr sein (year()), sonst gilt alles für den Zeitraum der Reihe."""
+    def euro(r):
+        return r["ins_haus"] * prices["energy"] + r["einspeisung"] * prices.get("feed_in", 0)
+
+    now = euro(simulate(series, anlage))
+    return [{"kapazitaet": c, **r, "ersparnis": euro(r), "mehr": euro(r) - now}
+            for c in capacities for r in [simulate(series, replace(anlage, capacity=c))]]

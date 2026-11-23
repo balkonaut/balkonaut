@@ -1,3 +1,4 @@
+from datetime import datetime
 from dataclasses import replace
 
 from balkonaut.simulate import Anlage, calibrate, hours, measured, simulate
@@ -38,3 +39,23 @@ def test_hours_and_measured():
     assert hours(rows) == [(0, 150.0, 400.0)]
     assert measured(rows, 0, 7200) == {"netzbezug": 0.3, "einspeisung": 0.0, "ins_haus": 0.1, "geladen": 0.05,
                                        "entladen": 0.0}
+
+
+def test_year_and_battery_options():
+    from datetime import date
+    from zoneinfo import ZoneInfo
+
+    from balkonaut.simulate import battery_options, days, year
+    tz = ZoneInfo("Europe/Berlin")
+    t0 = int(datetime(2026, 11, 2, tzinfo=tz).timestamp())
+    series = [(t0 + i * 3600, pv, house) for i, (_, pv, house) in enumerate(DAY * 2)]
+    measured_days = days(series[:-1], tz)  # zweiter Tag unvollständig
+    assert [d for d, *_ in measured_days] == [date(2026, 11, 2)]
+    y = year(measured_days, [150.0] * 6 + [300.0] * 6, 51.0, 10.0, tz)
+    assert len(y) == 365 * 24
+    assert round(sum(pv for _, pv, _ in y) / 1000) == 6 * 150 + 6 * 300  # PV je Monat wie im Profil
+    pv_june = [pv for t, pv, _ in y[24 * 160:24 * 161]]
+    assert pv_june[3] == 0 and pv_june[13] > 0  # nachts keine Sonne
+    opts = battery_options(y, Anlage(capacity=2), {"energy": 0.3}, [0, 2, 4])
+    assert opts[1]["mehr"] == 0 and opts[0]["mehr"] < 0 < opts[2]["mehr"]
+    assert abs(opts[0]["ersparnis"] - opts[0]["ins_haus"] * 0.3) < 1e-9
